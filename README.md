@@ -1,8 +1,8 @@
 # MiniThing
 
 #### 介绍
-Windows平台的Everything软件查找速度非常快，本质是利用了NTFS文件系统的USN日志，以及Windows平台的文件检测功能
-本软件按照相同原理，通过查询USN日志，检测Windows平台文件修改，使用sqlite存储文件信息，实现了类似的功能
+- Windows平台的Everything软件查找速度非常快，本质是利用了NTFS文件系统的USN日志，以及Windows平台的文件检测功能
+- 本软件按照相同原理，通过查询USN日志，检测Windows平台文件修改，使用sqlite存储文件信息，实现了类似的功能
 
 #### 编写计划
 - [x] 实现基本的USN日志查询，建立初始的sqlite数据库
