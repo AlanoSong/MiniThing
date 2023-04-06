@@ -1,39 +1,21 @@
 # MiniThing
 
 #### 介绍
-{**以下是 Gitee 平台说明，您可以替换此简介**
-Gitee 是 OSCHINA 推出的基于 Git 的代码托管平台（同时支持 SVN）。专为开发者提供稳定、高效、安全的云端软件开发协作平台
-无论是个人、团队、或是企业，都能够用 Gitee 实现代码托管、项目管理、协作开发。企业项目请看 [https://gitee.com/enterprises](https://gitee.com/enterprises)}
+Windows平台的Everything软件查找速度非常快，本质是利用了NTFS文件系统的USN日志，以及Windows平台的文件检测功能
+本软件按照相同原理，通过查询USN日志，检测Windows平台文件修改，使用sqlite存储文件信息，实现了类似的功能
 
-#### 软件架构
-软件架构说明
-
-
-#### 安装教程
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 使用说明
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
+#### 编写计划
+[x] 实现基本的USN日志查询，建立初始的sqlite数据库
+[x] 开启monitor thread，检测系统文件改动
+[ ] 研究Unicode原理，彻底解决宽字符的打印、与常规字符转换、sqlite的存取问题（找找有没有相关的开源轮子）
+[ ] 研究sqlite接口，将当前存储在map中的文件信息，完全port到sqlite中
+[ ] 开启query thread，实现一个基本的查询功能
+[ ] 基本bug清掉，常规操作流程排除bug
+[ ] 调查MFC、QT，选一个实现查询界面
+[ ] 软件整体优化、输出相关文档
 
 #### 参与贡献
-
 1.  Fork 本仓库
 2.  新建 Feat_xxx 分支
 3.  提交代码
 4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
