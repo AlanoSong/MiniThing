@@ -16,6 +16,12 @@
     <Filter Include="SQLite">
       <UniqueIdentifier>{ecfa402a-d2ff-4c3e-8a2d-85b7dc704163}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utility">
+      <UniqueIdentifier>{72679f85-31e0-4019-b968-515f7d02006e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Docs">
+      <UniqueIdentifier>{e53a5590-5162-4e22-acad-fd5061df0115}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -33,6 +39,9 @@
     <ClCompile Include="SQLite\sqlite3.c">
       <Filter>SQLite</Filter>
     </ClCompile>
+    <ClCompile Include="Utility\Utility.cpp">
+      <Filter>Utility</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MonitorThread.h">
@@ -47,5 +56,13 @@
     <ClInclude Include="SQLite\sqlite3ext.h">
       <Filter>SQLite</Filter>
     </ClInclude>
+    <ClInclude Include="Utility\Utility.h">
+      <Filter>Utility</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Docs\Unicode.md">
+      <Filter>Docs</Filter>
+    </None>
   </ItemGroup>
 </Project>

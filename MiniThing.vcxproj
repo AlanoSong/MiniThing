@@ -134,12 +134,17 @@
     <ClCompile Include="MonitorThread.cpp" />
     <ClCompile Include="SQLite\shell.c" />
     <ClCompile Include="SQLite\sqlite3.c" />
+    <ClCompile Include="Utility\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiniThing.h" />
     <ClInclude Include="MonitorThread.h" />
     <ClInclude Include="SQLite\sqlite3.h" />
     <ClInclude Include="SQLite\sqlite3ext.h" />
+    <ClInclude Include="Utility\Utility.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Docs\Unicode.md" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

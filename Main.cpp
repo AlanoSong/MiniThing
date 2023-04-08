@@ -4,10 +4,16 @@
 #include <iostream>
 
 #include "MiniThing.h"
+#include "Utility/Utility.h"
+
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <tchar.h>
 
 int main()
 {
-    MiniThing *pMiniThing = new MiniThing("F:");
+    MiniThing* pMiniThing = new MiniThing("F:");
 
     // Open folder and create SQLite db
     pMiniThing->GetHandle();
