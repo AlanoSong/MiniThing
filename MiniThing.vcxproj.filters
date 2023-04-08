@@ -64,5 +64,6 @@
     <None Include="Docs\Unicode.md">
       <Filter>Docs</Filter>
     </None>
+    <None Include="README.md" />
   </ItemGroup>
 </Project>

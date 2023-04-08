@@ -36,24 +36,16 @@ struct UsnInfo
 class MiniThing
 {
 public:
-    MiniThing(string volumeName);
+    MiniThing(std::wstring volumeName, const char *sqlDBPath);
     ~MiniThing(VOID);
 
-    VOID GetSystemError(VOID);
-    BOOL IsNtfs(VOID);
-    BOOL CreateUsn(VOID);
-
-    BOOL GetHandle(VOID);
-    VOID closeHandle(VOID);
-
-    BOOL QueryUsn(VOID);
-    BOOL RecordUsn(VOID);
-    VOID GetCurrentFilePath(wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
-    VOID SortUsn(VOID);
-    VOID DeleteUsn(VOID);
+    std::wstring GetVolName(VOID)
+    {
+        return m_volumeName;
+    }
 
     VOID MonitorFileChange(VOID);
-    VOID AdjustUsnRecord(wstring folder, wstring filePath, wstring reFileName, DWORD op);
+    VOID AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring reFileName, DWORD op);
     BOOL CreateMonitorThread(VOID);
     VOID StartMonitorThread(VOID);
     VOID StopMonitorThread(VOID);
@@ -69,33 +61,44 @@ public:
     HRESULT SQLiteModify(UsnInfo* pUsnInfo);
     HRESULT SQLiteClose(VOID);
 
-    string m_volumeName = "F:";
 
-    HANDLE m_hVol = INVALID_HANDLE_VALUE;
 
     unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
 
     DWORDLONG m_unusedFileRefNum = ((DWORDLONG)(-1)) - 1;
 
-    const DWORDLONG m_constFileRefNumMax = ((DWORDLONG)(-1));
 
     // Some file always exist in root folder
-    vector<DWORDLONG> m_systemParentRef = { 0xb00000000000b, 0x100000000001b, 0x100000000001e, 0x1000000000024, 0x1000000000029, 281474976710698, 0x000100000000002b };
 
-    // Private functions
-    LPCWSTR StrToLPCWSTR(string orig);
-    LPCSTR StrToLPCSTR(string str);
 
-    CString StrToCstr(string str);
-    string LPCWSTRToStr(LPCWSTR lpcwszStr);
-
-    wstring GetFileNameAccordPath(wstring path);
-    wstring GetPathAccordPath(wstring path);
-    BOOL IsWstringSame(wstring s1, wstring s2);
 
     // Monitor thread
     HANDLE m_hExitEvent;
     HANDLE m_hMonitorThread;
+
+private:
+    std::wstring m_volumeName;
+    HANDLE m_hVol = INVALID_HANDLE_VALUE;
+    const DWORDLONG m_constFileRefNumMax = ((DWORDLONG)(-1));
+    USN_JOURNAL_DATA m_usnInfo;
+    vector<DWORDLONG> m_systemParentRef = { 0xb00000000000b, 0x100000000001b, 0x100000000001e, 0x1000000000024, 0x1000000000029, 281474976710698, 0x000100000000002b };
+
+private:
+    HRESULT GetHandle(VOID);
+    VOID closeHandle(VOID);
+    BOOL IsNtfs(VOID);
+
+    VOID GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
+    HRESULT CreateUsn(VOID);
+    HRESULT QueryUsn(VOID);
+    HRESULT RecordUsn(VOID);
+    HRESULT SortUsn(VOID);
+    HRESULT DeleteUsn(VOID);
+
+    VOID GetSystemError(VOID);
+    BOOL IsWstringSame(std::wstring s1, std::wstring s2);
+    std::wstring GetFileNameAccordPath(std::wstring path);
+    std::wstring GetPathAccordPath(std::wstring path);
 };
 
 

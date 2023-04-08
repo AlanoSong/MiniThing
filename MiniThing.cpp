@@ -1,56 +1,69 @@
 #include "MiniThing.h"
+#include "Utility/Utility.h"
 
-
-USN_JOURNAL_DATA m_usnInfo;
-
-MiniThing::MiniThing(string volumeName)
+MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
 {
     m_volumeName = volumeName;
+
+    // Set chinese debug output
+    std::wcout.imbue(std::locale("chs"));
+
+    // Get folder handle
+    if (FAILED(GetHandle()))
+    {
+        assert(0);
+    }
+
+    // Check if folder is ntfs ?
+    if (!IsNtfs())
+    {
+        assert(0);
+    }
+
+    // Create or open sql data base file
+    if (FAILED(SQLiteOpen(sqlDBPath)))
+    {
+        assert(0);
+    }
+
+    // Create system usn info
+    if (FAILED(CreateUsn()))
+    {
+        assert(0);
+    }
+
+    if (FAILED(QueryUsn()))
+    {
+        assert(0);
+    }
+
+    if (FAILED(RecordUsn()))
+    {
+        assert(0);
+    }
+
+    if (FAILED(SortUsn()))
+    {
+        assert(0);
+    }
+
+    if (FAILED(DeleteUsn()))
+    {
+        assert(0);
+    }
 }
 
 MiniThing::~MiniThing(VOID)
 {
-}
-
-CString MiniThing::StrToCstr(string str)
-{
-    return CString(str.c_str());
-}
-
-LPCWSTR MiniThing::StrToLPCWSTR(string orig)
-{
-    size_t origsize = orig.length() + 1;
-    const size_t newsize = 100;
-    size_t convertedChars = 0;
-    wchar_t* wcstring = (wchar_t*)malloc(sizeof(wchar_t) * (orig.length() - 1));
-    mbstowcs_s(&convertedChars, wcstring, origsize, orig.c_str(), _TRUNCATE);
-
-    return wcstring;
-}
-
-LPCSTR MiniThing::StrToLPCSTR(string str)
-{
-    return str.c_str();
-}
-
-string MiniThing::LPCWSTRToStr(LPCWSTR lpcwszStr)
-{
-    string str;
-    DWORD dwMinSize = 0;
-    LPSTR lpszStr = NULL;
-    dwMinSize = WideCharToMultiByte(CP_OEMCP, NULL, lpcwszStr, -1, NULL, 0, NULL, FALSE);
-    if (0 == dwMinSize)
+    if (FAILED(SQLiteClose()))
     {
-        return FALSE;
+        assert(0);
     }
-    lpszStr = new char[dwMinSize];
-    WideCharToMultiByte(CP_OEMCP, NULL, lpcwszStr, -1, lpszStr, dwMinSize, NULL, FALSE);
-    str = lpszStr;
-    delete[] lpszStr;
-    return str;
+
+    closeHandle();
 }
 
-BOOL MiniThing::IsWstringSame(wstring s1, wstring s2)
+BOOL MiniThing::IsWstringSame(std::wstring s1, std::wstring s2)
 {
     CString c1 = s1.c_str();
     CString c2 = s2.c_str();
@@ -58,28 +71,28 @@ BOOL MiniThing::IsWstringSame(wstring s1, wstring s2)
     return c1.CompareNoCase(c2) == 0 ? TRUE : FALSE;
 }
 
-BOOL MiniThing::GetHandle()
+HRESULT MiniThing::GetHandle()
 {
-    CString folderPath = _T("\\\\.\\");
-    folderPath += StrToCstr(m_volumeName);
+    std::wstring folderPath = L"\\\\.\\";
+    folderPath += m_volumeName;
 
-    m_hVol = CreateFile(folderPath,
-        GENERIC_READ | GENERIC_WRITE, // 可以为0
-        FILE_SHARE_READ | FILE_SHARE_WRITE, // 必须包含有FILE_SHARE_WRITE
+    m_hVol = CreateFile(folderPath.c_str(),
+        GENERIC_READ | GENERIC_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
         nullptr,
-        OPEN_EXISTING, // 必须包含OPEN_EXISTING, CREATE_ALWAYS可能会导致错误
-        FILE_FLAG_BACKUP_SEMANTICS, // FILE_ATTRIBUTE_NORMAL可能会导致错误
+        OPEN_EXISTING,
+        FILE_FLAG_BACKUP_SEMANTICS,
         nullptr);
 
     if (INVALID_HANDLE_VALUE != m_hVol)
     {
-        cout << "Get handle : " << m_volumeName << endl;
-        return TRUE;
+        std::wcout << L"Get handle : " << m_volumeName << std::endl;
+        return S_OK;
     }
     else
     {
-        cout << "Get handle failed : " << m_volumeName << endl;
-        return FALSE;
+        std::wcout << L"Get handle failed : " << m_volumeName << std::endl;
+        return E_FAIL;
     }
 }
 
@@ -87,11 +100,11 @@ VOID MiniThing::closeHandle(VOID)
 {
     if (TRUE == CloseHandle(m_hVol))
     {
-        cout << "Close handle : " << m_volumeName << endl;
+        std::wcout << L"Close handle : " << m_volumeName << std::endl;
     }
     else
     {
-        cout << "Get handle : " << m_volumeName << endl;
+        std::wcout << L"Get handle : " << m_volumeName << std::endl;
     }
 }
 
@@ -109,10 +122,8 @@ VOID MiniThing::GetSystemError(VOID)
         NULL
     );
 
-    setlocale(LC_ALL, "chs");
-
     LPCTSTR strValue = lpMsgBuf;
-    _tprintf(_T("ERROR msg ：%s"), strValue);
+    _tprintf(_T("ERROR msg : %s\n"), strValue);
 }
 
 BOOL MiniThing::IsNtfs(VOID)
@@ -120,8 +131,12 @@ BOOL MiniThing::IsNtfs(VOID)
     BOOL isNtfs = FALSE;
     char sysNameBuf[MAX_PATH] = { 0 };
 
+    int len = WstringToChar(m_volumeName, nullptr);
+    char* pVol = new char[len];
+    WstringToChar(m_volumeName, pVol);
+
     BOOL status = GetVolumeInformationA(
-        StrToLPCSTR(m_volumeName),
+        pVol,
         NULL,
         0,
         NULL,
@@ -130,9 +145,9 @@ BOOL MiniThing::IsNtfs(VOID)
         sysNameBuf,
         MAX_PATH);
 
-    if (FALSE != status) {
-
-        cout << " File system name : " << sysNameBuf << endl;
+    if (FALSE != status)
+    {
+        std::cout << " File system name : " << sysNameBuf << std::endl;
 
         if (0 == strcmp(sysNameBuf, "NTFS"))
         {
@@ -140,7 +155,7 @@ BOOL MiniThing::IsNtfs(VOID)
         }
         else
         {
-            cout << "File system not NTFS format !!!" << endl;
+            std::cout << "File system not NTFS format !!!" << std::endl;
             GetSystemError();
         }
     }
@@ -148,13 +163,16 @@ BOOL MiniThing::IsNtfs(VOID)
     return isNtfs;
 }
 
-BOOL MiniThing::CreateUsn(VOID)
+HRESULT MiniThing::CreateUsn(VOID)
 {
+    HRESULT ret = S_OK;
+
     DWORD br;
     CREATE_USN_JOURNAL_DATA cujd;
-    cujd.MaximumSize = 0; // 0表示使用默认值  
-    cujd.AllocationDelta = 0; // 0表示使用默认值  
-    BOOL status = DeviceIoControl(m_hVol,
+    cujd.MaximumSize = 0;
+    cujd.AllocationDelta = 0;
+    BOOL status = DeviceIoControl(
+        m_hVol,
         FSCTL_CREATE_USN_JOURNAL,
         &cujd,
         sizeof(cujd),
@@ -165,21 +183,24 @@ BOOL MiniThing::CreateUsn(VOID)
 
     if (FALSE != status)
     {
-        cout << "Create usn file success" << endl;
-        return status;
+        std::cout << "Create usn file success" << std::endl;
+        ret = S_OK;
     }
     else
     {
-        cout << "Create usn file failed" << endl;
+        std::cout << "Create usn file failed" << std::endl;
         GetSystemError();
-        return false;
+        ret = E_FAIL;
     }
+
+    return ret;
 }
 
-BOOL MiniThing::QueryUsn(VOID)
+HRESULT MiniThing::QueryUsn(VOID)
 {
-    DWORD br;
+    HRESULT ret = S_OK;
 
+    DWORD br;
     BOOL status = DeviceIoControl(m_hVol,
         FSCTL_QUERY_USN_JOURNAL,
         NULL,
@@ -191,22 +212,24 @@ BOOL MiniThing::QueryUsn(VOID)
 
     if (FALSE != status)
     {
-        cout << "Query usn info success" << endl;
+        std::cout << "Query usn info success" << std::endl;
     }
     else
     {
-        cout << "Query usn info failed" << endl;
+        ret = E_FAIL;
+        std::cout << "Query usn info failed" << std::endl;
         GetSystemError();
     }
 
-    return TRUE;
+    return ret;
 }
 
-BOOL MiniThing::RecordUsn(VOID)
+HRESULT MiniThing::RecordUsn(VOID)
 {
     MFT_ENUM_DATA med = { 0, 0, m_usnInfo.NextUsn };
     med.MaxMajorVersion = 2;
-    char buffer[0x1000]; // Used to record usn info, must big enough
+    // Used to record usn info, must big enough
+    char buffer[0x1000];
     DWORD usnDataSize = 0;
     PUSN_RECORD pUsnRecord;
 
@@ -228,16 +251,14 @@ BOOL MiniThing::RecordUsn(VOID)
 
         while (dwRetBytes > 0)
         {
-            const int strLen = pUsnRecord->FileNameLength;
-            char fileName[MAX_PATH] = { 0 };
-            WideCharToMultiByte(CP_OEMCP, NULL, pUsnRecord->FileName, strLen / 2, fileName, strLen, NULL, FALSE);
-
-            UINT iSize = MultiByteToWideChar(CP_ACP, 0, fileName, -1, NULL, 0);
-            wchar_t* fileNameWstr = (wchar_t*)malloc(iSize * sizeof(wchar_t));
-            MultiByteToWideChar(CP_ACP, 0, fileName, -1, fileNameWstr, iSize);
-
-            string fileNameStr = fileName;
-
+            // Here FileNameLength may count in bytes, and each wchar_t occupy 2 bytes
+            wchar_t* pWchar = new wchar_t[pUsnRecord->FileNameLength / 2 + 1];
+            memcpy(pWchar, pUsnRecord->FileName, pUsnRecord->FileNameLength);
+            pWchar[pUsnRecord->FileNameLength / 2] = 0x00;
+            // wcsncpy_s(pWchar, pUsnRecord->FileNameLength / 2, pUsnRecord->FileName, pUsnRecord->FileNameLength / 2);
+            std::wstring fileNameWstr = WcharToWstring(pWchar);
+            std::string fileNameStr = WstringToString(fileNameWstr);
+            delete pWchar;
 
             // Several system file need be filtered
             if (find(m_systemParentRef.begin(), m_systemParentRef.end(), pUsnRecord->ParentFileReferenceNumber) == m_systemParentRef.end())
@@ -248,12 +269,7 @@ BOOL MiniThing::RecordUsn(VOID)
                 usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
                 usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
                 usnInfo.timeStamp = pUsnRecord->TimeStamp;
-#if _DEBUG
-                // 打印获取到的文件信息
-                cout << "File name : " << fileNameStr << endl;
-                cout << "File ref number : " << pUsnRecord->FileReferenceNumber << endl;
-                cout << "File parent ref number : " << pUsnRecord->ParentFileReferenceNumber << endl;
-#endif
+
                 m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
 
                 // Store to SQLite
@@ -274,60 +290,64 @@ BOOL MiniThing::RecordUsn(VOID)
 
     }
 
-    return TRUE;
+    return S_OK;
 }
 
-VOID MiniThing::GetCurrentFilePath(wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
+VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
 {
     if (currentRef == rootRef)
     {
-        // TODO
-        // m_volumeName -> wstring
-        path = L"F:\\" + path;
+        path = m_volumeName + L"\\" + path;
         return;
     }
 
-    // "CREATE TABLE UsnInfo(ParentRef sqlite_uint64, SelfRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-    char search[1024] = { 0 };
-    sprintf_s(search, "SELECT * FROM UsnInfo WHERE SelfRef = %llu;", currentRef);
-    sqlite3_stmt* stmt = NULL;
-
-    /*将sql语句转换为sqlite3可识别的语句，返回指针到stmt*/
-    int res = sqlite3_prepare_v2(m_hSQLite, search, strlen(search), &stmt, NULL);
-
-    if (SQLITE_OK != res || NULL == stmt)
+    if(FALSE)
     {
-        std::cout << "Prepare SQLite search failed" << endl;
-        assert(0);
-    }
+        // "CREATE TABLE UsnInfo(ParentRef sqlite_uint64, SelfRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+        char search[1024] = { 0 };
+        sprintf_s(search, "SELECT * FROM UsnInfo WHERE SelfRef = %llu;", currentRef);
+        sqlite3_stmt* stmt = NULL;
 
-    /*执行准备好的sqlite3语句*/
-    while (SQLITE_ROW == sqlite3_step(stmt))
-    {
-        const unsigned char *pstr = sqlite3_column_text(stmt, 4);
-        if (!pstr)
+        /*将sql语句转换为sqlite3可识别的语句，返回指针到stmt*/
+        int res = sqlite3_prepare_v2(m_hSQLite, search, strlen(search), &stmt, NULL);
+
+        if (SQLITE_OK != res || NULL == stmt)
         {
-            cout << "SQLite : query info failed" << endl;
+            std::cout << "Prepare SQLite search failed" << std::endl;
             assert(0);
         }
 
-        printf("SQLite : query file path : %s\n", pstr);
+        /*执行准备好的sqlite3语句*/
+        while (SQLITE_ROW == sqlite3_step(stmt))
+        {
+            const unsigned char* pstr = sqlite3_column_text(stmt, 4);
+            if (!pstr)
+            {
+                std::cout << "SQLite : query info failed" << std::endl;
+                assert(0);
+            }
+
+            printf("SQLite : query file path : %s\n", pstr);
+        }
+
+        sqlite3_finalize(stmt);
     }
 
-    sqlite3_finalize(stmt);
-
-    wstring str = m_usnRecordMap[currentRef].fileNameWstr;
+    std::wstring str = m_usnRecordMap[currentRef].fileNameWstr;
     path = str + L"\\" + path;
     GetCurrentFilePath(path, m_usnRecordMap[currentRef].pParentRef, rootRef);
 }
 
-VOID MiniThing::SortUsn(VOID)
+HRESULT MiniThing::SortUsn(VOID)
 {
+    HRESULT ret = S_OK;
+
     // Get "System Volume Information"'s parent ref number
     //      cause it's under top level folder
     //      so its parent ref number is top level folder's ref number
-    wstring cmpStr(L"System Volume Information");
+    std::wstring cmpStr(L"System Volume Information");
     DWORDLONG topLevelRefNum = 0x0;
+
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
@@ -340,25 +360,43 @@ VOID MiniThing::SortUsn(VOID)
 
     if (topLevelRefNum == 0)
     {
-        cout << "Cannot find root folder" << endl;
-        return;
+        std::cout << "Cannot find root folder" << std::endl;
+        ret = E_FAIL;
+        goto exit;
     }
 
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
-        wstring path(m_usnRecordMap[usnInfo.pSelfRef].fileNameWstr);
+        std::wstring path(usnInfo.fileNameWstr);
 
         GetCurrentFilePath(path, usnInfo.pParentRef, topLevelRefNum);
 
         m_usnRecordMap[usnInfo.pSelfRef].filePathWstr = path;
 
-        // wcout << L"File [" << usnInfo.fileNameWstr << L"] path: " << path << endl;
+        // std::wcout << L"File [" << usnInfo.fileNameWstr << L"] path: " << path << std::endl;
     }
+
+#if _DEBUG
+    for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
+    {
+        UsnInfo usnInfo = it->second;
+        // 打印获取到的文件信息
+        std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
+        std::wcout << L"File path : " << usnInfo.filePathWstr << std::endl;
+        std::cout << "File ref number : 0x" << std::hex << usnInfo.pSelfRef << std::endl;
+        std::cout << "File parent ref number : 0x" << std::hex << usnInfo.pParentRef << std::endl << std::endl;
+    }
+#endif
+
+exit:
+    return ret;
 }
 
-VOID MiniThing::DeleteUsn(VOID)
+HRESULT MiniThing::DeleteUsn(VOID)
 {
+    HRESULT ret = S_OK;
+
     DELETE_USN_JOURNAL_DATA dujd;
     dujd.UsnJournalID = m_usnInfo.UsnJournalID;
     dujd.DeleteFlags = USN_DELETE_FLAG_DELETE;
@@ -375,27 +413,30 @@ VOID MiniThing::DeleteUsn(VOID)
 
     if (FALSE != status)
     {
-        cout << "Delete usn file success" << endl;
+        std::cout << "Delete usn file success" << std::endl;
     }
     else
     {
         GetSystemError();
-        cout << "Delete usn file failed" << endl;
+        ret = E_FAIL;
+        std::cout << "Delete usn file failed" << std::endl;
     }
+
+    return ret;
 }
 
-wstring MiniThing::GetFileNameAccordPath(wstring path)
+std::wstring MiniThing::GetFileNameAccordPath(std::wstring path)
 {
     return path.substr(path.find_last_of(L"\\") + 1);
 }
 
-wstring MiniThing::GetPathAccordPath(wstring path)
+std::wstring MiniThing::GetPathAccordPath(std::wstring path)
 {
     wstring name = GetFileNameAccordPath(path);
     return path.substr(0, path.length() - name.length());
 }
 
-VOID MiniThing::AdjustUsnRecord(wstring folder, wstring filePath, wstring reFileName, DWORD op)
+VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring reFileName, DWORD op)
 {
     switch (op)
     {
@@ -425,7 +466,7 @@ VOID MiniThing::AdjustUsnRecord(wstring folder, wstring filePath, wstring reFile
         }
         if (it == m_usnRecordMap.end())
         {
-            cout << "Failed find rename file" << endl;
+            std::cout << "Failed find rename file" << std::endl;
             break;
         }
 
@@ -466,20 +507,19 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 {
     MiniThing* pMiniThing = (MiniThing*)lp;
 
-    // Set up Chinese output env
-    wcout.imbue(std::locale("chs"));
-
-    cout << "Monitor thread start" << endl;
-
     char notifyInfo[1024];
 
     wstring fileNameWstr;
     wstring fileRenameWstr;
 
-    cout << "Start monitor : " << pMiniThing->m_volumeName << endl;
+    // Set chinese debug output
+    std::wcout.imbue(std::locale("chs"));
 
-    CString folderPath = pMiniThing->StrToCstr(pMiniThing->m_volumeName);
-    HANDLE dirHandle = CreateFile(folderPath,
+    std::wcout << L"Start monitor : " << pMiniThing->GetVolName() << std::endl;
+
+    std::wstring folderPath = pMiniThing->GetVolName();
+
+    HANDLE dirHandle = CreateFile(folderPath.c_str(),
         GENERIC_READ | GENERIC_WRITE | FILE_LIST_DIRECTORY,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
         nullptr,
@@ -490,8 +530,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
     // 若网络重定向或目标文件系统不支持该操作，函数失败，同时调用GetLastError()返回ERROR_INVALID_FUNCTION
     if (dirHandle == INVALID_HANDLE_VALUE)
     {
-        cout << "error " << GetLastError() << endl;
-        exit(0);
+        std::cout << "Error " << GetLastError() << std::endl;
+        assert(0);
     }
 
     auto* pNotifyInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(notifyInfo);
@@ -502,7 +542,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
-            cout << "Recv the quit event" << endl;
+            std::cout << "Recv the quit event" << std::endl;
             break;
         }
 
@@ -533,8 +573,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     data.append(L"F:\\");
                     data.append(fileNameWstr);
 
-                    wcout << L"Add file : " << data << endl;
-                    wcout << flush;
+                    std::wcout << L"Add file : " << data << std::endl;
+                    std::wcout << flush;
 
                     pMiniThing->AdjustUsnRecord(L"F:\\", data, L"", FILE_ACTION_ADDED);
                 }
@@ -548,8 +588,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     wstring tmp;
                     tmp.append(L"F:\\");
                     tmp.append(fileNameWstr);
-                    wcout << L"Add file : " << tmp << endl;
-                    wcout << flush;
+                    std::wcout << L"Add file : " << tmp << std::endl;
+                    std::wcout << flush;
                     //add_record(to_utf8(StringToWString(data)));
                 }
                 break;
@@ -562,8 +602,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     tmp.append(L"F:\\");
                     tmp.append(fileNameWstr);
 
-                    wcout << L"Remove file : " << tmp << endl;
-                    wcout << flush;
+                    std::wcout << L"Remove file : " << tmp << std::endl;
+                    std::wcout << flush;
 
                     pMiniThing->AdjustUsnRecord(L"F:\\", tmp, L"", FILE_ACTION_REMOVED);
                 }
@@ -582,47 +622,47 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     tmpRename.append(L"F:\\");
                     tmpRename.append(fileRenameWstr);
 
-                    wcout << L"Rename file : " << tmp << L"->" << tmpRename << endl;
-                    wcout << flush;
+                    std::wcout << L"Rename file : " << tmp << L"->" << tmpRename << std::endl;
+                    std::wcout << flush;
 
                     pMiniThing->AdjustUsnRecord(L"F:\\", tmp, tmpRename, FILE_ACTION_RENAMED_OLD_NAME);
                 }
                 break;
 
             default:
-                wcout << L"Unknown command" << endl;
+                std::wcout << L"Unknown command" << std::endl;
             }
         }
     }
 
     CloseHandle(dirHandle);
 
-    cout << "Monitor thread stop" << endl;
+    std::cout << "Monitor thread stop" << std::endl;
 
     return 0;
 }
 
 BOOL MiniThing::CreateMonitorThread(VOID)
 {
+    HRESULT ret = S_OK;
+
     m_hExitEvent = CreateEvent(0, 0, 0, 0);
 
     // 以挂起方式创建线程
     m_hMonitorThread = CreateThread(0, 0, MonitorThread, this, CREATE_SUSPENDED, 0);
     if (INVALID_HANDLE_VALUE == m_hMonitorThread)
     {
-        GetLastError();
-        return FALSE;
+        GetSystemError();
+        ret = E_FAIL;
     }
 
-    return TRUE;
+    return ret;
 }
 
 VOID MiniThing::StartMonitorThread(VOID)
 {
     // 使线程开始运行
     ResumeThread(m_hMonitorThread);
-
-    return VOID();
 }
 
 VOID MiniThing::StopMonitorThread(VOID)
@@ -638,8 +678,6 @@ VOID MiniThing::StopMonitorThread(VOID)
 
     // 释放线程句柄
     CloseHandle(m_hMonitorThread);
-
-    return VOID();
 }
 
 HRESULT MiniThing::SQLiteOpen(CONST CHAR *path)
@@ -665,15 +703,15 @@ HRESULT MiniThing::SQLiteOpen(CONST CHAR *path)
             sqlite3_free(errMsg);
             sqlite3_close(m_hSQLite);
 
-            ret = S_FALSE;
+            ret = E_FAIL;
         }
 
-        cout << "SQLite : open success" << endl;
+        std::cout << "SQLite : open success" << std::endl;
     }
     else
     {
-        ret = S_FALSE;
-        cout << "SQLite : open failed" << endl;
+        ret = E_FAIL;
+        std::cout << "SQLite : open failed" << std::endl;
     }
 
     return ret;
@@ -715,28 +753,28 @@ HRESULT MiniThing::SQLiteModify(UsnInfo* pUsnInfo)
     return E_NOTIMPL;
 }
 
-
-
 HRESULT MiniThing::SQLiteClose(VOID)
 {
     sqlite3_close_v2(m_hSQLite);
-
 
     return S_OK;
 }
 
 VOID MiniThing::MonitorFileChange(VOID)
 {
-    CString folderPath = StrToCstr(m_volumeName);
-
     char notifyInfo[1024];
 
     wstring fileNameWstr;
     wstring fileRenameWstr;
 
-    wcout << L"Start monitor" << folderPath << endl;
+    std::wstring folderPath = L"\\\\.\\";
+    folderPath += m_volumeName;
 
-    HANDLE dirHandle = CreateFile(folderPath,
+    std::wcout << L"Start monitor" << folderPath << std::endl;
+
+    
+
+    HANDLE dirHandle = CreateFile(folderPath.c_str(),
         GENERIC_READ | GENERIC_WRITE | FILE_LIST_DIRECTORY,
         FILE_SHARE_READ | FILE_SHARE_WRITE,
         nullptr,
@@ -747,7 +785,7 @@ VOID MiniThing::MonitorFileChange(VOID)
     // 若网络重定向或目标文件系统不支持该操作，函数失败，同时调用GetLastError()返回ERROR_INVALID_FUNCTION
     if (dirHandle == INVALID_HANDLE_VALUE)
     {
-        cout << "error " << GetLastError() << endl;
+        std::cout << "error " << GetLastError() << std::endl;
         exit(0);
     }
 
@@ -780,7 +818,7 @@ VOID MiniThing::MonitorFileChange(VOID)
                     //      F:
                     data.append(L"F:\\");
                     data.append(fileNameWstr);
-                    wcout << L"Add file : " << data << endl;
+                    std::wcout << L"Add file : " << data << std::endl;
                     AdjustUsnRecord(L"F:\\", data, L"", FILE_ACTION_ADDED);
                 }
                 break;
@@ -793,7 +831,7 @@ VOID MiniThing::MonitorFileChange(VOID)
                     wstring tmp;
                     tmp.append(L"F:\\");
                     tmp.append(fileNameWstr);
-                    wcout << L"Add file : " << tmp << endl;
+                    std::wcout << L"Add file : " << tmp << std::endl;
                     //add_record(to_utf8(StringToWString(data)));
                 }
                 break;
@@ -806,7 +844,7 @@ VOID MiniThing::MonitorFileChange(VOID)
                     tmp.append(L"F:\\");
                     tmp.append(fileNameWstr);
 
-                    wcout << L"Remove file : " << tmp << endl;
+                    std::wcout << L"Remove file : " << tmp << std::endl;
 
                     AdjustUsnRecord(L"F:\\", tmp, L"", FILE_ACTION_REMOVED);
                 }
@@ -825,21 +863,21 @@ VOID MiniThing::MonitorFileChange(VOID)
                     tmpRename.append(L"F:\\");
                     tmpRename.append(fileRenameWstr);
 
-                    wcout << L"file renamed : " << tmp << "->" << tmpRename << endl;
+                    std::wcout << L"file renamed : " << tmp << "->" << tmpRename << std::endl;
 
                     AdjustUsnRecord(L"F:\\", tmp, tmpRename, FILE_ACTION_RENAMED_OLD_NAME);
                 }
                 break;
 
             default:
-                wcout << L"Unknown command" << endl;
+                std::wcout << L"Unknown command" << std::endl;
             }
         }
     }
 
     CloseHandle(dirHandle);
 
-    wcout << L"Stop monitor" << folderPath << endl;
+    std::wcout << L"Stop monitor" << folderPath << std::endl;
 
     return;
 }

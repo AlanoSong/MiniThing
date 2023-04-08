@@ -13,29 +13,19 @@
 
 int main()
 {
-    MiniThing* pMiniThing = new MiniThing("F:");
-
-    // Open folder and create SQLite db
-    pMiniThing->GetHandle();
-    pMiniThing->SQLiteOpen(".\\test.db");
-
-    // Query USN info and record
-    pMiniThing->CreateUsn();
-    pMiniThing->QueryUsn();
-    pMiniThing->RecordUsn();
-    pMiniThing->SortUsn();
-    pMiniThing->DeleteUsn();
-    pMiniThing->closeHandle();
+    MiniThing* pMiniThing = new MiniThing(L"F:", ".\\test.db");
 
     // Create monitor thread to record file change
-    pMiniThing->CreateMonitorThread();
+    if (FAILED(pMiniThing->CreateMonitorThread()))
+    {
+        assert(0);
+    }
     pMiniThing->StartMonitorThread();
 
     Sleep(1000 * 1200);
 
     // Exit monitor thread and SQLite
     pMiniThing->StopMonitorThread();
-    pMiniThing->SQLiteClose();
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
