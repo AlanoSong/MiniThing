@@ -150,7 +150,7 @@ BOOL MiniThing::IsNtfs(VOID)
 
     if (FALSE != status)
     {
-        std::cout << " File system name : " << sysNameBuf << std::endl;
+        std::cout << "File system name : " << sysNameBuf << std::endl;
 
         if (0 == strcmp(sysNameBuf, "NTFS"))
         {
@@ -353,7 +353,7 @@ HRESULT MiniThing::SortUsn(VOID)
 
         // Store to SQLite
         SQLiteInsert(&usnInfo);
-#if _DEBUG
+#if 0
         // 打印获取到的文件信息
         std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
         std::wcout << L"File path : " << usnInfo.filePathWstr << std::endl;
@@ -650,7 +650,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
     return 0;
 }
 
-BOOL MiniThing::CreateMonitorThread(VOID)
+HRESULT MiniThing::CreateMonitorThread(VOID)
 {
     HRESULT ret = S_OK;
 
@@ -688,7 +688,72 @@ VOID MiniThing::StopMonitorThread(VOID)
     CloseHandle(m_hMonitorThread);
 }
 
-HRESULT MiniThing::SQLiteOpen(CONST CHAR *path)
+DWORD WINAPI QueryThread(LPVOID lp)
+{
+    MiniThing* pMiniThing = (MiniThing*)lp;
+
+    // Set chinese debug output
+    std::wcout.imbue(std::locale("chs"));
+    setlocale(LC_ALL, "zh-CN");
+
+    printf("Query thread start\n");
+
+    while (TRUE)
+    {
+        std::wcout << std::endl <<  L"==============================" << std::endl;
+        std::wcout << L"Input query file info next :" << std::endl;
+
+        std::wstring query;
+        std::wcin >> query;
+
+        std::vector<std::wstring> vec;
+        pMiniThing->SQLiteQuery(query, vec);
+        std::wcout << L"==============================" << std::endl;
+    }
+
+    printf("Query thread stop\n");
+    return 0;
+}
+
+HRESULT MiniThing::CreateQueryThread(VOID)
+{
+    HRESULT ret = S_OK;
+
+    m_hQueryExitEvent = CreateEvent(0, 0, 0, 0);
+
+    // 以挂起方式创建线程
+    m_hQueryThread = CreateThread(0, 0, QueryThread, this, CREATE_SUSPENDED, 0);
+    if (INVALID_HANDLE_VALUE == m_hQueryThread)
+    {
+        GetSystemError();
+        ret = E_FAIL;
+    }
+
+    return ret;
+}
+
+VOID MiniThing::StartQueryThread(VOID)
+{
+    // 使线程开始运行
+    ResumeThread(m_hQueryThread);
+}
+
+VOID MiniThing::StopQueryThread(VOID)
+{
+    // 使事件处于激发的状态
+    SetEvent(m_hQueryExitEvent);
+
+    // 等待线程运行结束
+    DWORD dwWaitCode = WaitForSingleObject(m_hQueryThread, INFINITE);
+
+    // 断言判断线程是否正常结束
+    assert(dwWaitCode == WAIT_OBJECT_0);
+
+    // 释放线程句柄
+    CloseHandle(m_hQueryThread);
+}
+
+HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
 {
     HRESULT ret = S_OK;
     m_SQLitePath = path;
@@ -751,12 +816,47 @@ HRESULT MiniThing::SQLiteInsert(UsnInfo* pUsnInfo)
     return ret;
 }
 
-HRESULT MiniThing::SQLiteQuery(UsnInfo* pUsnInfo)
+HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec)
 {
     HRESULT ret = S_OK;
-
-    // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
     char sql[1024] = { 0 };
+    char* errMsg = nullptr;
+
+    // 1. Conveter unicode -> utf-8
+    std::string str = UnicodeToUtf8(queryInfo);
+
+    // 2. Query and pop vector
+    sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
+
+    sqlite3_stmt* stmt = NULL;
+    int res = sqlite3_prepare_v2(m_hSQLite, sql, strlen(sql), &stmt, NULL);
+    if (SQLITE_OK == res && NULL != stmt)
+    {
+        // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+        while (SQLITE_ROW == sqlite3_step(stmt))
+        {
+            const unsigned char* pName = sqlite3_column_text(stmt, 3);
+            const unsigned char* pPath = sqlite3_column_text(stmt, 4);
+            std::string strName = (char*)pName;
+            std::string strPath = (char*)pPath;
+
+            std::wstring wstrName = Utf8ToUnicode(strName);
+            std::wstring wstrPath = Utf8ToUnicode(strPath);
+
+            vec.push_back(wstrPath);
+#if _DEBUG
+            wprintf(L"\nFound name : %s\n", wstrName.c_str());
+            wprintf(L"Found path : %s\n", wstrPath.c_str());
+#endif
+        }
+    }
+    else
+    {
+        ret = E_FAIL;
+        printf("sqlite : query failed\n");
+    }
+
+    sqlite3_finalize(stmt);
 
     return ret;
 }

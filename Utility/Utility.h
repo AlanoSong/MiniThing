@@ -187,7 +187,8 @@ inline std::string WstringToString(const std::wstring& wStr)
     return str;
 }
 
-inline std::string UnicodeToUtf8(const std::wstring wStr)
+// No 5.1
+inline std::string UnicodeToUtf8(const std::wstring& wStr)
 {
     int utf8Size = ::WideCharToMultiByte(CP_UTF8, 0, wStr.c_str(), -1, NULL, 0, NULL, NULL);
     if (utf8Size == 0)
@@ -208,4 +209,32 @@ inline std::string UnicodeToUtf8(const std::wstring wStr)
     return str;
 }
 
+// No 5.2
+inline std::wstring Utf8ToUnicode(const std::string& utf8Str)
+{
+    int wideSize = ::MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, NULL, 0);
 
+    if (wideSize == ERROR_NO_UNICODE_TRANSLATION)
+    {
+        throw std::exception("Invalid UTF-8 sequence.");
+    }
+
+    if (wideSize == 0)
+    {
+        throw std::exception("Error in conversion.");
+    }
+
+    wchar_t *pWchar = new wchar_t[wideSize];
+
+    int ret = ::MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, pWchar, wideSize);
+
+    if (ret != wideSize)
+    {
+        throw std::exception("La falla!");
+    }
+
+    std::wstring wStr(pWchar);
+    delete pWchar;
+
+    return wStr;
+}

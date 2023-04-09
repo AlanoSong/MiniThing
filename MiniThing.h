@@ -36,7 +36,7 @@ struct UsnInfo
 class MiniThing
 {
 public:
-    MiniThing(std::wstring volumeName, const char *sqlDBPath);
+    MiniThing(std::wstring volumeName, const char* sqlDBPath);
     ~MiniThing(VOID);
 
     std::wstring GetVolName(VOID)
@@ -44,37 +44,37 @@ public:
         return m_volumeName;
     }
 
-    VOID MonitorFileChange(VOID);
     VOID AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring reFileName, DWORD op);
-    BOOL CreateMonitorThread(VOID);
+
+    HRESULT CreateMonitorThread(VOID);
     VOID StartMonitorThread(VOID);
     VOID StopMonitorThread(VOID);
 
+    HRESULT CreateQueryThread(VOID);
+    VOID StartQueryThread(VOID);
+    VOID StopQueryThread(VOID);
 
     // For SQLite
     sqlite3* m_hSQLite;
     string m_SQLitePath;
     HRESULT SQLiteOpen(CONST CHAR* path);
-    HRESULT SQLiteInsert(UsnInfo * pUsnInfo);
-    HRESULT SQLiteQuery(UsnInfo* pUsnInfo);
+    HRESULT SQLiteInsert(UsnInfo* pUsnInfo);
     HRESULT SQLiteDelete(UsnInfo* pUsnInfo);
     HRESULT SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath);
     HRESULT SQLiteClose(VOID);
-
-
+    HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
 
     unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
 
     DWORDLONG m_unusedFileRefNum = ((DWORDLONG)(-1)) - 1;
 
-
-    // Some file always exist in root folder
-
-
-
     // Monitor thread
     HANDLE m_hExitEvent;
     HANDLE m_hMonitorThread;
+
+    // Query thread
+    HANDLE m_hQueryExitEvent;
+    HANDLE m_hQueryThread;
 
 private:
     std::wstring m_volumeName;
