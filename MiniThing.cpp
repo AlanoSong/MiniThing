@@ -701,13 +701,28 @@ DWORD WINAPI QueryThread(LPVOID lp)
     while (TRUE)
     {
         std::wcout << std::endl <<  L"==============================" << std::endl;
-        std::wcout << L"Input query file info next :" << std::endl;
+        std::wcout << L"Input query file info here:" << std::endl;
 
         std::wstring query;
         std::wcin >> query;
 
         std::vector<std::wstring> vec;
         pMiniThing->SQLiteQuery(query, vec);
+
+#if _DEBUG
+        if (vec.empty())
+        {
+            std::wcout << "Not found" << std::endl;
+        }
+        else
+        {
+            int cnt = 0;
+            for (auto it = vec.begin(); it != vec.end(); it++)
+            {
+                std::wcout << L"No." << cnt++ << " : " << *it << endl;
+            }
+        }
+#endif
         std::wcout << L"==============================" << std::endl;
     }
 
@@ -844,10 +859,6 @@ HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>
             std::wstring wstrPath = Utf8ToUnicode(strPath);
 
             vec.push_back(wstrPath);
-#if _DEBUG
-            wprintf(L"\nFound name : %s\n", wstrName.c_str());
-            wprintf(L"Found path : %s\n", wstrPath.c_str());
-#endif
         }
     }
     else
@@ -870,7 +881,7 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
     char* errMsg = nullptr;
 
     // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-    std::string path = UnicodeToUtf8(pUsnInfo->fileNameWstr);
+    std::string path = UnicodeToUtf8(pUsnInfo->filePathWstr);
     sprintf_s(sql, "DELETE FROM UsnInfo WHERE FilePath = '%s';", path.c_str());
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
