@@ -353,7 +353,7 @@ HRESULT MiniThing::SortUsn(VOID)
 
         // Store to SQLite
         SQLiteInsert(&usnInfo);
-#if 0
+#if _DEBUG
         // 打印获取到的文件信息
         std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
         std::wcout << L"File path : " << usnInfo.filePathWstr << std::endl;
