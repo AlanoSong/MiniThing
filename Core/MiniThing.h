@@ -11,7 +11,7 @@
 #include <assert.h>
 #include <atlstr.h>
 
-#include "SQLite/sqlite3.h"
+#include "../SQLite/sqlite3.h"
 
 using namespace std;
 

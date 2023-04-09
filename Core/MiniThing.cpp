@@ -1,5 +1,5 @@
 #include "MiniThing.h"
-#include "Utility/Utility.h"
+#include "../Utility/Utility.h"
 
 MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
 {
@@ -844,7 +844,7 @@ HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>
     sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
 
     sqlite3_stmt* stmt = NULL;
-    int res = sqlite3_prepare_v2(m_hSQLite, sql, strlen(sql), &stmt, NULL);
+    int res = sqlite3_prepare_v2(m_hSQLite, sql, (int)strlen(sql), &stmt, NULL);
     if (SQLITE_OK == res && NULL != stmt)
     {
         // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"

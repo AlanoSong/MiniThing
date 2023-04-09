@@ -7,9 +7,9 @@
 #include <vector>
 
 // No 1.1
-inline size_t CharToWchar(const char* pChar, wchar_t* pWchar)
+inline int CharToWchar(const char* pChar, wchar_t* pWchar)
 {
-    int len = MultiByteToWideChar(CP_ACP, 0, pChar, strlen(pChar), NULL, 0);
+    int len = MultiByteToWideChar(CP_ACP, 0, pChar, (int)strlen(pChar), NULL, 0);
 
     if (pWchar == nullptr)
     {
@@ -17,7 +17,7 @@ inline size_t CharToWchar(const char* pChar, wchar_t* pWchar)
         return len + 1;
     }
 
-    MultiByteToWideChar(CP_ACP, 0, pChar, strlen(pChar), pWchar, len);
+    MultiByteToWideChar(CP_ACP, 0, pChar, (int)strlen(pChar), pWchar, len);
 
     pWchar[len] = 0x00;
 
@@ -34,10 +34,10 @@ inline std::string CharToString(const char* pChar)
 inline std::wstring CharToWstring(const char* pChar)
 {
     wchar_t* pWchar;
-    int len = MultiByteToWideChar(CP_ACP, 0, pChar, strlen(pChar), NULL, 0);
+    int len = MultiByteToWideChar(CP_ACP, 0, pChar, (int)strlen(pChar), NULL, 0);
 
     pWchar = new wchar_t[len + 1];
-    MultiByteToWideChar(CP_ACP, 0, pChar, strlen(pChar), pWchar, len);
+    MultiByteToWideChar(CP_ACP, 0, pChar, (int)strlen(pChar), pWchar, len);
     pWchar[len] = 0x00;
 
     std::wstring wStr = pWchar;
@@ -47,9 +47,9 @@ inline std::wstring CharToWstring(const char* pChar)
 }
 
 // No 2.1
-inline size_t WcharToChar(const wchar_t* pWchar, char* pChar)
+inline int WcharToChar(const wchar_t* pWchar, char* pChar)
 {
-    int len = WideCharToMultiByte(CP_ACP, 0, pWchar, wcslen(pWchar), NULL, 0, NULL, NULL);
+    int len = WideCharToMultiByte(CP_ACP, 0, pWchar, (int)wcslen(pWchar), NULL, 0, NULL, NULL);
 
     if (pChar == nullptr)
     {
@@ -57,7 +57,7 @@ inline size_t WcharToChar(const wchar_t* pWchar, char* pChar)
         return len + 1;
     }
 
-    WideCharToMultiByte(CP_ACP, 0, pWchar, wcslen(pWchar), pChar, len, NULL, NULL);
+    WideCharToMultiByte(CP_ACP, 0, pWchar, (int)wcslen(pWchar), pChar, len, NULL, NULL);
 
     pChar[len] = 0x00;
 
@@ -88,7 +88,7 @@ inline std::string WcharToString(const wchar_t* pWchar)
 // No 3.1
 inline int StringToChar(const std::string str, char* pChar)
 {
-    int len = str.length();
+    int len = (int)str.length();
 
     if (pChar == nullptr)
     {
@@ -135,7 +135,7 @@ inline std::wstring StringToWstring(const std::string str)
 // No 4.1
 inline int WstringToWchar(const std::wstring& wStr, wchar_t* pWchar)
 {
-    int len = wStr.length();
+    int len = (int)wStr.length();
     if (pWchar == nullptr)
     {
         // Need 1 more to store 0x00 end
@@ -190,14 +190,14 @@ inline std::string WstringToString(const std::wstring& wStr)
 // No 5.1
 inline std::string UnicodeToUtf8(const std::wstring& wStr)
 {
-    int utf8Size = ::WideCharToMultiByte(CP_UTF8, 0, wStr.c_str(), -1, NULL, 0, NULL, NULL);
+    int utf8Size = WideCharToMultiByte(CP_UTF8, 0, wStr.c_str(), -1, NULL, 0, NULL, NULL);
     if (utf8Size == 0)
     {
         throw std::exception("Error in conversion.");
     }
 
     char* pChar = new char[utf8Size];
-    int ret = ::WideCharToMultiByte(CP_UTF8, 0, wStr.c_str(), -1, pChar, utf8Size, NULL, NULL);
+    int ret = WideCharToMultiByte(CP_UTF8, 0, wStr.c_str(), -1, pChar, utf8Size, NULL, NULL);
     if (ret != utf8Size)
     {
         throw std::exception("La falla!");

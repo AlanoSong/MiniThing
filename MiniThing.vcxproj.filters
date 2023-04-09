@@ -1,18 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Header Files">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Resource Files">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
-    </Filter>
     <Filter Include="SQLite">
       <UniqueIdentifier>{ecfa402a-d2ff-4c3e-8a2d-85b7dc704163}</UniqueIdentifier>
     </Filter>
@@ -22,17 +10,11 @@
     <Filter Include="Docs">
       <UniqueIdentifier>{e53a5590-5162-4e22-acad-fd5061df0115}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{00e72164-637e-4f53-b3e3-c856ba943913}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MiniThing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="MonitorThread.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="SQLite\shell.c">
       <Filter>SQLite</Filter>
     </ClCompile>
@@ -42,14 +24,17 @@
     <ClCompile Include="Utility\Utility.cpp">
       <Filter>Utility</Filter>
     </ClCompile>
+    <ClCompile Include="Core\MiniThing.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\MonitorThread.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="Core\Main.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MonitorThread.h">
-      <Filter>Resource Files</Filter>
-    </ClInclude>
-    <ClInclude Include="MiniThing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SQLite\sqlite3.h">
       <Filter>SQLite</Filter>
     </ClInclude>
@@ -58,6 +43,12 @@
     </ClInclude>
     <ClInclude Include="Utility\Utility.h">
       <Filter>Utility</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\MiniThing.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Core\MonitorThread.h">
+      <Filter>Core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

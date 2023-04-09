@@ -129,16 +129,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MiniThing.cpp" />
-    <ClCompile Include="MonitorThread.cpp" />
+    <ClCompile Include="Core\Main.cpp" />
+    <ClCompile Include="Core\MiniThing.cpp" />
+    <ClCompile Include="Core\MonitorThread.cpp" />
     <ClCompile Include="SQLite\shell.c" />
     <ClCompile Include="SQLite\sqlite3.c" />
     <ClCompile Include="Utility\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MiniThing.h" />
-    <ClInclude Include="MonitorThread.h" />
+    <ClInclude Include="Core\MiniThing.h" />
+    <ClInclude Include="Core\MonitorThread.h" />
     <ClInclude Include="SQLite\sqlite3.h" />
     <ClInclude Include="SQLite\sqlite3ext.h" />
     <ClInclude Include="Utility\Utility.h" />

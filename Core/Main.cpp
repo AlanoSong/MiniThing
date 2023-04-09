@@ -8,7 +8,7 @@
 #include <tchar.h>
 
 #include "MiniThing.h"
-#include "Utility/Utility.h"
+#include "../Utility/Utility.h"
 
 int main()
 {
