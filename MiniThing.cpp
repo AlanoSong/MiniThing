@@ -51,6 +51,8 @@ MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
     {
         assert(0);
     }
+
+    closeHandle();
 }
 
 MiniThing::~MiniThing(VOID)
@@ -60,7 +62,6 @@ MiniThing::~MiniThing(VOID)
         assert(0);
     }
 
-    closeHandle();
 }
 
 BOOL MiniThing::IsWstringSame(std::wstring s1, std::wstring s2)
@@ -106,6 +107,8 @@ VOID MiniThing::closeHandle(VOID)
     {
         std::wcout << L"Get handle : " << m_volumeName << std::endl;
     }
+
+    m_hVol = INVALID_HANDLE_VALUE;
 }
 
 VOID MiniThing::GetSystemError(VOID)
@@ -260,20 +263,25 @@ HRESULT MiniThing::RecordUsn(VOID)
             std::string fileNameStr = WstringToString(fileNameWstr);
             delete pWchar;
 
-            // Several system file need be filtered
-            if (find(m_systemParentRef.begin(), m_systemParentRef.end(), pUsnRecord->ParentFileReferenceNumber) == m_systemParentRef.end())
+            // Several system file "$***" cannot find its parent ref, so just exclude them directly
+            // TO DO : remove those logic
+            if (fileNameWstr.find(L"$") == std::wstring::npos)
             {
-                UsnInfo usnInfo = { 0 };
-                usnInfo.fileNameStr = fileNameStr;
-                usnInfo.fileNameWstr = fileNameWstr;
-                usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
-                usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
-                usnInfo.timeStamp = pUsnRecord->TimeStamp;
+                // Several file's parent is not in current root folder, so just exclude them directly
+                if (find(m_patchOfParentRef.begin(), m_patchOfParentRef.end(), pUsnRecord->ParentFileReferenceNumber) == m_patchOfParentRef.end())
+                {
+                    UsnInfo usnInfo = { 0 };
+                    usnInfo.fileNameStr = fileNameStr;
+                    usnInfo.fileNameWstr = fileNameWstr;
+                    usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
+                    usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
+                    usnInfo.timeStamp = pUsnRecord->TimeStamp;
 
-                m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
+                    m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
 
-                // Store to SQLite
-                SQLiteInsert(&usnInfo);
+                    // Store to SQLite
+                    SQLiteInsert(&usnInfo);
+                }
             }
 
             // 获取下一个记录
@@ -287,7 +295,6 @@ HRESULT MiniThing::RecordUsn(VOID)
         // The USN returned as the first item in the output buffer is the USN of the next record number to be retrieved.  
         // Use this value to continue reading records from the end boundary forward.  
         med.StartFileReferenceNumber = *(USN*)&buffer;
-
     }
 
     return S_OK;
@@ -373,8 +380,6 @@ HRESULT MiniThing::SortUsn(VOID)
         GetCurrentFilePath(path, usnInfo.pParentRef, topLevelRefNum);
 
         m_usnRecordMap[usnInfo.pSelfRef].filePathWstr = path;
-
-        // std::wcout << L"File [" << usnInfo.fileNameWstr << L"] path: " << path << std::endl;
     }
 
 #if _DEBUG
@@ -521,7 +526,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
     HANDLE dirHandle = CreateFile(folderPath.c_str(),
         GENERIC_READ | GENERIC_WRITE | FILE_LIST_DIRECTORY,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         nullptr,
         OPEN_EXISTING,
         FILE_FLAG_BACKUP_SEMANTICS,
@@ -548,9 +553,15 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
         DWORD retBytes;
 
-        if (ReadDirectoryChangesW(dirHandle, &notifyInfo, 1024, true,
+        if (ReadDirectoryChangesW(
+            dirHandle,
+            &notifyInfo,
+            sizeof(notifyInfo),
+            true, // Monitor sub directory
             FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE,
-            &retBytes, nullptr, nullptr))
+            &retBytes,
+            nullptr,
+            nullptr))
         {
             // Change file name
             fileNameWstr = pNotifyInfo->FileName;

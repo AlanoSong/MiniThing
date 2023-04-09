@@ -81,7 +81,11 @@ private:
     HANDLE m_hVol = INVALID_HANDLE_VALUE;
     const DWORDLONG m_constFileRefNumMax = ((DWORDLONG)(-1));
     USN_JOURNAL_DATA m_usnInfo;
-    vector<DWORDLONG> m_systemParentRef = { 0xb00000000000b, 0x100000000001b, 0x100000000001e, 0x1000000000024, 0x1000000000029, 281474976710698, 0x000100000000002b };
+    vector<DWORDLONG> m_patchOfParentRef = {
+        0x000100000000002b,
+        // desktop.ini
+        0x000100000000002c,
+    };
 
 private:
     HRESULT GetHandle(VOID);
