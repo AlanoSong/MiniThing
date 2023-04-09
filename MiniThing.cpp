@@ -487,6 +487,8 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
 
     case FILE_ACTION_REMOVED:
     {
+        // TODO:
+        //      if remove a folder?
         auto tmp = m_usnRecordMap.end();
         for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
         {
@@ -519,6 +521,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
     // Set chinese debug output
     std::wcout.imbue(std::locale("chs"));
+    setlocale(LC_ALL, "zh-CN");
 
     std::wcout << L"Start monitor : " << pMiniThing->GetVolName() << std::endl;
 
@@ -577,17 +580,16 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             case FILE_ACTION_ADDED:
                 if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
                 {
-                    wstring data;
-                    // TODO
-                    //      F:
-                    data.clear();
-                    data.append(L"F:\\");
-                    data.append(fileNameWstr);
+                    std::wstring addPath;
+                    addPath.clear();
+                    addPath.append(pMiniThing->GetVolName());
+                    addPath.append(L"\\");
+                    addPath.append(fileNameWstr);
 
-                    std::wcout << L"Add file : " << data << std::endl;
-                    std::wcout << flush;
+                    // Here use printf to suit multi-thread
+                    wprintf(L"\nAdd file : %s\n", addPath.c_str());
 
-                    pMiniThing->AdjustUsnRecord(L"F:\\", data, L"", FILE_ACTION_ADDED);
+                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), addPath, L"", FILE_ACTION_ADDED);
                 }
                 break;
 
@@ -596,11 +598,12 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     fileNameWstr.find(L"fileAdded.txt") == wstring::npos &&
                     fileNameWstr.find(L"fileRemoved.txt") == wstring::npos)
                 {
-                    wstring tmp;
-                    tmp.append(L"F:\\");
-                    tmp.append(fileNameWstr);
-                    std::wcout << L"Add file : " << tmp << std::endl;
-                    std::wcout << flush;
+                    std::wstring modPath;
+                    modPath.append(pMiniThing->GetVolName());
+                    modPath.append(L"\\");
+                    modPath.append(fileNameWstr);
+                    // Here use printf to suit multi-thread
+                    wprintf(L"\Mod file : %s\n", modPath.c_str());
                     //add_record(to_utf8(StringToWString(data)));
                 }
                 break;
@@ -608,35 +611,38 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             case FILE_ACTION_REMOVED:
                 if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
                 {
-                    wstring tmp;
-                    tmp.clear();
-                    tmp.append(L"F:\\");
-                    tmp.append(fileNameWstr);
+                    std::wstring remPath;
+                    remPath.clear();
+                    remPath.append(pMiniThing->GetVolName());
+                    remPath.append(L"\\");
+                    remPath.append(fileNameWstr);
 
-                    std::wcout << L"Remove file : " << tmp << std::endl;
-                    std::wcout << flush;
+                    // Here use printf to suit multi-thread
+                    wprintf(L"\nRemove file : %s\n", remPath.c_str());
 
-                    pMiniThing->AdjustUsnRecord(L"F:\\", tmp, L"", FILE_ACTION_REMOVED);
+                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), remPath, L"", FILE_ACTION_REMOVED);
                 }
                 break;
 
             case FILE_ACTION_RENAMED_OLD_NAME:
                 if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
                 {
-                    wstring tmp;
-                    tmp.clear();
-                    tmp.append(L"F:\\");
-                    tmp.append(fileNameWstr);
+                    wstring oriName;
+                    oriName.clear();
+                    oriName.append(pMiniThing->GetVolName());
+                    oriName.append(L"\\");
+                    oriName.append(fileNameWstr);
 
-                    wstring tmpRename;
-                    tmpRename.clear();
-                    tmpRename.append(L"F:\\");
-                    tmpRename.append(fileRenameWstr);
+                    wstring reName;
+                    reName.clear();
+                    reName.append(pMiniThing->GetVolName());
+                    reName.append(L"\\");
+                    reName.append(fileRenameWstr);
 
-                    std::wcout << L"Rename file : " << tmp << L"->" << tmpRename << std::endl;
-                    std::wcout << flush;
+                    // Here use printf to suit multi-thread
+                    wprintf(L"\nRename file : %s -> %s\n", oriName.c_str(), reName.c_str());
 
-                    pMiniThing->AdjustUsnRecord(L"F:\\", tmp, tmpRename, FILE_ACTION_RENAMED_OLD_NAME);
+                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), oriName, reName, FILE_ACTION_RENAMED_OLD_NAME);
                 }
                 break;
 
@@ -769,127 +775,5 @@ HRESULT MiniThing::SQLiteClose(VOID)
     sqlite3_close_v2(m_hSQLite);
 
     return S_OK;
-}
-
-VOID MiniThing::MonitorFileChange(VOID)
-{
-    char notifyInfo[1024];
-
-    wstring fileNameWstr;
-    wstring fileRenameWstr;
-
-    std::wstring folderPath = L"\\\\.\\";
-    folderPath += m_volumeName;
-
-    std::wcout << L"Start monitor" << folderPath << std::endl;
-
-    
-
-    HANDLE dirHandle = CreateFile(folderPath.c_str(),
-        GENERIC_READ | GENERIC_WRITE | FILE_LIST_DIRECTORY,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        nullptr,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        nullptr);
-
-    // 若网络重定向或目标文件系统不支持该操作，函数失败，同时调用GetLastError()返回ERROR_INVALID_FUNCTION
-    if (dirHandle == INVALID_HANDLE_VALUE)
-    {
-        std::cout << "error " << GetLastError() << std::endl;
-        exit(0);
-    }
-
-    auto* pNotifyInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(notifyInfo);
-
-    while (true)
-    {
-        DWORD retBytes;
-
-        if (ReadDirectoryChangesW(dirHandle, &notifyInfo, 1024, true,
-            FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE,
-            &retBytes, nullptr, nullptr))
-        {
-            // Change file name
-            fileNameWstr = pNotifyInfo->FileName;
-            fileNameWstr[pNotifyInfo->FileNameLength / 2] = 0;
-
-            // Rename file new name
-            auto pInfo = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(reinterpret_cast<char*>(pNotifyInfo) + pNotifyInfo->NextEntryOffset);
-            fileRenameWstr = pInfo->FileName;
-            fileRenameWstr[pInfo->FileNameLength / 2] = 0;
-
-            switch (pNotifyInfo->Action)
-            {
-            case FILE_ACTION_ADDED:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
-                {
-                    wstring data;
-                    // TODO
-                    //      F:
-                    data.append(L"F:\\");
-                    data.append(fileNameWstr);
-                    std::wcout << L"Add file : " << data << std::endl;
-                    AdjustUsnRecord(L"F:\\", data, L"", FILE_ACTION_ADDED);
-                }
-                break;
-
-            case FILE_ACTION_MODIFIED:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos &&
-                    fileNameWstr.find(L"fileAdded.txt") == wstring::npos &&
-                    fileNameWstr.find(L"fileRemoved.txt") == wstring::npos)
-                {
-                    wstring tmp;
-                    tmp.append(L"F:\\");
-                    tmp.append(fileNameWstr);
-                    std::wcout << L"Add file : " << tmp << std::endl;
-                    //add_record(to_utf8(StringToWString(data)));
-                }
-                break;
-
-            case FILE_ACTION_REMOVED:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
-                {
-                    wstring tmp;
-                    tmp.clear();
-                    tmp.append(L"F:\\");
-                    tmp.append(fileNameWstr);
-
-                    std::wcout << L"Remove file : " << tmp << std::endl;
-
-                    AdjustUsnRecord(L"F:\\", tmp, L"", FILE_ACTION_REMOVED);
-                }
-                break;
-
-            case FILE_ACTION_RENAMED_OLD_NAME:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
-                {
-                    wstring tmp;
-                    tmp.clear();
-                    tmp.append(L"F:\\");
-                    tmp.append(fileNameWstr);
-
-                    wstring tmpRename;
-                    tmpRename.clear();
-                    tmpRename.append(L"F:\\");
-                    tmpRename.append(fileRenameWstr);
-
-                    std::wcout << L"file renamed : " << tmp << "->" << tmpRename << std::endl;
-
-                    AdjustUsnRecord(L"F:\\", tmp, tmpRename, FILE_ACTION_RENAMED_OLD_NAME);
-                }
-                break;
-
-            default:
-                std::wcout << L"Unknown command" << std::endl;
-            }
-        }
-    }
-
-    CloseHandle(dirHandle);
-
-    std::wcout << L"Stop monitor" << folderPath << std::endl;
-
-    return;
 }
 
