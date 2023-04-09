@@ -3,6 +3,8 @@
 #include <string>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stringapiset.h>
+#include <vector>
 
 // No 1.1
 inline size_t CharToWchar(const char* pChar, wchar_t* pWchar)
@@ -184,3 +186,26 @@ inline std::string WstringToString(const std::wstring& wStr)
 
     return str;
 }
+
+inline std::string UnicodeToUtf8(const std::wstring wStr)
+{
+    int utf8Size = ::WideCharToMultiByte(CP_UTF8, 0, wStr.c_str(), -1, NULL, 0, NULL, NULL);
+    if (utf8Size == 0)
+    {
+        throw std::exception("Error in conversion.");
+    }
+
+    char* pChar = new char[utf8Size];
+    int ret = ::WideCharToMultiByte(CP_UTF8, 0, wStr.c_str(), -1, pChar, utf8Size, NULL, NULL);
+    if (ret != utf8Size)
+    {
+        throw std::exception("La falla!");
+    }
+
+    std::string str(pChar);
+    delete pChar;
+
+    return str;
+}
+
+

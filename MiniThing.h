@@ -58,7 +58,7 @@ public:
     HRESULT SQLiteInsert(UsnInfo * pUsnInfo);
     HRESULT SQLiteQuery(UsnInfo* pUsnInfo);
     HRESULT SQLiteDelete(UsnInfo* pUsnInfo);
-    HRESULT SQLiteModify(UsnInfo* pUsnInfo);
+    HRESULT SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath);
     HRESULT SQLiteClose(VOID);
 
 
