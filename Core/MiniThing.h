@@ -15,6 +15,8 @@
 
 using namespace std;
 
+#define USE_MAP_STORE 0
+
 struct UsnInfo
 {
     // File reference number
@@ -32,6 +34,17 @@ struct UsnInfo
     string filePathStr;
 };
 
+typedef enum _QUERY_TYPE
+{
+    BY_NAME = 0,
+    BY_REF,
+}QUERY_TYPE;
+
+typedef struct _QueryInfo
+{
+    QUERY_TYPE type;
+    UsnInfo info;
+}QueryInfo;
 
 class MiniThing
 {
@@ -61,8 +74,10 @@ public:
     HRESULT SQLiteInsert(UsnInfo* pUsnInfo);
     HRESULT SQLiteDelete(UsnInfo* pUsnInfo);
     HRESULT SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath);
+    HRESULT SQLiteUpdateV2(UsnInfo* pUsnInfo, DWORDLONG selfRef);
     HRESULT SQLiteClose(VOID);
     HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
+    HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec);
 
     unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
 
@@ -85,6 +100,7 @@ private:
         0x000100000000002b,
         // desktop.ini
         0x000100000000002c,
+        0x0001000000000027,
     };
 
 private:
@@ -93,6 +109,7 @@ private:
     BOOL IsNtfs(VOID);
 
     VOID GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
+    VOID GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
     HRESULT CreateUsn(VOID);
     HRESULT QueryUsn(VOID);
     HRESULT RecordUsn(VOID);

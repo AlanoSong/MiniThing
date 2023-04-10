@@ -134,9 +134,9 @@ BOOL MiniThing::IsNtfs(VOID)
     BOOL isNtfs = FALSE;
     char sysNameBuf[MAX_PATH] = { 0 };
 
-    int len = WstringToChar(m_volumeName, nullptr);
+    int len = WstringToChar(m_volumeName + L"\\", nullptr);
     char* pVol = new char[len];
-    WstringToChar(m_volumeName, pVol);
+    WstringToChar(m_volumeName + L"\\", pVol);
 
     BOOL status = GetVolumeInformationA(
         pVol,
@@ -276,8 +276,11 @@ HRESULT MiniThing::RecordUsn(VOID)
                     usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
                     usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
                     usnInfo.timeStamp = pUsnRecord->TimeStamp;
-
+// #if USE_MAP_STORE
                     m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
+// #else
+                    SQLiteInsert(&usnInfo);
+// #endif
                 }
             }
 
@@ -310,6 +313,43 @@ VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWO
     GetCurrentFilePath(path, m_usnRecordMap[currentRef].pParentRef, rootRef);
 }
 
+VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
+{
+    // 1. This is root node, just add root path and return
+    if (currentRef == rootRef)
+    {
+        path = m_volumeName + L"\\" + path;
+        return;
+    }
+
+    // 2. Query this node's parent info
+    QueryInfo queryInfo;
+    queryInfo.type = BY_REF;
+    queryInfo.info.pSelfRef = currentRef;
+    std::vector<UsnInfo> vec;
+    SQLiteQueryV2(&queryInfo, vec);
+
+    assert(vec.size() == 1);
+
+    UsnInfo usnInfo = vec.front();
+    std::wstring selfPath = usnInfo.fileNameWstr;
+
+    // 3. Query this node's parent info
+    queryInfo.info.pSelfRef = usnInfo.pParentRef;
+    vec.clear();
+
+    SQLiteQueryV2(&queryInfo, vec);
+    if (vec.empty() && (usnInfo.pParentRef != rootRef))
+    {
+        // Some system node, they parent not exist in current folder, just throw them away
+        return;
+    }
+
+    // 4. Loop more
+    path = selfPath + L"\\" + path;
+    GetCurrentFilePathBySql(path, usnInfo.pParentRef, rootRef);
+}
+
 HRESULT MiniThing::SortUsn(VOID)
 {
     HRESULT ret = S_OK;
@@ -320,6 +360,7 @@ HRESULT MiniThing::SortUsn(VOID)
     std::wstring cmpStr(L"System Volume Information");
     DWORDLONG topLevelRefNum = 0x0;
 
+#if USE_MAP_STORE
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
@@ -329,6 +370,16 @@ HRESULT MiniThing::SortUsn(VOID)
             break;
         }
     }
+#else
+    QueryInfo queryInfo;
+    queryInfo.type = BY_NAME;
+    queryInfo.info.fileNameWstr = cmpStr;
+    std::vector<UsnInfo> vec;
+    SQLiteQueryV2(&queryInfo, vec);
+    assert(vec.size() == 1);
+
+    topLevelRefNum = vec[0].pParentRef;
+#endif
 
     if (topLevelRefNum == 0)
     {
@@ -341,10 +392,16 @@ HRESULT MiniThing::SortUsn(VOID)
     {
         UsnInfo usnInfo = it->second;
         std::wstring path(usnInfo.fileNameWstr);
-
+        std::wstring pathBySql(usnInfo.fileNameWstr);
+#if USE_MAP_STORE
         GetCurrentFilePath(path, usnInfo.pParentRef, topLevelRefNum);
-
         m_usnRecordMap[usnInfo.pSelfRef].filePathWstr = path;
+#else
+        GetCurrentFilePathBySql(pathBySql, usnInfo.pParentRef, topLevelRefNum);
+        usnInfo.filePathWstr = pathBySql;
+        SQLiteUpdateV2(&usnInfo, usnInfo.pSelfRef);
+#endif
+
     }
 
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
@@ -352,7 +409,7 @@ HRESULT MiniThing::SortUsn(VOID)
         UsnInfo usnInfo = it->second;
 
         // Store to SQLite
-        SQLiteInsert(&usnInfo);
+        // SQLiteInsert(&usnInfo);
 #if _DEBUG
         // 打印获取到的文件信息
         std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
@@ -420,19 +477,21 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         tmp.fileNameWstr = GetFileNameAccordPath(filePath);
         tmp.pParentRef = m_constFileRefNumMax;
         tmp.pSelfRef = m_unusedFileRefNum--;
-
+#if USE_MAP_STORE
         m_usnRecordMap[tmp.pSelfRef] = tmp;
-
+#else
         // Update sql db
         if (FAILED(SQLiteInsert(&tmp)))
         {
             assert(0);
         }
+#endif
         break;
     }
 
     case FILE_ACTION_RENAMED_OLD_NAME:
     {
+#if USE_MAP_STORE
         // TODO:
         //      if rename a folder?
         auto it = m_usnRecordMap.begin();
@@ -453,20 +512,23 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         tmp.filePathWstr = reFileName;
         tmp.fileNameWstr = GetFileNameAccordPath(reFileName);
         m_usnRecordMap[it->first] = tmp;
-
+#else
         // Update sql db
         // TODO:
         //      if rename a folder?
-        if (FAILED(SQLiteUpdate(&tmp, filePath)))
+        UsnInfo usnInfo = { 0 };
+        usnInfo.fileNameWstr = reFileName;
+        if (FAILED(SQLiteUpdate(&usnInfo, filePath)))
         {
             assert(0);
         }
-
+#endif
         break;
     }
 
     case FILE_ACTION_REMOVED:
     {
+#if USE_MAP_STORE
         // TODO:
         //      if remove a folder?
         auto tmp = m_usnRecordMap.end();
@@ -482,7 +544,7 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         {
             m_usnRecordMap.erase(tmp);
         }
-
+#else
         // Update sql db
         // TODO:
         //      if remove a folder?
@@ -492,7 +554,7 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         {
             assert(0);
         }
-
+#endif
         break;
     }
 
@@ -872,6 +934,67 @@ HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>
     return ret;
 }
 
+HRESULT MiniThing::SQLiteQueryV2(QueryInfo *queryInfo, std::vector<UsnInfo>& vec)
+{
+    HRESULT ret = S_OK;
+    char sql[1024] = { 0 };
+    char* errMsg = nullptr;
+
+    switch (queryInfo->type)
+    {
+    case BY_REF:
+    {
+        sprintf_s(sql, "SELECT * FROM UsnInfo WHERE SelfRef = %llu;", queryInfo->info.pSelfRef);
+        break;
+    }
+    case BY_NAME:
+    {
+        std::string str = UnicodeToUtf8(queryInfo->info.fileNameWstr);
+        sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
+        break;
+    }
+    default:
+        assert(0);
+        break;
+    }
+
+    sqlite3_stmt* stmt = NULL;
+    int res = sqlite3_prepare_v2(m_hSQLite, sql, (int)strlen(sql), &stmt, NULL);
+    if (SQLITE_OK == res && NULL != stmt)
+    {
+        // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+        while (SQLITE_ROW == sqlite3_step(stmt))
+        {
+            DWORDLONG self = sqlite3_column_int64(stmt, 0);
+            DWORDLONG parent = sqlite3_column_int64(stmt, 1);
+            const unsigned char* pName = sqlite3_column_text(stmt, 3);
+            const unsigned char* pPath = sqlite3_column_text(stmt, 4);
+            std::string strName = (char*)pName;
+            std::string strPath = (char*)pPath;
+
+            std::wstring wstrName = Utf8ToUnicode(strName);
+            std::wstring wstrPath = Utf8ToUnicode(strPath);
+
+            UsnInfo usnInfo = { 0 };
+            usnInfo.pSelfRef = self;
+            usnInfo.pParentRef = parent;
+            usnInfo.fileNameWstr = wstrName;
+            usnInfo.filePathWstr = wstrPath;
+
+            vec.push_back(usnInfo);
+        }
+    }
+    else
+    {
+        ret = E_FAIL;
+        printf("sqlite : query failed\n");
+    }
+
+    sqlite3_finalize(stmt);
+
+    return ret;
+}
+
 HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
 {
     HRESULT ret = S_OK;
@@ -909,6 +1032,30 @@ HRESULT MiniThing::SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath)
     std::string newPath = UnicodeToUtf8(pUsnInfo->filePathWstr);
     std::string newName = UnicodeToUtf8(pUsnInfo->fileNameWstr);
     sprintf_s(sql, "UPDATE UsnInfo SET FileName = '%s', FilePath = '%s' WHERE FilePath = '%s';", newName.c_str(), newPath.c_str(), oriPath.c_str());
+    if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+    {
+        ret = E_FAIL;
+        printf("sqlite : update failed\n");
+        printf("error : %s\n", errMsg);
+    }
+    else
+    {
+        printf("sqlite : update done\n");
+    }
+
+    return ret;
+}
+
+HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pUsnInfo, DWORDLONG selfRef)
+{
+    HRESULT ret = S_OK;
+
+    char sql[1024] = { 0 };
+    char* errMsg = nullptr;
+
+    // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+    std::string newPath = UnicodeToUtf8(pUsnInfo->filePathWstr);
+    sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", newPath.c_str(), selfRef);
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
