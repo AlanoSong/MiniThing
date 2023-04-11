@@ -276,11 +276,11 @@ HRESULT MiniThing::RecordUsn(VOID)
                     usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
                     usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
                     usnInfo.timeStamp = pUsnRecord->TimeStamp;
-// #if USE_MAP_STORE
+#if STORE_DATA_IN_MAP
                     m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
-// #else
+#else
                     SQLiteInsert(&usnInfo);
-// #endif
+#endif
                 }
             }
 
@@ -300,6 +300,7 @@ HRESULT MiniThing::RecordUsn(VOID)
     return S_OK;
 }
 
+#if STORE_DATA_IN_MAP
 VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
 {
     if (currentRef == rootRef)
@@ -312,6 +313,7 @@ VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWO
     path = str + L"\\" + path;
     GetCurrentFilePath(path, m_usnRecordMap[currentRef].pParentRef, rootRef);
 }
+#else // STORE_DATA_IN_MAP
 
 VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
 {
@@ -348,6 +350,7 @@ VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef
         assert(0);
     }
 }
+#endif // STORE_DATA_IN_MAP
 
 HRESULT MiniThing::SortUsn(VOID)
 {
@@ -359,7 +362,7 @@ HRESULT MiniThing::SortUsn(VOID)
     std::wstring cmpStr(L"System Volume Information");
     DWORDLONG topLevelRefNum = 0x0;
 
-#if USE_MAP_STORE
+#if STORE_DATA_IN_MAP
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
@@ -384,40 +387,50 @@ HRESULT MiniThing::SortUsn(VOID)
     {
         std::cout << "Cannot find root folder" << std::endl;
         ret = E_FAIL;
-        goto exit;
+        assert(0);
     }
 
+#if STORE_DATA_IN_MAP
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
         std::wstring path(usnInfo.fileNameWstr);
-        std::wstring pathBySql(usnInfo.fileNameWstr);
-#if USE_MAP_STORE
+
         GetCurrentFilePath(path, usnInfo.pParentRef, topLevelRefNum);
         m_usnRecordMap[usnInfo.pSelfRef].filePathWstr = path;
-#else
-        GetCurrentFilePathBySql(pathBySql, usnInfo.pParentRef, topLevelRefNum);
-        usnInfo.filePathWstr = pathBySql;
-        SQLiteUpdateV2(&usnInfo, usnInfo.pSelfRef);
-#endif
-    }
 
-    for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
-    {
-        UsnInfo usnInfo = it->second;
-
-        // Store to SQLite
-        // SQLiteInsert(&usnInfo);
 #if _DEBUG
-        // 打印获取到的文件信息
+        // Print file node info
         std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
         std::wcout << L"File path : " << usnInfo.filePathWstr << std::endl;
         std::cout << "File ref number : 0x" << std::hex << usnInfo.pSelfRef << std::endl;
         std::cout << "File parent ref number : 0x" << std::hex << usnInfo.pParentRef << std::endl << std::endl;
 #endif
     }
+#else // STORE_DATA_IN_MAP
 
-exit:
+    // Get all file node from sql db
+    std::vector<UsnInfo> allFileNode;
+    SQLiteQueryV2(nullptr, allFileNode);
+
+    for (auto it = allFileNode.begin(); it != allFileNode.end(); it++)
+    {
+        UsnInfo usnInfo = *it;
+        std::wstring pathBySql(usnInfo.fileNameWstr);
+        GetCurrentFilePathBySql(pathBySql, usnInfo.pParentRef, topLevelRefNum);
+        usnInfo.filePathWstr = pathBySql;
+        SQLiteUpdateV2(&usnInfo, usnInfo.pSelfRef);
+
+#if _DEBUG
+        // Print file node info
+        std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
+        std::wcout << L"File path : " << usnInfo.filePathWstr << std::endl;
+        std::cout << "File ref number : 0x" << std::hex << usnInfo.pSelfRef << std::endl;
+        std::cout << "File parent ref number : 0x" << std::hex << usnInfo.pParentRef << std::endl << std::endl;
+#endif // _DEBUG
+    }
+#endif // STORE_DATA_IN_MAP
+
     return ret;
 }
 
@@ -475,7 +488,7 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         tmp.fileNameWstr = GetFileNameAccordPath(filePath);
         tmp.pParentRef = m_constFileRefNumMax;
         tmp.pSelfRef = m_unusedFileRefNum--;
-#if USE_MAP_STORE
+#if STORE_DATA_IN_MAP
         m_usnRecordMap[tmp.pSelfRef] = tmp;
 #else
         // Update sql db
@@ -489,7 +502,7 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
 
     case FILE_ACTION_RENAMED_OLD_NAME:
     {
-#if USE_MAP_STORE
+#if STORE_DATA_IN_MAP
         // TODO:
         //      if rename a folder?
         auto it = m_usnRecordMap.begin();
@@ -526,7 +539,7 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
 
     case FILE_ACTION_REMOVED:
     {
-#if USE_MAP_STORE
+#if STORE_DATA_IN_MAP
         // TODO:
         //      if remove a folder?
         auto tmp = m_usnRecordMap.end();
@@ -938,22 +951,29 @@ HRESULT MiniThing::SQLiteQueryV2(QueryInfo *queryInfo, std::vector<UsnInfo>& vec
     char sql[1024] = { 0 };
     char* errMsg = nullptr;
 
-    switch (queryInfo->type)
+    if (queryInfo)
     {
-    case BY_REF:
-    {
-        sprintf_s(sql, "SELECT * FROM UsnInfo WHERE SelfRef = %llu;", queryInfo->info.pSelfRef);
-        break;
+        switch (queryInfo->type)
+        {
+        case BY_REF:
+        {
+            sprintf_s(sql, "SELECT * FROM UsnInfo WHERE SelfRef = %llu;", queryInfo->info.pSelfRef);
+            break;
+        }
+        case BY_NAME:
+        {
+            std::string str = UnicodeToUtf8(queryInfo->info.fileNameWstr);
+            sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
+            break;
+        }
+        default:
+            assert(0);
+            break;
+        }
     }
-    case BY_NAME:
+    else
     {
-        std::string str = UnicodeToUtf8(queryInfo->info.fileNameWstr);
-        sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
-        break;
-    }
-    default:
-        assert(0);
-        break;
+        sprintf_s(sql, "SELECT * FROM UsnInfo;");
     }
 
     sqlite3_stmt* stmt = NULL;

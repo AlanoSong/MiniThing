@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define USE_MAP_STORE 0
+#define STORE_DATA_IN_MAP ( 0 )
 
 struct UsnInfo
 {
@@ -79,7 +79,9 @@ public:
     HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
     HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec);
 
+#if STORE_DATA_IN_MAP
     unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
+#endif
 
     DWORDLONG m_unusedFileRefNum = ((DWORDLONG)(-1)) - 1;
 
