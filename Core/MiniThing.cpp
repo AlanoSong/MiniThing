@@ -801,6 +801,16 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
         std::vector<std::wstring> vec;
 
+#if _DEBUG
+        LARGE_INTEGER timeStart;
+        LARGE_INTEGER timeEnd;
+        LARGE_INTEGER frequency;
+        QueryPerformanceFrequency(&frequency);
+        double quadpart = (double)frequency.QuadPart;
+
+        QueryPerformanceCounter(&timeStart);
+#endif
+
 #if STORE_DATA_IN_MAP
 
         for (auto it = pMiniThing->m_usnRecordMap.begin(); it != pMiniThing->m_usnRecordMap.end(); it++)
@@ -813,6 +823,12 @@ DWORD WINAPI QueryThread(LPVOID lp)
 #else
         pMiniThing->SQLiteQuery(query, vec);
 #endif 
+
+#if _DEBUG
+        QueryPerformanceCounter(&timeEnd);
+        double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
+        std::cout << "Time elapsed : " << elapsed << " S" << std::endl;
+#endif
 
 #if _DEBUG
         if (vec.empty())
@@ -930,7 +946,7 @@ HRESULT MiniThing::SQLiteInsert(UsnInfo* pUsnInfo)
     }
     else
     {
-        printf("sqlite : insert done\n");
+        // printf("sqlite : insert done\n");
     }
 
     return ret;

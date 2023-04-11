@@ -15,15 +15,20 @@
 - [ ] （4周）调查MFC、QT，选一个实现查询界面
 - [ ] （2周）整理输出相关文档
 
-#### 性能统计
+#### 性能测试
 - 工程主要采用2种方式存储文件节点数据：stl库中的unordered_map和sqlite数据库
-- 实测系统F:\盘，包含（文件\*2251，文件夹\*48）
+- 实测系统F:\盘，包含（文件\*5895，文件夹\*96）
 ![](./Docs/Pictures/Statistics0.png)
-- 采用unoreder_map，初始化所有索引数据，耗时`15.6452 S`
+- 采用unoreder_map，建立初始文件索引，耗时`26.6718 S`
 ![](./Docs/Pictures/Statistics1.png)
-- 采用sqlite数据库时，耗时`76.1146 S`
+而进行一次查询，耗时`0.0220457 S`
 ![](./Docs/Pictures/Statistics2.png)
-- 显然sqlite在增删改查的过程中，耗费了更多的时间
+- 采用sqlite数据库时，建立初始文件索引，耗时`183.216 S`
+![](./Docs/Pictures/Statistics3.png)
+而进行一次查询，耗时`0.0044486 S`
+![](./Docs/Pictures/Statistics4.png)
+- 显然sqlite数据库，在增删改查的过程中，消耗了更多的时间；而unordered_map驻留在内存当中，访问速度自然更快一些
+- 文件信息打印也消耗了很多时间，有空把打印去掉测一下
 
 #### 参与贡献
 - Fork 本仓库
