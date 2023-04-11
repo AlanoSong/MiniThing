@@ -27,9 +27,9 @@
 ![](./Docs/Pictures/Statistics3.png)
 而进行一次查询，耗时`0.0044486 S`
 ![](./Docs/Pictures/Statistics4.png)
-- 显然*建立文件索引方面，unordered_map更胜一筹*，因为其数据结构驻留在内存当中，查找和更新更快
-- 而在*文件查询方面，sqlite更胜一筹*，因为unordered_map需要遍历所有数据，而sqlite数据库内部肯定经过了优化
-- 所以可以采取以下策略优化性能：*建立文件索引采用unordered_map，然后数据存储到sqlite，文件查询通过sqlite*
+- 显然***建立文件索引方面，unordered_map性能更优***，因为其数据结构驻留在内存当中，查找和更新更快
+- 而在***文件查询方面，sqlite性能更优***，因为unordered_map需要遍历所有数据，而sqlite数据库内部肯定经过了优化
+- 所以可以采取以下策略优化性能：***建立文件索引采用unordered_map，然后数据存储到sqlite，文件查询通过sqlite***
 
 #### 参与贡献
 - Fork 本仓库
