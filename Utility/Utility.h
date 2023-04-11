@@ -224,7 +224,7 @@ inline std::wstring Utf8ToUnicode(const std::string& utf8Str)
         throw std::exception("Error in conversion.");
     }
 
-    wchar_t *pWchar = new wchar_t[wideSize];
+    wchar_t* pWchar = new wchar_t[wideSize];
 
     int ret = ::MultiByteToWideChar(CP_UTF8, 0, utf8Str.c_str(), -1, pWchar, wideSize);
 

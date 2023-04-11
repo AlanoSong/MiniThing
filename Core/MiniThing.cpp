@@ -793,7 +793,7 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
     while (TRUE)
     {
-        std::wcout << std::endl <<  L"==============================" << std::endl;
+        std::wcout << std::endl << L"==============================" << std::endl;
         std::wcout << L"Input query file info here:" << std::endl;
 
         std::wstring query;
@@ -993,7 +993,7 @@ HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>
     return ret;
 }
 
-HRESULT MiniThing::SQLiteQueryV2(QueryInfo *queryInfo, std::vector<UsnInfo>& vec)
+HRESULT MiniThing::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec)
 {
     HRESULT ret = S_OK;
     char sql[1024] = { 0 };

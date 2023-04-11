@@ -122,7 +122,7 @@ private:
     HRESULT DeleteUsn(VOID);
 
     VOID GetSystemError(VOID);
-    
+
     std::wstring GetFileNameAccordPath(std::wstring path);
     std::wstring GetPathAccordPath(std::wstring path);
 };
