@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define STORE_DATA_IN_MAP ( 1 )
+#define STORE_DATA_IN_MAP ( 0 )
 
 struct UsnInfo
 {
