@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define STORE_DATA_IN_MAP ( 0 )
+#define STORE_DATA_IN_MAP ( 1 )
 
 struct UsnInfo
 {
@@ -79,6 +79,9 @@ public:
     HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
     HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec);
 
+    BOOL IsWstringSame(std::wstring s1, std::wstring s2);
+    BOOL IsSubStr(std::wstring s1, std::wstring s2);
+
 #if STORE_DATA_IN_MAP
     unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
 #endif
@@ -119,7 +122,7 @@ private:
     HRESULT DeleteUsn(VOID);
 
     VOID GetSystemError(VOID);
-    BOOL IsWstringSame(std::wstring s1, std::wstring s2);
+    
     std::wstring GetFileNameAccordPath(std::wstring path);
     std::wstring GetPathAccordPath(std::wstring path);
 };

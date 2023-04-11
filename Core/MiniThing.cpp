@@ -72,6 +72,11 @@ BOOL MiniThing::IsWstringSame(std::wstring s1, std::wstring s2)
     return c1.CompareNoCase(c2) == 0 ? TRUE : FALSE;
 }
 
+BOOL MiniThing::IsSubStr(std::wstring s1, std::wstring s2)
+{
+    return (s1.find(s2) != std::wstring::npos);
+}
+
 HRESULT MiniThing::GetHandle()
 {
     std::wstring folderPath = L"\\\\.\\";
@@ -236,9 +241,8 @@ HRESULT MiniThing::RecordUsn(VOID)
     DWORD usnDataSize = 0;
     PUSN_RECORD pUsnRecord;
 
-    // 找到第一个 USN 记录
-    // from MSDN(http://msdn.microsoft.com/en-us/library/aa365736%28v=VS.85%29.aspx ):
-    // return a USN followed by zero or more change journal records, each in a USN_RECORD structure.
+    // Find the first USN record
+    // return a USN followed by zero or more change journal records, each in a USN_RECORD structure
     while (FALSE != DeviceIoControl(m_hVol,
         FSCTL_ENUM_USN_DATA,
         &med,
@@ -284,13 +288,13 @@ HRESULT MiniThing::RecordUsn(VOID)
                 }
             }
 
-            // 获取下一个记录
+            // Get the next USN record
             DWORD recordLen = pUsnRecord->RecordLength;
             dwRetBytes -= recordLen;
             pUsnRecord = (PUSN_RECORD)(((PCHAR)pUsnRecord) + recordLen);
         }
 
-        // 获取下一页数据， MTF 大概是分多页来储存的吧？  
+        // Get next page USN record
         // from MSDN(http://msdn.microsoft.com/en-us/library/aa365736%28v=VS.85%29.aspx ):  
         // The USN returned as the first item in the output buffer is the USN of the next record number to be retrieved.  
         // Use this value to continue reading records from the end boundary forward.  
@@ -303,16 +307,30 @@ HRESULT MiniThing::RecordUsn(VOID)
 #if STORE_DATA_IN_MAP
 VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
 {
+    // 1. This is root node, just add root path and return
     if (currentRef == rootRef)
     {
         path = m_volumeName + L"\\" + path;
         return;
     }
 
-    std::wstring str = m_usnRecordMap[currentRef].fileNameWstr;
-    path = str + L"\\" + path;
-    GetCurrentFilePath(path, m_usnRecordMap[currentRef].pParentRef, rootRef);
+    if (m_usnRecordMap.find(currentRef) != m_usnRecordMap.end())
+    {
+        // 2. Normal node, loop more
+        std::wstring str = m_usnRecordMap[currentRef].fileNameWstr;
+        path = str + L"\\" + path;
+        GetCurrentFilePath(path, m_usnRecordMap[currentRef].pParentRef, rootRef);
+    }
+    else
+    {
+        // 3. Some system files's root node is not in current folder
+        std::wstring str = L"?";
+        path = str + L"\\" + path;
+
+        return;
+    }
 }
+
 #else // STORE_DATA_IN_MAP
 
 VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
@@ -344,6 +362,8 @@ VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef
         // 3. Some system files's root node is not in current folder
         std::wstring str = L"?";
         path = str + L"\\" + path;
+
+        return;
     }
     else
     {
@@ -402,7 +422,7 @@ HRESULT MiniThing::SortUsn(VOID)
 #if _DEBUG
         // Print file node info
         std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
-        std::wcout << L"File path : " << usnInfo.filePathWstr << std::endl;
+        std::wcout << L"File path : " << path << std::endl;
         std::cout << "File ref number : 0x" << std::hex << usnInfo.pSelfRef << std::endl;
         std::cout << "File parent ref number : 0x" << std::hex << usnInfo.pParentRef << std::endl << std::endl;
 #endif
@@ -780,7 +800,19 @@ DWORD WINAPI QueryThread(LPVOID lp)
         std::wcin >> query;
 
         std::vector<std::wstring> vec;
+
+#if STORE_DATA_IN_MAP
+
+        for (auto it = pMiniThing->m_usnRecordMap.begin(); it != pMiniThing->m_usnRecordMap.end(); it++)
+        {
+            if (pMiniThing->IsSubStr(it->second.fileNameWstr, query))
+            {
+                vec.push_back(it->second.filePathWstr);
+            }
+        }
+#else
         pMiniThing->SQLiteQuery(query, vec);
+#endif 
 
 #if _DEBUG
         if (vec.empty())
