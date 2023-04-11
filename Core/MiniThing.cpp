@@ -322,32 +322,31 @@ VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef
         return;
     }
 
-    // 2. Query this node's parent info
     QueryInfo queryInfo;
     queryInfo.type = BY_REF;
     queryInfo.info.pSelfRef = currentRef;
     std::vector<UsnInfo> vec;
-    SQLiteQueryV2(&queryInfo, vec);
-
-    assert(vec.size() == 1);
-
-    UsnInfo usnInfo = vec.front();
-    std::wstring selfPath = usnInfo.fileNameWstr;
-
-    // 3. Query this node's parent info
-    queryInfo.info.pSelfRef = usnInfo.pParentRef;
-    vec.clear();
 
     SQLiteQueryV2(&queryInfo, vec);
-    if (vec.empty() && (usnInfo.pParentRef != rootRef))
+
+    if (vec.size() == 1)
     {
-        // Some system node, they parent not exist in current folder, just throw them away
-        return;
-    }
+        // 2. Normal node, loop more
+        std::wstring str = vec[0].fileNameWstr;
+        path = str + L"\\" + path;
 
-    // 4. Loop more
-    path = selfPath + L"\\" + path;
-    GetCurrentFilePathBySql(path, usnInfo.pParentRef, rootRef);
+        GetCurrentFilePathBySql(path, vec[0].pParentRef, rootRef);
+    }
+    else if (vec.empty())
+    {
+        // 3. Some system files's root node is not in current folder
+        std::wstring str = L"?";
+        path = str + L"\\" + path;
+    }
+    else
+    {
+        assert(0);
+    }
 }
 
 HRESULT MiniThing::SortUsn(VOID)
@@ -401,7 +400,6 @@ HRESULT MiniThing::SortUsn(VOID)
         usnInfo.filePathWstr = pathBySql;
         SQLiteUpdateV2(&usnInfo, usnInfo.pSelfRef);
 #endif
-
     }
 
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
