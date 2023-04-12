@@ -274,7 +274,7 @@ HRESULT MiniThing::RecordUsn(VOID)
             usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
             usnInfo.timeStamp = pUsnRecord->TimeStamp;
 
-#if STORE_DATA_IN_MAP
+#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
             m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
 #else
             SQLiteInsert(&usnInfo);
@@ -296,7 +296,7 @@ HRESULT MiniThing::RecordUsn(VOID)
     return S_OK;
 }
 
-#if STORE_DATA_IN_MAP
+#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
 VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
 {
     // 1. This is root node, just add root path and return
@@ -323,7 +323,7 @@ VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWO
     }
 }
 
-#else // STORE_DATA_IN_MAP
+#else // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
 
 VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
 {
@@ -362,7 +362,7 @@ VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef
         assert(0);
     }
 }
-#endif // STORE_DATA_IN_MAP
+#endif // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
 
 HRESULT MiniThing::SortUsn(VOID)
 {
@@ -374,7 +374,7 @@ HRESULT MiniThing::SortUsn(VOID)
     std::wstring cmpStr(L"System Volume Information");
     DWORDLONG topLevelRefNum = 0x0;
 
-#if STORE_DATA_IN_MAP
+#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
@@ -402,24 +402,34 @@ HRESULT MiniThing::SortUsn(VOID)
         assert(0);
     }
 
-#if STORE_DATA_IN_MAP
+#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
         std::wstring path(usnInfo.fileNameWstr);
 
         GetCurrentFilePath(path, usnInfo.pParentRef, topLevelRefNum);
+
+#if USE_MAP_TO_SPEED_UP
+        usnInfo.filePathWstr = path;
+        SQLiteInsert(&usnInfo);
+
+#else
         m_usnRecordMap[usnInfo.pSelfRef].filePathWstr = path;
+#endif
 
 #if _DEBUG
         // Print file node info
-        std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
-        std::wcout << L"File path : " << path << std::endl;
-        std::cout << "File ref number : 0x" << std::hex << usnInfo.pSelfRef << std::endl;
-        std::cout << "File parent ref number : 0x" << std::hex << usnInfo.pParentRef << std::endl << std::endl;
+        std::wcout << path << std::endl;
 #endif
     }
-#else // STORE_DATA_IN_MAP
+
+#if USE_MAP_TO_SPEED_UP
+    // After file node sorted, the map can be destroyed
+    m_usnRecordMap.clear();
+#endif
+
+#else // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
 
     // Get all file node from sql db
     std::vector<UsnInfo> allFileNode;
@@ -435,13 +445,11 @@ HRESULT MiniThing::SortUsn(VOID)
 
 #if _DEBUG
         // Print file node info
-        std::wcout << std::endl << L"File name : " << usnInfo.fileNameWstr << std::endl;
-        std::wcout << L"File path : " << usnInfo.filePathWstr << std::endl;
-        std::cout << "File ref number : 0x" << std::hex << usnInfo.pSelfRef << std::endl;
-        std::cout << "File parent ref number : 0x" << std::hex << usnInfo.pParentRef << std::endl << std::endl;
+        std::wcout << usnInfo.filePathWstr << std::endl;
 #endif // _DEBUG
     }
-#endif // STORE_DATA_IN_MAP
+
+#endif // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
 
     return ret;
 }
@@ -1098,7 +1106,7 @@ HRESULT MiniThing::SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath)
     }
     else
     {
-        printf("sqlite : update done\n");
+        // printf("sqlite : update done\n");
     }
 
     return ret;
@@ -1122,7 +1130,7 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pUsnInfo, DWORDLONG selfRef)
     }
     else
     {
-        printf("sqlite : update done\n");
+        // printf("sqlite : update done\n");
     }
 
     return ret;

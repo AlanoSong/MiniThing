@@ -15,7 +15,13 @@
 
 using namespace std;
 
-#define STORE_DATA_IN_MAP ( 0 )
+#define STORE_DATA_IN_MAP       ( 0 )
+
+//  Here we can also use map to record and sort file node,
+//  cause map resident in ram and is faster then sql db
+#if !(STORE_DATA_IN_MAP)
+#define USE_MAP_TO_SPEED_UP     ( 1 )
+#endif
 
 struct UsnInfo
 {
@@ -82,7 +88,7 @@ public:
     BOOL IsWstringSame(std::wstring s1, std::wstring s2);
     BOOL IsSubStr(std::wstring s1, std::wstring s2);
 
-#if STORE_DATA_IN_MAP
+#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
     unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
 #endif
 
