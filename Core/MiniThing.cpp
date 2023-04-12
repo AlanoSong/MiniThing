@@ -368,6 +368,8 @@ HRESULT MiniThing::SortUsn(VOID)
 {
     HRESULT ret = S_OK;
 
+    std::cout << "Generating sql data base......" << std::endl;
+
     // Get "System Volume Information"'s parent ref number
     //      cause it's under top level folder
     //      so its parent ref number is top level folder's ref number
@@ -801,7 +803,6 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
         std::vector<std::wstring> vec;
 
-#if _DEBUG
         LARGE_INTEGER timeStart;
         LARGE_INTEGER timeEnd;
         LARGE_INTEGER frequency;
@@ -809,7 +810,6 @@ DWORD WINAPI QueryThread(LPVOID lp)
         double quadpart = (double)frequency.QuadPart;
 
         QueryPerformanceCounter(&timeStart);
-#endif
 
 #if STORE_DATA_IN_MAP
 
@@ -824,13 +824,10 @@ DWORD WINAPI QueryThread(LPVOID lp)
         pMiniThing->SQLiteQuery(query, vec);
 #endif 
 
-#if _DEBUG
         QueryPerformanceCounter(&timeEnd);
         double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
         std::cout << "Time elapsed : " << elapsed << " S" << std::endl;
-#endif
 
-#if _DEBUG
         if (vec.empty())
         {
             std::wcout << "Not found" << std::endl;
@@ -843,7 +840,6 @@ DWORD WINAPI QueryThread(LPVOID lp)
                 std::wcout << L"No." << cnt++ << " : " << *it << endl;
             }
         }
-#endif
         std::wcout << L"==============================" << std::endl;
     }
 
