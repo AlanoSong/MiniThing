@@ -22,7 +22,10 @@ int main()
     QueryPerformanceCounter(&timeStart);
 #endif
 
-    MiniThing* pMiniThing = new MiniThing(L"F:", ".\\MiniThing.db");
+    std::wstring folderName;
+    std::cout << "Which folder ? (eg. C:)" << std::endl;
+    std::wcin >> folderName;
+    MiniThing* pMiniThing = new MiniThing(folderName, ".\\MiniThing.db");
 
 #if _DEBUG
     QueryPerformanceCounter(&timeEnd);

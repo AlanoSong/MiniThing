@@ -1080,7 +1080,7 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
     }
     else
     {
-        printf("sqlite : delete done\n");
+        // printf("sqlite : delete done\n");
     }
 
     return ret;
