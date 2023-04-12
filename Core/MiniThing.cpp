@@ -267,26 +267,18 @@ HRESULT MiniThing::RecordUsn(VOID)
             std::string fileNameStr = WstringToString(fileNameWstr);
             delete pWchar;
 
-            // Several system file "$***" cannot find its parent ref, so just exclude them directly
-            // TO DO : remove those logic
-            if (fileNameWstr.find(L"$") == std::wstring::npos)
-            {
-                // Several file's parent is not in current root folder, so just exclude them directly
-                if (find(m_patchOfParentRef.begin(), m_patchOfParentRef.end(), pUsnRecord->ParentFileReferenceNumber) == m_patchOfParentRef.end())
-                {
-                    UsnInfo usnInfo = { 0 };
-                    usnInfo.fileNameStr = fileNameStr;
-                    usnInfo.fileNameWstr = fileNameWstr;
-                    usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
-                    usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
-                    usnInfo.timeStamp = pUsnRecord->TimeStamp;
+            UsnInfo usnInfo = { 0 };
+            usnInfo.fileNameStr = fileNameStr;
+            usnInfo.fileNameWstr = fileNameWstr;
+            usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
+            usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
+            usnInfo.timeStamp = pUsnRecord->TimeStamp;
+
 #if STORE_DATA_IN_MAP
-                    m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
+            m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
 #else
-                    SQLiteInsert(&usnInfo);
+            SQLiteInsert(&usnInfo);
 #endif
-                }
-            }
 
             // Get the next USN record
             DWORD recordLen = pUsnRecord->RecordLength;
