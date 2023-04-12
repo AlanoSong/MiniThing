@@ -12,7 +12,6 @@
 
 int main()
 {
-#if _DEBUG
     LARGE_INTEGER timeStart;
     LARGE_INTEGER timeEnd;
     LARGE_INTEGER frequency;
@@ -20,18 +19,15 @@ int main()
     double quadpart = (double)frequency.QuadPart;
 
     QueryPerformanceCounter(&timeStart);
-#endif
 
     std::wstring folderName;
     std::cout << "Which folder ? (eg. C:)" << std::endl;
     std::wcin >> folderName;
     MiniThing* pMiniThing = new MiniThing(folderName, ".\\MiniThing.db");
 
-#if _DEBUG
     QueryPerformanceCounter(&timeEnd);
     double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
     std::cout << "Time elapsed : " << elapsed << " S" << std::endl;
-#endif
 
     if (FAILED(pMiniThing->CreateMonitorThread()))
     {
