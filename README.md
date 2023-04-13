@@ -4,6 +4,19 @@
 - Windows平台的Everything文件查找速度非常快，优势在于利用了NTFS的USN日志，以及Windows上的文件监测机制
 - 这个项目仿照类似原理，通过查询USN日志、监测Windows平台文件修改、使用SQLite数据库存储文件节点，并提供文件信息查询功能
 
+#### 如何使用
+##### 编译
+- Visual Studio：打开根目录下的MiniThing.sln，编译选择Build Solution，启动选择Local Windows Debugger
+- CMake：待添加
+##### 使用
+- 目前仅支持命令行查找，程序启动后，输入要查询的盘符（eg."F:"）
+- 第1次进入会建数据库，等待数据库建好之后，就能输入文件名进行查找
+![](./Docs/Pictures/Use0.png)
+- 盘符下的文件改动也会被软件捕获到
+![](./Docs/Pictures/Use1.png)
+- QT界面制作中...
+- 正则查找等其他功能制作中...
+
 #### 编写计划
 - [x] 实现基本的USN日志查询，建立初始的文件节点数据库，存放在unordered map中
 - [x] 开启monitor thread，后台监测文件改动
