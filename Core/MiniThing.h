@@ -88,6 +88,11 @@ public:
     BOOL IsWstringSame(std::wstring s1, std::wstring s2);
     BOOL IsSubStr(std::wstring s1, std::wstring s2);
 
+    BOOL IsSqlExist(VOID)
+    {
+        return m_isSqlExist;
+    }
+
 #if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
     unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
 #endif
@@ -104,6 +109,7 @@ public:
 
 private:
     std::wstring m_volumeName;
+    BOOL m_isSqlExist;
     HANDLE m_hVol = INVALID_HANDLE_VALUE;
     const DWORDLONG m_constFileRefNumMax = ((DWORDLONG)(-1));
     USN_JOURNAL_DATA m_usnInfo;

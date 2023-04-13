@@ -26,30 +26,33 @@ MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
         assert(0);
     }
 
-    // Create system usn info
-    if (FAILED(CreateUsn()))
+    if (! IsSqlExist())
     {
-        assert(0);
-    }
+        // Create system usn info
+        if (FAILED(CreateUsn()))
+        {
+            assert(0);
+        }
 
-    if (FAILED(QueryUsn()))
-    {
-        assert(0);
-    }
+        if (FAILED(QueryUsn()))
+        {
+            assert(0);
+        }
 
-    if (FAILED(RecordUsn()))
-    {
-        assert(0);
-    }
+        if (FAILED(RecordUsn()))
+        {
+            assert(0);
+        }
 
-    if (FAILED(SortUsn()))
-    {
-        assert(0);
-    }
+        if (FAILED(SortUsn()))
+        {
+            assert(0);
+        }
 
-    if (FAILED(DeleteUsn()))
-    {
-        assert(0);
+        if (FAILED(DeleteUsn()))
+        {
+            assert(0);
+        }
     }
 
     closeHandle();
@@ -893,22 +896,37 @@ HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
 
     if (result == SQLITE_OK)
     {
-        std::string table;
-        table.append(
-            "DROP TABLE IF EXISTS UsnInfo;"
-            "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-        );
-
         char* errMsg = nullptr;
 
-        int rc = sqlite3_exec(m_hSQLite, table.c_str(), NULL, NULL, &errMsg);
-        if (rc != SQLITE_OK)
-        {
-            std::cerr << "SQLite : create table failed" << std::endl;
-            sqlite3_free(errMsg);
-            sqlite3_close(m_hSQLite);
+        // Check if the sql db exist ?
+        std::string check;
+        check.append("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'UsnInfo';");
 
-            ret = E_FAIL;
+        sqlite3_stmt* stmt = nullptr;
+        int res = sqlite3_prepare_v2(m_hSQLite, check.c_str(), (int)strlen(check.c_str()), &stmt, NULL);
+        if (stmt != nullptr)
+        {
+            m_isSqlExist = TRUE;
+            std::cout << "SQLite : data base already exist" << std::endl;
+        }
+        else
+        {
+            m_isSqlExist = FALSE;
+
+            std::string table;
+            table.append(
+                "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+            );
+
+            int rc = sqlite3_exec(m_hSQLite, table.c_str(), NULL, NULL, &errMsg);
+            if (rc != SQLITE_OK)
+            {
+                std::cerr << "SQLite : create table failed" << std::endl;
+                sqlite3_free(errMsg);
+                sqlite3_close(m_hSQLite);
+
+                ret = E_FAIL;
+            }
         }
 
         std::cout << "SQLite : open success" << std::endl;
