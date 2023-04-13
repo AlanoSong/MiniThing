@@ -141,6 +141,8 @@
     <ClInclude Include="Core\MonitorThread.h" />
     <ClInclude Include="SQLite\sqlite3.h" />
     <ClInclude Include="SQLite\sqlite3ext.h" />
+    <ClInclude Include="ThreadPool\SafeQueue.h" />
+    <ClInclude Include="ThreadPool\ThreadPool.h" />
     <ClInclude Include="Utility\Utility.h" />
   </ItemGroup>
   <ItemGroup>

@@ -13,6 +13,9 @@
     <Filter Include="Core">
       <UniqueIdentifier>{00e72164-637e-4f53-b3e3-c856ba943913}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ThreadPool">
+      <UniqueIdentifier>{f281a59d-f42c-43c9-9120-8e47accf5a15}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SQLite\shell.c">
@@ -49,6 +52,12 @@
     </ClInclude>
     <ClInclude Include="Core\MonitorThread.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadPool\ThreadPool.h">
+      <Filter>ThreadPool</Filter>
+    </ClInclude>
+    <ClInclude Include="ThreadPool\SafeQueue.h">
+      <Filter>ThreadPool</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
