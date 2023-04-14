@@ -277,11 +277,7 @@ HRESULT MiniThing::RecordUsn(VOID)
             usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
             usnInfo.timeStamp = pUsnRecord->TimeStamp;
 
-#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
             m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
-#else
-            SQLiteInsert(&usnInfo);
-#endif
 
             // Get the next USN record
             DWORD recordLen = pUsnRecord->RecordLength;
@@ -299,7 +295,6 @@ HRESULT MiniThing::RecordUsn(VOID)
     return S_OK;
 }
 
-#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
 VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
 {
     // 1. This is root node, just add root path and return
@@ -326,47 +321,6 @@ VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWO
     }
 }
 
-#else // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
-
-VOID MiniThing::GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
-{
-    // 1. This is root node, just add root path and return
-    if (currentRef == rootRef)
-    {
-        path = m_volumeName + L"\\" + path;
-        return;
-    }
-
-    QueryInfo queryInfo;
-    queryInfo.type = BY_REF;
-    queryInfo.info.pSelfRef = currentRef;
-    std::vector<UsnInfo> vec;
-
-    SQLiteQueryV2(&queryInfo, vec);
-
-    if (vec.size() == 1)
-    {
-        // 2. Normal node, loop more
-        std::wstring str = vec[0].fileNameWstr;
-        path = str + L"\\" + path;
-
-        GetCurrentFilePathBySql(path, vec[0].pParentRef, rootRef);
-    }
-    else if (vec.empty())
-    {
-        // 3. Some system files's root node is not in current folder
-        std::wstring str = L"?";
-        path = str + L"\\" + path;
-
-        return;
-    }
-    else
-    {
-        assert(0);
-    }
-}
-#endif // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
-
 HRESULT MiniThing::SortUsn(VOID)
 {
     HRESULT ret = S_OK;
@@ -379,7 +333,6 @@ HRESULT MiniThing::SortUsn(VOID)
     std::wstring cmpStr(L"System Volume Information");
     DWORDLONG topLevelRefNum = 0x0;
 
-#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
@@ -389,16 +342,6 @@ HRESULT MiniThing::SortUsn(VOID)
             break;
         }
     }
-#else
-    QueryInfo queryInfo;
-    queryInfo.type = BY_NAME;
-    queryInfo.info.fileNameWstr = cmpStr;
-    std::vector<UsnInfo> vec;
-    SQLiteQueryV2(&queryInfo, vec);
-    assert(vec.size() == 1);
-
-    topLevelRefNum = vec[0].pParentRef;
-#endif
 
     if (topLevelRefNum == 0)
     {
@@ -407,7 +350,6 @@ HRESULT MiniThing::SortUsn(VOID)
         assert(0);
     }
 
-#if STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
@@ -415,13 +357,8 @@ HRESULT MiniThing::SortUsn(VOID)
 
         GetCurrentFilePath(path, usnInfo.pParentRef, topLevelRefNum);
 
-#if USE_MAP_TO_SPEED_UP
         usnInfo.filePathWstr = path;
         SQLiteInsert(&usnInfo);
-
-#else
-        m_usnRecordMap[usnInfo.pSelfRef].filePathWstr = path;
-#endif
 
 #if _DEBUG
         // Print file node info
@@ -429,32 +366,8 @@ HRESULT MiniThing::SortUsn(VOID)
 #endif
     }
 
-#if USE_MAP_TO_SPEED_UP
     // After file node sorted, the map can be destroyed
     m_usnRecordMap.clear();
-#endif
-
-#else // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
-
-    // Get all file node from sql db
-    std::vector<UsnInfo> allFileNode;
-    SQLiteQueryV2(nullptr, allFileNode);
-
-    for (auto it = allFileNode.begin(); it != allFileNode.end(); it++)
-    {
-        UsnInfo usnInfo = *it;
-        std::wstring pathBySql(usnInfo.fileNameWstr);
-        GetCurrentFilePathBySql(pathBySql, usnInfo.pParentRef, topLevelRefNum);
-        usnInfo.filePathWstr = pathBySql;
-        SQLiteUpdateV2(&usnInfo, usnInfo.pSelfRef);
-
-#if _DEBUG
-        // Print file node info
-        std::wcout << usnInfo.filePathWstr << std::endl;
-#endif // _DEBUG
-    }
-
-#endif // STORE_DATA_IN_MAP || USE_MAP_TO_SPEED_UP
 
     return ret;
 }
@@ -513,42 +426,17 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         tmp.fileNameWstr = GetFileNameAccordPath(filePath);
         tmp.pParentRef = m_constFileRefNumMax;
         tmp.pSelfRef = m_unusedFileRefNum--;
-#if STORE_DATA_IN_MAP
-        m_usnRecordMap[tmp.pSelfRef] = tmp;
-#else
+
         // Update sql db
         if (FAILED(SQLiteInsert(&tmp)))
         {
             assert(0);
         }
-#endif
         break;
     }
 
     case FILE_ACTION_RENAMED_OLD_NAME:
     {
-#if STORE_DATA_IN_MAP
-        // TODO:
-        //      if rename a folder?
-        auto it = m_usnRecordMap.begin();
-        for (; it != m_usnRecordMap.end(); it++)
-        {
-            if (IsWstringSame(it->second.filePathWstr, filePath))
-            {
-                break;
-            }
-        }
-        if (it == m_usnRecordMap.end())
-        {
-            std::cout << "Failed find rename file" << std::endl;
-            break;
-        }
-
-        auto tmp = m_usnRecordMap[it->first];
-        tmp.filePathWstr = reFileName;
-        tmp.fileNameWstr = GetFileNameAccordPath(reFileName);
-        m_usnRecordMap[it->first] = tmp;
-#else
         // Update sql db
         // TODO:
         //      if rename a folder?
@@ -558,29 +446,11 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         {
             assert(0);
         }
-#endif
         break;
     }
 
     case FILE_ACTION_REMOVED:
     {
-#if STORE_DATA_IN_MAP
-        // TODO:
-        //      if remove a folder?
-        auto tmp = m_usnRecordMap.end();
-        for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
-        {
-            if (IsWstringSame(it->second.filePathWstr, filePath))
-            {
-                tmp = it;
-                break;
-            }
-        }
-        if (tmp != m_usnRecordMap.end())
-        {
-            m_usnRecordMap.erase(tmp);
-        }
-#else
         // Update sql db
         // TODO:
         //      if remove a folder?
@@ -590,7 +460,6 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
         {
             assert(0);
         }
-#endif
         break;
     }
 
@@ -814,18 +683,7 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
         QueryPerformanceCounter(&timeStart);
 
-#if STORE_DATA_IN_MAP
-
-        for (auto it = pMiniThing->m_usnRecordMap.begin(); it != pMiniThing->m_usnRecordMap.end(); it++)
-        {
-            if (pMiniThing->IsSubStr(it->second.fileNameWstr, query))
-            {
-                vec.push_back(it->second.filePathWstr);
-            }
-        }
-#else
         pMiniThing->SQLiteQuery(query, vec);
-#endif 
 
         QueryPerformanceCounter(&timeEnd);
         double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
@@ -898,35 +756,18 @@ HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
     {
         char* errMsg = nullptr;
 
-        // Check if the sql db exist ?
-        std::string check;
-        check.append("SELECT count(*) FROM sqlite_master WHERE type = 'table' AND name = 'UsnInfo';");
+        std::string create;
+        create.append("CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);");
 
-        sqlite3_stmt* stmt = nullptr;
-        int res = sqlite3_prepare_v2(m_hSQLite, check.c_str(), (int)strlen(check.c_str()), &stmt, NULL);
-        if (stmt != nullptr)
+        int res = sqlite3_exec(m_hSQLite, create.c_str(), 0, 0, &errMsg);
+        if (res == SQLITE_OK)
         {
-            m_isSqlExist = TRUE;
-            std::cout << "SQLite : data base already exist" << std::endl;
+            m_isSqlExist = FALSE;
         }
         else
         {
-            m_isSqlExist = FALSE;
-
-            std::string table;
-            table.append(
-                "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-            );
-
-            int rc = sqlite3_exec(m_hSQLite, table.c_str(), NULL, NULL, &errMsg);
-            if (rc != SQLITE_OK)
-            {
-                std::cerr << "SQLite : create table failed" << std::endl;
-                sqlite3_free(errMsg);
-                sqlite3_close(m_hSQLite);
-
-                ret = E_FAIL;
-            }
+            std::cout << "SQLite : data base already exist" << std::endl;
+            m_isSqlExist = TRUE;
         }
 
         std::cout << "SQLite : open success" << std::endl;
