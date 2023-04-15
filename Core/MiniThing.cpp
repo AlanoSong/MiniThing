@@ -321,53 +321,186 @@ VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWO
     }
 }
 
+VOID GetCurrentFilePathV2(std::wstring& path, std::wstring volName, DWORDLONG currentRef, DWORDLONG rootRef, unordered_map<DWORDLONG, UsnInfo>& recordMapAll)
+{
+    // 1. This is root node, just add root path and return
+    if (currentRef == rootRef)
+    {
+        path = volName + L"\\" + path;
+        return;
+    }
+
+    if (recordMapAll.find(currentRef) != recordMapAll.end())
+    {
+        // 2. Normal node, loop more
+        std::wstring str = recordMapAll[currentRef].fileNameWstr;
+        path = str + L"\\" + path;
+        GetCurrentFilePathV2(path, volName, recordMapAll[currentRef].pParentRef, rootRef, recordMapAll);
+    }
+    else
+    {
+        // 3. Some system files's root node is not in current folder
+        std::wstring str = L"?";
+        path = str + L"\\" + path;
+
+        return;
+    }
+}
+
+DWORD WINAPI SortThread(LPVOID lp)
+{
+    SortTaskInfo* pTaskInfo = (SortTaskInfo*)lp;
+
+    // Set chinese debug output
+    std::wcout.imbue(std::locale("chs"));
+    setlocale(LC_ALL, "zh-CN");
+
+    printf("Sort thread start\n");
+
+    do
+    {
+        LARGE_INTEGER timeStart;
+        LARGE_INTEGER timeEnd;
+        LARGE_INTEGER frequency;
+        QueryPerformanceFrequency(&frequency);
+        double quadpart = (double)frequency.QuadPart;
+        QueryPerformanceCounter(&timeStart);
+
+        for (auto it = (*pTaskInfo->pSortTask).begin(); it != (*pTaskInfo->pSortTask).end(); it++)
+        {
+            UsnInfo usnInfo = it->second;
+            std::wstring path(usnInfo.fileNameWstr);
+            GetCurrentFilePathV2(path, L"F:", usnInfo.pSelfRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
+
+            (*pTaskInfo->pSortTask)[it->first].filePathWstr = path;
+        }
+
+        QueryPerformanceCounter(&timeEnd);
+        double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
+        std::cout << "Sort task "<< pTaskInfo->taskIndex <<" over : " << elapsed << " S" << std::endl;
+    } while (0);
+
+    printf("Query thread stop\n");
+    return 0;
+}
+
 HRESULT MiniThing::SortUsn(VOID)
 {
     HRESULT ret = S_OK;
 
     std::cout << "Generating sql data base......" << std::endl;
 
-    // Get "System Volume Information"'s parent ref number
-    //      cause it's under top level folder
-    //      so its parent ref number is top level folder's ref number
+    // 1. Get root file node
+    //  cause "System Volume Information" is a system file and just under root folder
+    //  so we use it to find root folder
     std::wstring cmpStr(L"System Volume Information");
-    DWORDLONG topLevelRefNum = 0x0;
+    m_rootFileNode = 0x0;
 
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
         if (0 == usnInfo.fileNameWstr.compare(cmpStr))
         {
-            topLevelRefNum = usnInfo.pParentRef;
+            m_rootFileNode = usnInfo.pParentRef;
             break;
         }
     }
 
-    if (topLevelRefNum == 0)
+    if (m_rootFileNode == 0)
     {
         std::cout << "Cannot find root folder" << std::endl;
         ret = E_FAIL;
         assert(0);
     }
 
+    // 2. Divide file node into several sort tasks
+    int fileNodeCnt = 0;
+    vector<unordered_map<DWORDLONG, UsnInfo>> sortTaskSet;
+    unordered_map<DWORDLONG, UsnInfo> mapTmp;
+
     for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
     {
         UsnInfo usnInfo = it->second;
-        std::wstring path(usnInfo.fileNameWstr);
+        mapTmp[it->first] = it->second;
+        ++fileNodeCnt;
 
-        GetCurrentFilePath(path, usnInfo.pParentRef, topLevelRefNum);
+        if (fileNodeCnt % SORT_TASK_GRANULARITY == 0)
+        {
+            sortTaskSet.push_back(mapTmp);
+            mapTmp.clear();
+        }
+        else
+        {
+            continue;
+        }
+    }
+    if (!mapTmp.empty())
+    {
+        fileNodeCnt += mapTmp.size();
+        sortTaskSet.push_back(mapTmp);
+        mapTmp.clear();
+    }
 
-        usnInfo.filePathWstr = path;
-        SQLiteInsert(&usnInfo);
+    vector<HANDLE> taskHandleVec;
+    vector<SortTaskInfo> sortTaskVec;
 
+    for (int i = 0; i < sortTaskSet.size(); i++)
+    {
+        SortTaskInfo taskInfo;
+        taskInfo.taskIndex = i;
+        taskInfo.pSortTask = &(sortTaskSet[i]);
+        taskInfo.pAllUsnRecordMap = &m_usnRecordMap;
+        taskInfo.rootRef = m_rootFileNode;
+
+        sortTaskVec.push_back(taskInfo);
+    }
+
+    // 3. Execute all sort tasks by threads
+    for (int i = 0; i < sortTaskSet.size(); i++)
+    {
+        HANDLE taskThread = CreateThread(0, 0, SortThread, &(sortTaskVec[i]), CREATE_SUSPENDED, 0);
+        if (taskThread)
+        {
+            ResumeThread(taskThread);
+            taskHandleVec.push_back(taskThread);
+        }
+        else
+        {
+            assert(0);
+        }
+    }
+
+    // 4. Wait all sort thread over
+    for (auto it = taskHandleVec.begin(); it != taskHandleVec.end(); it++)
+    {
+        DWORD dwWaitCode = WaitForSingleObject(*it, INFINITE);
+        assert(dwWaitCode == WAIT_OBJECT_0);
+        CloseHandle(*it);
+    }
+
+    taskHandleVec.clear();
+    sortTaskVec.clear();
+
+    // 5. Get all sort results
+    for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
+    {
+        auto tmp = *it;
+        for (auto it1 = tmp.begin(); it1 != tmp.end(); it1++)
+        {
+            UsnInfo usnInfo = it1->second;
+            SQLiteInsert(&usnInfo);
 #if _DEBUG
-        // Print file node info
-        std::wcout << path << std::endl;
+            // Print file node info
+            // std::wcout << usnInfo.filePathWstr << std::endl;
 #endif
+        }
     }
 
     // After file node sorted, the map can be destroyed
+    sortTaskSet.clear();
     m_usnRecordMap.clear();
+
+    std::wcout << "Sort file node sum : " << fileNodeCnt << std::endl;
 
     return ret;
 }

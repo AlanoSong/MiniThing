@@ -15,6 +15,8 @@
 
 using namespace std;
 
+#define SORT_TASK_GRANULARITY           ( 4096 )
+
 struct UsnInfo
 {
     // File reference number
@@ -43,6 +45,14 @@ typedef struct _QueryInfo
     QUERY_TYPE type;
     UsnInfo info;
 }QueryInfo;
+
+typedef struct
+{
+    UINT taskIndex;
+    DWORDLONG rootRef;
+    unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
+    unordered_map<DWORDLONG, UsnInfo>* pSortTask;
+} SortTaskInfo;
 
 class MiniThing
 {
@@ -85,24 +95,25 @@ public:
         return m_isSqlExist;
     }
 
-    unordered_map<DWORDLONG, UsnInfo> m_usnRecordMap;
+    unordered_map<DWORDLONG, UsnInfo>   m_usnRecordMap;
 
-    DWORDLONG m_unusedFileRefNum = ((DWORDLONG)(-1)) - 1;
+    DWORDLONG   m_unusedFileRefNum = ((DWORDLONG)(-1)) - 1;
 
     // Monitor thread
-    HANDLE m_hExitEvent;
-    HANDLE m_hMonitorThread;
+    HANDLE      m_hExitEvent;
+    HANDLE      m_hMonitorThread;
 
     // Query thread
-    HANDLE m_hQueryExitEvent;
-    HANDLE m_hQueryThread;
+    HANDLE      m_hQueryExitEvent;
+    HANDLE      m_hQueryThread;
 
 private:
-    std::wstring m_volumeName;
-    BOOL m_isSqlExist;
-    HANDLE m_hVol = INVALID_HANDLE_VALUE;
-    const DWORDLONG m_constFileRefNumMax = ((DWORDLONG)(-1));
-    USN_JOURNAL_DATA m_usnInfo;
+    std::wstring        m_volumeName;
+    BOOL                m_isSqlExist;
+    HANDLE              m_hVol = INVALID_HANDLE_VALUE;
+    const DWORDLONG     m_constFileRefNumMax = ((DWORDLONG)(-1));
+    USN_JOURNAL_DATA    m_usnInfo;
+    DWORDLONG           m_rootFileNode;
 
 private:
     HRESULT GetHandle(VOID);
