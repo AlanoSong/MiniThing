@@ -492,7 +492,16 @@ HRESULT MiniThing::SortUsn(VOID)
         assert(0);
     }
 
-    // 2. Divide file node into several sort tasks
+    // 2. Get suitable thread task granularity
+    int hwThreadNum = std::thread::hardware_concurrency();
+    int granularity = m_usnRecordMap.size() / hwThreadNum;
+    int step = 100;
+    while (granularity * hwThreadNum < m_usnRecordMap.size())
+    {
+        granularity += 100;
+    }
+
+    // 3. Divide file node into several sort tasks
     int fileNodeCnt = 0;
     vector<unordered_map<DWORDLONG, UsnInfo>> sortTaskSet;
     unordered_map<DWORDLONG, UsnInfo> mapTmp;
@@ -503,7 +512,7 @@ HRESULT MiniThing::SortUsn(VOID)
         mapTmp[it->first] = it->second;
         ++fileNodeCnt;
 
-        if (fileNodeCnt % SORT_TASK_GRANULARITY == 0)
+        if (fileNodeCnt % granularity == 0)
         {
             sortTaskSet.push_back(mapTmp);
             mapTmp.clear();
@@ -535,7 +544,7 @@ HRESULT MiniThing::SortUsn(VOID)
         sortTaskVec.push_back(taskInfo);
     }
 
-    // 3. Execute all sort tasks by threads
+    // 4. Execute all sort tasks by threads
 
     // Check if sqlite open multiple thread support
     int threadMode = sqlite3_threadsafe();
@@ -556,7 +565,7 @@ HRESULT MiniThing::SortUsn(VOID)
         }
     }
 
-    // 4. Wait all sort thread over
+    // 5. Wait all sort thread over
     for (auto it = taskHandleVec.begin(); it != taskHandleVec.end(); it++)
     {
         DWORD dwWaitCode = WaitForSingleObject(*it, INFINITE);
@@ -564,7 +573,7 @@ HRESULT MiniThing::SortUsn(VOID)
         CloseHandle(*it);
     }
 
-    // 5. After file node sorted, the map can be destroyed
+    // 6. After file node sorted, the map can be destroyed
     taskHandleVec.clear();
     sortTaskVec.clear();
     sortTaskSet.clear();

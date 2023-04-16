@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <assert.h>
 #include <atlstr.h>
+#include <thread>
 
 #include "../SQLite/sqlite3.h"
 
