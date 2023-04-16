@@ -43,14 +43,6 @@ typedef struct _QueryInfo
     UsnInfo info;
 }QueryInfo;
 
-typedef struct
-{
-    UINT taskIndex;
-    DWORDLONG rootRef;
-    unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
-    unordered_map<DWORDLONG, UsnInfo>* pSortTask;
-} SortTaskInfo;
-
 class MiniThing
 {
 public:
@@ -131,4 +123,12 @@ private:
     std::wstring GetPathAccordPath(std::wstring path);
 };
 
+typedef struct
+{
+    UINT taskIndex;
+    string sqlPath;
+    DWORDLONG rootRef;
+    unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
+    unordered_map<DWORDLONG, UsnInfo>* pSortTask;
+} SortTaskInfo;
 

@@ -345,6 +345,32 @@ VOID GetCurrentFilePathV2(std::wstring& path, std::wstring volName, DWORDLONG cu
     }
 }
 
+HRESULT SQLiteInsertV2(sqlite3 *hSql, UsnInfo* pUsnInfo)
+{
+    HRESULT ret = S_OK;
+
+    // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+    char sql[1024] = { 0 };
+    std::string nameUtf8 = UnicodeToUtf8(pUsnInfo->fileNameWstr);
+    std::string pathUtf8 = UnicodeToUtf8(pUsnInfo->filePathWstr);
+    sprintf_s(sql, "INSERT INTO UsnInfo VALUES(%llu, %llu, %lld, '%s', '%s');",
+        pUsnInfo->pSelfRef, pUsnInfo->pParentRef, pUsnInfo->timeStamp, nameUtf8.c_str(), pathUtf8.c_str());
+
+    char* errMsg = nullptr;
+    if (sqlite3_exec(hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+    {
+        ret = E_FAIL;
+        printf("sqlite : insert failed\n");
+        printf("error : %s\n", errMsg);
+    }
+    else
+    {
+        // printf("sqlite : insert done\n");
+    }
+
+    return ret;
+}
+
 DWORD WINAPI SortThread(LPVOID lp)
 {
     SortTaskInfo* pTaskInfo = (SortTaskInfo*)lp;
@@ -354,8 +380,10 @@ DWORD WINAPI SortThread(LPVOID lp)
     setlocale(LC_ALL, "zh-CN");
 
     printf("Sort thread start\n");
+    sqlite3* hSql = nullptr;
+    int ret = sqlite3_open_v2((pTaskInfo->sqlPath).c_str(), &hSql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 
-    do
+    if(ret == SQLITE_OK)
     {
         LARGE_INTEGER timeStart;
         LARGE_INTEGER timeEnd;
@@ -370,13 +398,21 @@ DWORD WINAPI SortThread(LPVOID lp)
             std::wstring path(usnInfo.fileNameWstr);
             GetCurrentFilePathV2(path, L"F:", usnInfo.pSelfRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
 
-            (*pTaskInfo->pSortTask)[it->first].filePathWstr = path;
+            usnInfo.filePathWstr = path;
+            SQLiteInsertV2(hSql, &usnInfo);
+            // (*pTaskInfo->pSortTask)[it->first].filePathWstr = path;
         }
 
         QueryPerformanceCounter(&timeEnd);
         double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
         std::cout << "Sort task "<< pTaskInfo->taskIndex <<" over : " << elapsed << " S" << std::endl;
-    } while (0);
+
+        sqlite3_close_v2(hSql);
+    }
+    else
+    {
+        std::cout << "Cannot connect to sqlite db" << std::endl;
+    }
 
     printf("Query thread stop\n");
     return 0;
@@ -446,6 +482,7 @@ HRESULT MiniThing::SortUsn(VOID)
     {
         SortTaskInfo taskInfo;
         taskInfo.taskIndex = i;
+        taskInfo.sqlPath = m_SQLitePath;
         taskInfo.pSortTask = &(sortTaskSet[i]);
         taskInfo.pAllUsnRecordMap = &m_usnRecordMap;
         taskInfo.rootRef = m_rootFileNode;
@@ -454,6 +491,12 @@ HRESULT MiniThing::SortUsn(VOID)
     }
 
     // 3. Execute all sort tasks by threads
+
+    // Check if sqlite open multiple thread support
+    int threadMode = sqlite3_threadsafe();
+    // threadMode == 2 means multiple thread mode, we should add macro SQLITE_THREADSAFE=2 before compile
+    assert(threadMode == 2);
+
     for (int i = 0; i < sortTaskSet.size(); i++)
     {
         HANDLE taskThread = CreateThread(0, 0, SortThread, &(sortTaskVec[i]), CREATE_SUSPENDED, 0);
@@ -476,31 +519,13 @@ HRESULT MiniThing::SortUsn(VOID)
         CloseHandle(*it);
     }
 
+    // 5. After file node sorted, the map can be destroyed
     taskHandleVec.clear();
     sortTaskVec.clear();
-
-    int num = 0;
-    // 5. Get all sort results
-    for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
-    {
-        auto tmp = *it;
-        for (auto it1 = tmp.begin(); it1 != tmp.end(); it1++)
-        {
-            num++;
-            UsnInfo usnInfo = it1->second;
-            SQLiteInsert(&usnInfo);
-#if _DEBUG
-            // Print file node info
-            // std::wcout << usnInfo.filePathWstr << std::endl;
-#endif
-        }
-    }
-
-    // After file node sorted, the map can be destroyed
     sortTaskSet.clear();
     m_usnRecordMap.clear();
 
-    std::wcout << "Sort file node sum : " << fileNodeCnt << "  " << num << std::endl;
+    std::wcout << "Sort file node sum : " << fileNodeCnt << std::endl;
 
     return ret;
 }
