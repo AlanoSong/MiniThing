@@ -7,6 +7,7 @@ MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
 
     // Set chinese debug output
     std::wcout.imbue(std::locale("chs"));
+    setlocale(LC_ALL, "zh-CN");
 
     // Get folder handle
     if (FAILED(GetHandle()))
@@ -93,14 +94,16 @@ HRESULT MiniThing::GetHandle()
         FILE_FLAG_BACKUP_SEMANTICS,
         nullptr);
 
+
     if (INVALID_HANDLE_VALUE != m_hVol)
     {
-        std::wcout << L"Get handle : " << m_volumeName << std::endl;
+        printf("Get handle success : %s\n", WstringToString(m_volumeName).c_str());
         return S_OK;
     }
     else
     {
-        std::wcout << L"Get handle failed : " << m_volumeName << std::endl;
+        printf("Get handle failed : %s\n", WstringToString(m_volumeName).c_str());
+        GetSystemError();
         return E_FAIL;
     }
 }
@@ -493,7 +496,7 @@ HRESULT MiniThing::SortUsn(VOID)
     }
 
     // 2. Get suitable thread task granularity
-    int hwThreadNum = std::thread::hardware_concurrency();
+    int hwThreadNum = std::thread::hardware_concurrency() * 8;
     int granularity = m_usnRecordMap.size() / hwThreadNum;
     int step = 100;
     while (granularity * hwThreadNum < m_usnRecordMap.size())
