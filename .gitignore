@@ -363,3 +363,4 @@ FodyWeavers.xsd
 
 # SQLite db
 *.db
+*.db-journal

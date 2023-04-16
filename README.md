@@ -3,6 +3,7 @@
 #### 1. 介绍
 - Windows平台的Everything文件查找速度非常快，优势在于利用了NTFS的USN日志，以及Windows上的文件监测机制
 - 这个项目仿照类似原理，通过查询USN日志、监测Windows平台文件修改、使用SQLite数据库存储文件节点，并提供文件信息查询功能
+![](./Docs/Pictures/Architecture.png)
 
 #### 2. 如何使用
 ##### 2.1 编译
