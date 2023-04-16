@@ -26,7 +26,7 @@
 - [ ] 添加开源的日志打印，或者自写轻量级的打印宏
 - [x] 研究sqlite接口，将数据库完全port到sqlite中
 - [x] 开启query thread，实现命令行查询
-- [x] 用多线程加速文件节点排序、sqlite初始化
+- [x] 开启task thread，加速文件节点排序、sqlite初始化
 - [ ] 开启update thread，文件节点排序放到后台，加速进入软件
 - [ ] 基本bug清掉，代码结构优化
 - [ ] 调查MFC、QT，选一个实现ui界面
