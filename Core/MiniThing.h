@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define SORT_TASK_GRANULARITY           ( 4096 )
+#define SORT_TASK_GRANULARITY           ( 1024 )
 
 struct UsnInfo
 {
