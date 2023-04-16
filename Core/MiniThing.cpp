@@ -379,18 +379,25 @@ DWORD WINAPI SortThread(LPVOID lp)
     std::wcout.imbue(std::locale("chs"));
     setlocale(LC_ALL, "zh-CN");
 
-    printf("Sort thread start\n");
+    printf("Sort task %d start\n", pTaskInfo->taskIndex);
+
     sqlite3* hSql = nullptr;
     int ret = sqlite3_open_v2((pTaskInfo->sqlPath).c_str(), &hSql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 
     if(ret == SQLITE_OK)
     {
+        // 1. Get start time
         LARGE_INTEGER timeStart;
         LARGE_INTEGER timeEnd;
         LARGE_INTEGER frequency;
         QueryPerformanceFrequency(&frequency);
         double quadpart = (double)frequency.QuadPart;
         QueryPerformanceCounter(&timeStart);
+
+        int insertCnt = 0;
+        std::string insertStr;
+        insertStr.clear();
+        char* errMsg = nullptr;
 
         for (auto it = (*pTaskInfo->pSortTask).begin(); it != (*pTaskInfo->pSortTask).end(); it++)
         {
@@ -399,22 +406,60 @@ DWORD WINAPI SortThread(LPVOID lp)
             GetCurrentFilePathV2(path, L"F:", usnInfo.pSelfRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
 
             usnInfo.filePathWstr = path;
-            SQLiteInsertV2(hSql, &usnInfo);
-            // (*pTaskInfo->pSortTask)[it->first].filePathWstr = path;
+
+            // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+            char sql[1024] = { 0 };
+            std::string nameUtf8 = UnicodeToUtf8(usnInfo.fileNameWstr);
+            std::string pathUtf8 = UnicodeToUtf8(path);
+            sprintf_s(sql, "INSERT INTO UsnInfo VALUES(%llu, %llu, %lld, '%s', '%s');",
+                usnInfo.pSelfRef, usnInfo.pParentRef, usnInfo.timeStamp, nameUtf8.c_str(), pathUtf8.c_str());
+            std::string insertTmp = sql;
+            insertCnt++;
+
+            insertStr += insertTmp;
+
+            if (insertCnt % SQL_BATCH_INSERT_GRANULARITY == 0)
+            {
+                if (sqlite3_exec(hSql, insertStr.c_str(), NULL, NULL, &errMsg) != SQLITE_OK)
+                {
+                    printf("sqlite : insert failed\n");
+                    printf("error : %s\n", errMsg);
+                }
+                else
+                {
+                    // printf("sqlite : insert done\n");
+                }
+
+                insertStr.clear();
+            }
         }
+
+        if (!insertStr.empty())
+        {
+            if (sqlite3_exec(hSql, insertStr.c_str(), NULL, NULL, &errMsg) != SQLITE_OK)
+            {
+                printf("sqlite : insert failed\n");
+                printf("error : %s\n", errMsg);
+            }
+            else
+            {
+                // printf("sqlite : insert done\n");
+            }
+
+            insertStr.clear();
+        }
+
+        sqlite3_close_v2(hSql);
 
         QueryPerformanceCounter(&timeEnd);
         double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
-        std::cout << "Sort task "<< pTaskInfo->taskIndex <<" over : " << elapsed << " S" << std::endl;
-
-        sqlite3_close_v2(hSql);
+        printf("Sort task %d over, %f S\n", pTaskInfo->taskIndex, elapsed);
     }
     else
     {
         std::cout << "Cannot connect to sqlite db" << std::endl;
     }
 
-    printf("Query thread stop\n");
     return 0;
 }
 

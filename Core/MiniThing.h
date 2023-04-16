@@ -15,7 +15,8 @@
 
 using namespace std;
 
-#define SORT_TASK_GRANULARITY           ( 4096 )
+#define SORT_TASK_GRANULARITY           ( 1024 )
+#define SQL_BATCH_INSERT_GRANULARITY    ( 256 )
 
 struct UsnInfo
 {
