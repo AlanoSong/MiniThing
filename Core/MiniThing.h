@@ -29,9 +29,6 @@ struct UsnInfo
     // File path & name
     wstring fileNameWstr;
     wstring filePathWstr;
-
-    string fileNameStr;
-    string filePathStr;
 };
 
 typedef enum _QUERY_TYPE

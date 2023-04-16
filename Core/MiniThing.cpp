@@ -267,11 +267,9 @@ HRESULT MiniThing::RecordUsn(VOID)
             pWchar[pUsnRecord->FileNameLength / 2] = 0x00;
             // wcsncpy_s(pWchar, pUsnRecord->FileNameLength / 2, pUsnRecord->FileName, pUsnRecord->FileNameLength / 2);
             std::wstring fileNameWstr = WcharToWstring(pWchar);
-            std::string fileNameStr = WstringToString(fileNameWstr);
             delete pWchar;
 
             UsnInfo usnInfo = { 0 };
-            usnInfo.fileNameStr = fileNameStr;
             usnInfo.fileNameWstr = fileNameWstr;
             usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
             usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
@@ -481,12 +479,14 @@ HRESULT MiniThing::SortUsn(VOID)
     taskHandleVec.clear();
     sortTaskVec.clear();
 
+    int num = 0;
     // 5. Get all sort results
     for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
     {
         auto tmp = *it;
         for (auto it1 = tmp.begin(); it1 != tmp.end(); it1++)
         {
+            num++;
             UsnInfo usnInfo = it1->second;
             SQLiteInsert(&usnInfo);
 #if _DEBUG
@@ -500,7 +500,7 @@ HRESULT MiniThing::SortUsn(VOID)
     sortTaskSet.clear();
     m_usnRecordMap.clear();
 
-    std::wcout << "Sort file node sum : " << fileNodeCnt << std::endl;
+    std::wcout << "Sort file node sum : " << fileNodeCnt << "  " << num << std::endl;
 
     return ret;
 }
