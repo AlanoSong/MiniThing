@@ -33,6 +33,16 @@ struct UsnInfo
     wstring filePathWstr;
 };
 
+typedef struct
+{
+    UINT taskIndex;
+    std::string sqlPath;
+    std::wstring rootFolderName;
+    DWORDLONG rootRef;
+    unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
+    unordered_map<DWORDLONG, UsnInfo>* pSortTask;
+} SortTaskInfo;
+
 typedef enum _QUERY_TYPE
 {
     BY_NAME = 0,
@@ -124,13 +134,4 @@ private:
     std::wstring GetFileNameAccordPath(std::wstring path);
     std::wstring GetPathAccordPath(std::wstring path);
 };
-
-typedef struct
-{
-    UINT taskIndex;
-    string sqlPath;
-    DWORDLONG rootRef;
-    unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
-    unordered_map<DWORDLONG, UsnInfo>* pSortTask;
-} SortTaskInfo;
 

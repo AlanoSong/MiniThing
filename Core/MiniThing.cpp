@@ -27,7 +27,7 @@ MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
         assert(0);
     }
 
-    if (! IsSqlExist())
+    if (!IsSqlExist())
     {
         // Create system usn info
         if (FAILED(CreateUsn()))
@@ -348,7 +348,7 @@ VOID GetCurrentFilePathV2(std::wstring& path, std::wstring volName, DWORDLONG cu
     }
 }
 
-HRESULT SQLiteInsertV2(sqlite3 *hSql, UsnInfo* pUsnInfo)
+HRESULT SQLiteInsertV2(sqlite3* hSql, UsnInfo* pUsnInfo)
 {
     HRESULT ret = S_OK;
 
@@ -384,8 +384,7 @@ DWORD WINAPI SortThread(LPVOID lp)
 
     printf("Sort task %d start\n", pTaskInfo->taskIndex);
 
-    sqlite3* hSql = nullptr;
-    int ret = sqlite3_open_v2((pTaskInfo->sqlPath).c_str(), &hSql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+    int ret = 0;
 
     if(ret == SQLITE_OK)
     {
@@ -397,62 +396,13 @@ DWORD WINAPI SortThread(LPVOID lp)
         double quadpart = (double)frequency.QuadPart;
         QueryPerformanceCounter(&timeStart);
 
-        int insertCnt = 0;
-        std::string insertStr;
-        insertStr.clear();
-        char* errMsg = nullptr;
-
         for (auto it = (*pTaskInfo->pSortTask).begin(); it != (*pTaskInfo->pSortTask).end(); it++)
         {
             UsnInfo usnInfo = it->second;
             std::wstring path(usnInfo.fileNameWstr);
-            GetCurrentFilePathV2(path, L"F:", usnInfo.pSelfRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
-
-            usnInfo.filePathWstr = path;
-
-            // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-            char sql[1024] = { 0 };
-            std::string nameUtf8 = UnicodeToUtf8(usnInfo.fileNameWstr);
-            std::string pathUtf8 = UnicodeToUtf8(path);
-            sprintf_s(sql, "INSERT INTO UsnInfo VALUES(%llu, %llu, %lld, '%s', '%s');",
-                usnInfo.pSelfRef, usnInfo.pParentRef, usnInfo.timeStamp, nameUtf8.c_str(), pathUtf8.c_str());
-            std::string insertTmp = sql;
-            insertCnt++;
-
-            insertStr += insertTmp;
-
-            if (insertCnt % SQL_BATCH_INSERT_GRANULARITY == 0)
-            {
-                if (sqlite3_exec(hSql, insertStr.c_str(), NULL, NULL, &errMsg) != SQLITE_OK)
-                {
-                    printf("sqlite : insert failed\n");
-                    printf("error : %s\n", errMsg);
-                }
-                else
-                {
-                    // printf("sqlite : insert done\n");
-                }
-
-                insertStr.clear();
-            }
+            GetCurrentFilePathV2(path, pTaskInfo->rootFolderName, usnInfo.pParentRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
+            (*pTaskInfo->pSortTask)[it->first].filePathWstr = path;
         }
-
-        if (!insertStr.empty())
-        {
-            if (sqlite3_exec(hSql, insertStr.c_str(), NULL, NULL, &errMsg) != SQLITE_OK)
-            {
-                printf("sqlite : insert failed\n");
-                printf("error : %s\n", errMsg);
-            }
-            else
-            {
-                // printf("sqlite : insert done\n");
-            }
-
-            insertStr.clear();
-        }
-
-        sqlite3_close_v2(hSql);
 
         QueryPerformanceCounter(&timeEnd);
         double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
@@ -496,7 +446,7 @@ HRESULT MiniThing::SortUsn(VOID)
     }
 
     // 2. Get suitable thread task granularity
-    int hwThreadNum = std::thread::hardware_concurrency() * 8;
+    int hwThreadNum = std::thread::hardware_concurrency();
     int granularity = m_usnRecordMap.size() / hwThreadNum;
     int step = 100;
     while (granularity * hwThreadNum < m_usnRecordMap.size())
@@ -539,6 +489,7 @@ HRESULT MiniThing::SortUsn(VOID)
     {
         SortTaskInfo taskInfo;
         taskInfo.taskIndex = i;
+        taskInfo.rootFolderName = m_volumeName;
         taskInfo.sqlPath = m_SQLitePath;
         taskInfo.pSortTask = &(sortTaskSet[i]);
         taskInfo.pAllUsnRecordMap = &m_usnRecordMap;
@@ -548,12 +499,6 @@ HRESULT MiniThing::SortUsn(VOID)
     }
 
     // 4. Execute all sort tasks by threads
-
-    // Check if sqlite open multiple thread support
-    int threadMode = sqlite3_threadsafe();
-    // threadMode == 2 means multiple thread mode, we should add macro SQLITE_THREADSAFE=2 before compile
-    assert(threadMode == 2);
-
     for (int i = 0; i < sortTaskSet.size(); i++)
     {
         HANDLE taskThread = CreateThread(0, 0, SortThread, &(sortTaskVec[i]), CREATE_SUSPENDED, 0);
@@ -576,7 +521,51 @@ HRESULT MiniThing::SortUsn(VOID)
         CloseHandle(*it);
     }
 
-    // 6. After file node sorted, the map can be destroyed
+    printf("Insert begin...\n");
+    // 6. Write all file node info into sqlite
+    char* errMsg = nullptr;
+    int insertNodeCnt = 0;
+    char sql[1024] = { 0 };
+
+    // Turn off sqlite write sync
+    sqlite3_exec(m_hSQLite, "PRAGMA synchronous = OFF", NULL, NULL, &errMsg);
+    sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
+
+    sprintf_s(sql, "INSERT INTO UsnInfo (SelfRef, ParentRef, TimeStamp, FileName, FilePath) VALUES(?, ?, ?, ?, ?);");
+    sqlite3_stmt* pPrepare = nullptr;
+    sqlite3_prepare_v2(m_hSQLite, sql, strlen(sql), &pPrepare, 0);
+
+    for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
+    {
+        for (auto i = (*it).begin(); i != (*it).end(); i++)
+        {
+            ++insertNodeCnt;
+            UsnInfo usnInfo = i->second;
+
+            std::string nameUtf8 = UnicodeToUtf8(usnInfo.fileNameWstr);
+            std::string pathUtf8 = UnicodeToUtf8(usnInfo.filePathWstr);
+
+            // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+            sqlite3_reset(pPrepare);
+            sqlite3_bind_int64(pPrepare, 1, usnInfo.pSelfRef);
+            sqlite3_bind_int64(pPrepare, 2, usnInfo.pParentRef);
+            // sqlite3_bind_int64(pPrepare, 3, (sqlite_int64)usnInfo.timeStamp);
+            sqlite3_bind_text(pPrepare, 4, nameUtf8.c_str(), strlen(nameUtf8.c_str()), nullptr);
+            sqlite3_bind_text(pPrepare, 5, pathUtf8.c_str(), strlen(pathUtf8.c_str()), nullptr);
+            int ret = sqlite3_step(pPrepare);
+            assert(ret == SQLITE_DONE);
+
+            if (insertNodeCnt % SQL_BATCH_INSERT_GRANULARITY == 0)
+            {
+                sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
+                sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
+            }
+        }
+    }
+    sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
+    sqlite3_finalize(pPrepare);
+
+    // 7. After file node sorted, the map can be destroyed
     taskHandleVec.clear();
     sortTaskVec.clear();
     sortTaskSet.clear();
