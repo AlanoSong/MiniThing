@@ -871,6 +871,14 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
     while (TRUE)
     {
+        // Check if need exit thread
+        DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hQueryExitEvent, 0x0);
+        if (WAIT_OBJECT_0 == dwWaitCode)
+        {
+            std::cout << "Recv the quit event" << std::endl;
+            break;
+        }
+
         std::wcout << std::endl << L"==============================" << std::endl;
         std::wcout << L"Input query file info here:" << std::endl;
 
