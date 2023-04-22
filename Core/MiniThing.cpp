@@ -656,8 +656,6 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
     case FILE_ACTION_REMOVED:
     {
         // Update sql db
-        // TODO:
-        //      if remove a folder?
         UsnInfo tmpUsn = { 0 };
         tmpUsn.filePathWstr = filePath;
         if (FAILED(SQLiteDelete(&tmpUsn)))
@@ -731,11 +729,13 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             // Change file name
             fileNameWstr = pNotifyInfo->FileName;
             fileNameWstr[pNotifyInfo->FileNameLength / 2] = 0;
+            fileNameWstr.resize(pNotifyInfo->FileNameLength / 2 + 1);
 
             // Rename file new name
             auto pInfo = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(reinterpret_cast<char*>(pNotifyInfo) + pNotifyInfo->NextEntryOffset);
             fileRenameWstr = pInfo->FileName;
             fileRenameWstr[pInfo->FileNameLength / 2] = 0;
+            fileRenameWstr.resize(pInfo->FileNameLength / 2 + 1);
 
             switch (pNotifyInfo->Action)
             {
@@ -1140,6 +1140,19 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
     std::string path = UnicodeToUtf8(pUsnInfo->filePathWstr);
     sprintf_s(sql, "DELETE FROM UsnInfo WHERE FilePath = '%s';", path.c_str());
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+    {
+        ret = E_FAIL;
+        printf("sqlite : delete failed\n");
+        printf("error : %s\n", errMsg);
+    }
+    else
+    {
+        // printf("sqlite : delete done\n");
+    }
+
+    char sql1[1024] = { 0 };
+    sprintf_s(sql1, "DELETE FROM UsnInfo WHERE FilePath LIKE '%s\\%%';", path.c_str());
+    if (sqlite3_exec(m_hSQLite, sql1, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
         printf("sqlite : delete failed\n");
