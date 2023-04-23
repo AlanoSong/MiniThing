@@ -619,7 +619,7 @@ std::wstring MiniThing::GetPathAccordPath(std::wstring path)
     return path.substr(0, path.length() - name.length());
 }
 
-VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring reFileName, DWORD op)
+VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring fileRePath, DWORD op)
 {
     switch (op)
     {
@@ -642,11 +642,13 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
     case FILE_ACTION_RENAMED_OLD_NAME:
     {
         // Update sql db
-        // TODO:
-        //      if rename a folder?
-        UsnInfo usnInfo = { 0 };
-        usnInfo.fileNameWstr = reFileName;
-        if (FAILED(SQLiteUpdate(&usnInfo, filePath)))
+        UsnInfo oriInfo = { 0 };
+        oriInfo.fileNameWstr = GetFileNameAccordPath(filePath);
+        oriInfo.filePathWstr = filePath;
+        UsnInfo reInfo = { 0 };
+        reInfo.fileNameWstr = GetFileNameAccordPath(fileRePath);
+        reInfo.filePathWstr = fileRePath;
+        if (FAILED(SQLiteUpdateV2(&oriInfo, &reInfo)))
         {
             assert(0);
         }
@@ -676,8 +678,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
     char notifyInfo[1024];
 
-    wstring fileNameWstr;
-    wstring fileRenameWstr;
+    wstring filePathWstr;
+    wstring fileRePathWstr;
 
     // Set chinese debug output
     std::wcout.imbue(std::locale("chs"));
@@ -727,26 +729,26 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             nullptr))
         {
             // Change file name
-            fileNameWstr = pNotifyInfo->FileName;
-            fileNameWstr[pNotifyInfo->FileNameLength / 2] = 0;
-            fileNameWstr.resize(pNotifyInfo->FileNameLength / 2 + 1);
+            filePathWstr = pNotifyInfo->FileName;
+            filePathWstr[pNotifyInfo->FileNameLength / 2] = 0;
+            filePathWstr.resize(pNotifyInfo->FileNameLength / 2 + 1);
 
             // Rename file new name
             auto pInfo = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(reinterpret_cast<char*>(pNotifyInfo) + pNotifyInfo->NextEntryOffset);
-            fileRenameWstr = pInfo->FileName;
-            fileRenameWstr[pInfo->FileNameLength / 2] = 0;
-            fileRenameWstr.resize(pInfo->FileNameLength / 2 + 1);
+            fileRePathWstr = pInfo->FileName;
+            fileRePathWstr[pInfo->FileNameLength / 2] = 0;
+            fileRePathWstr.resize(pInfo->FileNameLength / 2 + 1);
 
             switch (pNotifyInfo->Action)
             {
             case FILE_ACTION_ADDED:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
+                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos)
                 {
                     std::wstring addPath;
                     addPath.clear();
                     addPath.append(pMiniThing->GetVolName());
                     addPath.append(L"\\");
-                    addPath.append(fileNameWstr);
+                    addPath.append(filePathWstr);
 
                     // Here use printf to suit multi-thread
                     wprintf(L"\nAdd file : %s\n", addPath.c_str());
@@ -756,14 +758,14 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 break;
 
             case FILE_ACTION_MODIFIED:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos &&
-                    fileNameWstr.find(L"fileAdded.txt") == wstring::npos &&
-                    fileNameWstr.find(L"fileRemoved.txt") == wstring::npos)
+                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos &&
+                    filePathWstr.find(L"fileAdded.txt") == wstring::npos &&
+                    filePathWstr.find(L"fileRemoved.txt") == wstring::npos)
                 {
                     std::wstring modPath;
                     modPath.append(pMiniThing->GetVolName());
                     modPath.append(L"\\");
-                    modPath.append(fileNameWstr);
+                    modPath.append(filePathWstr);
                     // Here use printf to suit multi-thread
                     wprintf(L"Mod file : %s\n", modPath.c_str());
                     //add_record(to_utf8(StringToWString(data)));
@@ -771,13 +773,13 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 break;
 
             case FILE_ACTION_REMOVED:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
+                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos)
                 {
                     std::wstring remPath;
                     remPath.clear();
                     remPath.append(pMiniThing->GetVolName());
                     remPath.append(L"\\");
-                    remPath.append(fileNameWstr);
+                    remPath.append(filePathWstr);
 
                     // Here use printf to suit multi-thread
                     wprintf(L"\nRemove file : %s\n", remPath.c_str());
@@ -787,24 +789,24 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 break;
 
             case FILE_ACTION_RENAMED_OLD_NAME:
-                if (fileNameWstr.find(L"$RECYCLE.BIN") == wstring::npos)
+                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos)
                 {
-                    wstring oriName;
-                    oriName.clear();
-                    oriName.append(pMiniThing->GetVolName());
-                    oriName.append(L"\\");
-                    oriName.append(fileNameWstr);
+                    wstring oriPath;
+                    oriPath.clear();
+                    oriPath.append(pMiniThing->GetVolName());
+                    oriPath.append(L"\\");
+                    oriPath.append(filePathWstr);
 
-                    wstring reName;
-                    reName.clear();
-                    reName.append(pMiniThing->GetVolName());
-                    reName.append(L"\\");
-                    reName.append(fileRenameWstr);
+                    wstring rePath;
+                    rePath.clear();
+                    rePath.append(pMiniThing->GetVolName());
+                    rePath.append(L"\\");
+                    rePath.append(fileRePathWstr);
 
                     // Here use printf to suit multi-thread
-                    wprintf(L"\nRename file : %s -> %s\n", oriName.c_str(), reName.c_str());
+                    wprintf(L"\nRename file : %s -> %s\n", oriPath.c_str(), rePath.c_str());
 
-                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), oriName, reName, FILE_ACTION_RENAMED_OLD_NAME);
+                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), oriPath, rePath, FILE_ACTION_RENAMED_OLD_NAME);
                 }
                 break;
 
@@ -1081,6 +1083,12 @@ HRESULT MiniThing::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec
             sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
             break;
         }
+        case BY_PREPATH:
+        {
+            std::string str = UnicodeToUtf8(queryInfo->info.filePathWstr);
+            sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FilePath LIKE '%s\\%%';", str.c_str());
+            break;
+        }
         default:
             assert(0);
             break;
@@ -1192,7 +1200,7 @@ HRESULT MiniThing::SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath)
     return ret;
 }
 
-HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pUsnInfo, DWORDLONG selfRef)
+HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
 {
     HRESULT ret = S_OK;
 
@@ -1200,8 +1208,15 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pUsnInfo, DWORDLONG selfRef)
     char* errMsg = nullptr;
 
     // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-    std::string newPath = UnicodeToUtf8(pUsnInfo->filePathWstr);
-    sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", newPath.c_str(), selfRef);
+    std::string oriPath = UnicodeToUtf8(pOriInfo->filePathWstr);
+    std::string oriName = UnicodeToUtf8(pOriInfo->fileNameWstr);
+    DWORDLONG oriRef = pOriInfo->pSelfRef;
+
+    std::string newPath = UnicodeToUtf8(pNewInfo->filePathWstr);
+    std::string newName = UnicodeToUtf8(pNewInfo->fileNameWstr);
+
+    // Update file node itself
+    sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", newPath.c_str(), oriRef);
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
@@ -1211,6 +1226,39 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pUsnInfo, DWORDLONG selfRef)
     else
     {
         // printf("sqlite : update done\n");
+    }
+
+    // Update file node under folder if exist
+    std::vector<UsnInfo> vec;
+
+    QueryInfo queryInfo;
+    queryInfo.type = BY_PREPATH;
+    queryInfo.info.filePathWstr = pOriInfo->filePathWstr;
+    SQLiteQueryV2(&queryInfo, vec);
+
+    if (!vec.empty());
+    {
+        for (auto it = vec.begin(); it != vec.end(); it++)
+        {
+            // Assembly new file node path
+            std::wstring tmpPath = (*it).filePathWstr;
+            int len = pOriInfo->filePathWstr.length();
+            int pos = tmpPath.find(pOriInfo->filePathWstr);
+            tmpPath = tmpPath.replace(0, len, pNewInfo->filePathWstr);
+
+
+            sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", UnicodeToUtf8(tmpPath).c_str(), (*it).pSelfRef);
+            if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+            {
+                ret = E_FAIL;
+                printf("sqlite : update failed\n");
+                printf("error : %s\n", errMsg);
+            }
+            else
+            {
+                // printf("sqlite : update done\n");
+            }
+        }
     }
 
     return ret;

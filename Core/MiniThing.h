@@ -47,6 +47,7 @@ typedef enum _QUERY_TYPE
 {
     BY_NAME = 0,
     BY_REF,
+    BY_PREPATH,
 }QUERY_TYPE;
 
 typedef struct _QueryInfo
@@ -83,7 +84,7 @@ public:
     HRESULT SQLiteInsert(UsnInfo* pUsnInfo);
     HRESULT SQLiteDelete(UsnInfo* pUsnInfo);
     HRESULT SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath);
-    HRESULT SQLiteUpdateV2(UsnInfo* pUsnInfo, DWORDLONG selfRef);
+    HRESULT SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo);
     HRESULT SQLiteClose(VOID);
     HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
     HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec);
