@@ -12,7 +12,7 @@
 #include <atlstr.h>
 #include <thread>
 
-#include "../SQLite/sqlite3.h"
+#include "../ThirdParty/SQLite/sqlite3.h"
 
 using namespace std;
 
