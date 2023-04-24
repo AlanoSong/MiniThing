@@ -8,8 +8,8 @@
 
 #### 2. 如何使用
 ##### 2.1 编译
-- Visual Studio：打开根目录下的MiniThing.sln，编译选择Build Solution，启动选择Local Windows Debugger
-- CMake：待添加
+- [x] Visual Studio
+- [ ] CMake：待添加
 ##### 2.2 使用
 - 目前仅支持命令行查找，程序启动后，输入要查询的盘符（eg."F:"）
 - 第1次进入会建数据库，等待数据库建好之后，就能输入文件名进行查找
