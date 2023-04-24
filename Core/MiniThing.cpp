@@ -730,14 +730,12 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         {
             // Change file name
             filePathWstr = pNotifyInfo->FileName;
-            filePathWstr[pNotifyInfo->FileNameLength / 2] = 0;
-            filePathWstr.resize(pNotifyInfo->FileNameLength / 2 + 1);
+            filePathWstr.resize(pNotifyInfo->FileNameLength / 2);
 
             // Rename file new name
             auto pInfo = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(reinterpret_cast<char*>(pNotifyInfo) + pNotifyInfo->NextEntryOffset);
             fileRePathWstr = pInfo->FileName;
-            fileRePathWstr[pInfo->FileNameLength / 2] = 0;
-            fileRePathWstr.resize(pInfo->FileNameLength / 2 + 1);
+            fileRePathWstr.resize(pInfo->FileNameLength / 2);
 
             switch (pNotifyInfo->Action)
             {
@@ -1236,18 +1234,17 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
     queryInfo.info.filePathWstr = pOriInfo->filePathWstr;
     SQLiteQueryV2(&queryInfo, vec);
 
-    if (!vec.empty());
+    if (!vec.empty())
     {
         for (auto it = vec.begin(); it != vec.end(); it++)
         {
             // Assembly new file node path
-            std::wstring tmpPath = (*it).filePathWstr;
-            int len = pOriInfo->filePathWstr.length();
-            int pos = tmpPath.find(pOriInfo->filePathWstr);
-            tmpPath = tmpPath.replace(0, len, pNewInfo->filePathWstr);
+            std::wstring path = (*it).filePathWstr;
+            std::wstring find = pOriInfo->filePathWstr;
+            std::wstring re = pNewInfo->filePathWstr;
+            path = path.replace(path.find(find), find.length(), re);
 
-
-            sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", UnicodeToUtf8(tmpPath).c_str(), (*it).pSelfRef);
+            sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", UnicodeToUtf8(path).c_str(), (*it).pSelfRef);
             if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
             {
                 ret = E_FAIL;
