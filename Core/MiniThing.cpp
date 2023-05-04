@@ -1208,13 +1208,12 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
     // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
     std::string oriPath = UnicodeToUtf8(pOriInfo->filePathWstr);
     std::string oriName = UnicodeToUtf8(pOriInfo->fileNameWstr);
-    DWORDLONG oriRef = pOriInfo->pSelfRef;
 
     std::string newPath = UnicodeToUtf8(pNewInfo->filePathWstr);
     std::string newName = UnicodeToUtf8(pNewInfo->fileNameWstr);
 
     // Update file node itself
-    sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", newPath.c_str(), oriRef);
+    sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s', FileName = '%s' WHERE FilePath = '%s';", newPath.c_str(), newName.c_str(), oriPath.c_str());
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
