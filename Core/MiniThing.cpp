@@ -697,7 +697,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         FILE_FLAG_BACKUP_SEMANTICS,
         nullptr);
 
-    // ÈôÍøÂçÖØ¶¨Ïò»òÄ¿±êÎÄ¼şÏµÍ³²»Ö§³Ö¸Ã²Ù×÷£¬º¯ÊıÊ§°Ü£¬Í¬Ê±µ÷ÓÃGetLastError()·µ»ØERROR_INVALID_FUNCTION
+    // è‹¥ç½‘ç»œé‡å®šå‘æˆ–ç›®æ ‡æ–‡ä»¶ç³»ç»Ÿä¸æ”¯æŒè¯¥æ“ä½œï¼Œå‡½æ•°å¤±è´¥ï¼ŒåŒæ—¶è°ƒç”¨GetLastError()è¿”å›ERROR_INVALID_FUNCTION
     if (dirHandle == INVALID_HANDLE_VALUE)
     {
         std::cout << "Error " << GetLastError() << std::endl;
@@ -827,7 +827,7 @@ HRESULT MiniThing::CreateMonitorThread(VOID)
 
     m_hExitEvent = CreateEvent(0, 0, 0, 0);
 
-    // ÒÔ¹ÒÆğ·½Ê½´´½¨Ïß³Ì
+    // ä»¥æŒ‚èµ·æ–¹å¼åˆ›å»ºçº¿ç¨‹
     m_hMonitorThread = CreateThread(0, 0, MonitorThread, this, CREATE_SUSPENDED, 0);
     if (INVALID_HANDLE_VALUE == m_hMonitorThread)
     {
@@ -840,22 +840,22 @@ HRESULT MiniThing::CreateMonitorThread(VOID)
 
 VOID MiniThing::StartMonitorThread(VOID)
 {
-    // Ê¹Ïß³Ì¿ªÊ¼ÔËĞĞ
+    // ä½¿çº¿ç¨‹å¼€å§‹è¿è¡Œ
     ResumeThread(m_hMonitorThread);
 }
 
 VOID MiniThing::StopMonitorThread(VOID)
 {
-    // Ê¹ÊÂ¼ş´¦ÓÚ¼¤·¢µÄ×´Ì¬
+    // ä½¿äº‹ä»¶å¤„äºæ¿€å‘çš„çŠ¶æ€
     SetEvent(m_hExitEvent);
 
-    // µÈ´ıÏß³ÌÔËĞĞ½áÊø
+    // ç­‰å¾…çº¿ç¨‹è¿è¡Œç»“æŸ
     DWORD dwWaitCode = WaitForSingleObject(m_hMonitorThread, INFINITE);
 
-    // ¶ÏÑÔÅĞ¶ÏÏß³ÌÊÇ·ñÕı³£½áÊø
+    // æ–­è¨€åˆ¤æ–­çº¿ç¨‹æ˜¯å¦æ­£å¸¸ç»“æŸ
     assert(dwWaitCode == WAIT_OBJECT_0);
 
-    // ÊÍ·ÅÏß³Ì¾ä±ú
+    // é‡Šæ”¾çº¿ç¨‹å¥æŸ„
     CloseHandle(m_hMonitorThread);
 }
 
@@ -926,7 +926,7 @@ HRESULT MiniThing::CreateQueryThread(VOID)
 
     m_hQueryExitEvent = CreateEvent(0, 0, 0, 0);
 
-    // ÒÔ¹ÒÆğ·½Ê½´´½¨Ïß³Ì
+    // ä»¥æŒ‚èµ·æ–¹å¼åˆ›å»ºçº¿ç¨‹
     m_hQueryThread = CreateThread(0, 0, QueryThread, this, CREATE_SUSPENDED, 0);
     if (INVALID_HANDLE_VALUE == m_hQueryThread)
     {
@@ -939,22 +939,22 @@ HRESULT MiniThing::CreateQueryThread(VOID)
 
 VOID MiniThing::StartQueryThread(VOID)
 {
-    // Ê¹Ïß³Ì¿ªÊ¼ÔËĞĞ
+    // ä½¿çº¿ç¨‹å¼€å§‹è¿è¡Œ
     ResumeThread(m_hQueryThread);
 }
 
 VOID MiniThing::StopQueryThread(VOID)
 {
-    // Ê¹ÊÂ¼ş´¦ÓÚ¼¤·¢µÄ×´Ì¬
+    // ä½¿äº‹ä»¶å¤„äºæ¿€å‘çš„çŠ¶æ€
     SetEvent(m_hQueryExitEvent);
 
-    // µÈ´ıÏß³ÌÔËĞĞ½áÊø
+    // ç­‰å¾…çº¿ç¨‹è¿è¡Œç»“æŸ
     DWORD dwWaitCode = WaitForSingleObject(m_hQueryThread, INFINITE);
 
-    // ¶ÏÑÔÅĞ¶ÏÏß³ÌÊÇ·ñÕı³£½áÊø
+    // æ–­è¨€åˆ¤æ–­çº¿ç¨‹æ˜¯å¦æ­£å¸¸ç»“æŸ
     assert(dwWaitCode == WAIT_OBJECT_0);
 
-    // ÊÍ·ÅÏß³Ì¾ä±ú
+    // é‡Šæ”¾çº¿ç¨‹å¥æŸ„
     CloseHandle(m_hQueryThread);
 }
 
@@ -1241,9 +1241,10 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
             std::wstring path = (*it).filePathWstr;
             std::wstring find = pOriInfo->filePathWstr;
             std::wstring re = pNewInfo->filePathWstr;
-            path = path.replace(path.find(find), find.length(), re);
+            std::wstring newPath = path.replace(path.find(find), find.length(), re);
+            std::wstring newName = GetFileNameAccordPath(newPath);
 
-            sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s' WHERE SelfRef = %llu;", UnicodeToUtf8(path).c_str(), (*it).pSelfRef);
+            sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s', FileName = '%s' WHERE SelfRef = %llu;", UnicodeToUtf8(newPath).c_str(), UnicodeToUtf8(newName).c_str(), (*it).pSelfRef);
             if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
             {
                 ret = E_FAIL;
