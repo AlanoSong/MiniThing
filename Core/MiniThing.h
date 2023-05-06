@@ -43,6 +43,15 @@ typedef struct
     unordered_map<DWORDLONG, UsnInfo>* pSortTask;
 } SortTaskInfo;
 
+typedef struct
+{
+    VOID* pMiniThing;
+    DWORD op;
+    std::wstring folder;
+    std::wstring oriPath;
+    std::wstring newPath;
+} UpdateDataBaseTaskInfo;
+
 typedef enum _QUERY_TYPE
 {
     BY_NAME = 0,
@@ -76,6 +85,15 @@ public:
     HRESULT CreateQueryThread(VOID);
     VOID StartQueryThread(VOID);
     VOID StopQueryThread(VOID);
+
+    DWORDLONG GetNewFileRef(VOID)
+    {
+        return m_unusedFileRefNum--;
+    }
+    DWORDLONG GetParentFileRef(VOID)
+    {
+        return m_constFileRefNumMax;
+    }
 
     // For SQLite
     sqlite3* m_hSQLite;
@@ -131,8 +149,5 @@ private:
     HRESULT DeleteUsn(VOID);
 
     VOID GetSystemError(VOID);
-
-    std::wstring GetFileNameAccordPath(std::wstring path);
-    std::wstring GetPathAccordPath(std::wstring path);
 };
 

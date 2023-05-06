@@ -527,8 +527,6 @@ HRESULT MiniThing::SortUsn(VOID)
     int insertNodeCnt = 0;
     char sql[1024] = { 0 };
 
-    // Turn off sqlite write sync
-    sqlite3_exec(m_hSQLite, "PRAGMA synchronous = OFF", NULL, NULL, &errMsg);
     sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
 
     sprintf_s(sql, "INSERT INTO UsnInfo (SelfRef, ParentRef, TimeStamp, FileName, FilePath) VALUES(?, ?, ?, ?, ?);");
@@ -608,12 +606,12 @@ HRESULT MiniThing::DeleteUsn(VOID)
     return ret;
 }
 
-std::wstring MiniThing::GetFileNameAccordPath(std::wstring path)
+static std::wstring GetFileNameAccordPath(std::wstring path)
 {
     return path.substr(path.find_last_of(L"\\") + 1);
 }
 
-std::wstring MiniThing::GetPathAccordPath(std::wstring path)
+static std::wstring GetPathAccordPath(std::wstring path)
 {
     wstring name = GetFileNameAccordPath(path);
     return path.substr(0, path.length() - name.length());
@@ -672,6 +670,75 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
     }
 }
 
+DWORD WINAPI UpdateDataBaseThread(LPVOID lp)
+{
+    // Set chinese debug output
+    std::wcout.imbue(std::locale("chs"));
+    setlocale(LC_ALL, "zh-CN");
+
+    UpdateDataBaseTaskInfo* pTaskInfo = (UpdateDataBaseTaskInfo*)lp;
+    MiniThing* pMiniThing = (MiniThing*)pTaskInfo->pMiniThing;
+
+    switch (pTaskInfo->op)
+    {
+    case FILE_ACTION_ADDED:
+    {
+        wprintf(L"Add: '%s'\n", pTaskInfo->oriPath.c_str());
+
+        UsnInfo tmp = { 0 };
+        tmp.filePathWstr = pTaskInfo->oriPath;
+        tmp.fileNameWstr = GetFileNameAccordPath(pTaskInfo->oriPath);
+        tmp.pParentRef = pMiniThing->GetParentFileRef();
+        tmp.pSelfRef = pMiniThing->GetNewFileRef();
+
+        if (FAILED(pMiniThing->SQLiteInsert(&tmp)))
+        {
+            assert(0);
+        }
+        break;
+    }
+
+    case FILE_ACTION_RENAMED_OLD_NAME:
+    {
+        wprintf(L"Ren: '%s' -> '%s'\n", pTaskInfo->oriPath.c_str(), pTaskInfo->newPath.c_str());
+
+        UsnInfo oriInfo = { 0 };
+        oriInfo.fileNameWstr = GetFileNameAccordPath(pTaskInfo->oriPath);
+        oriInfo.filePathWstr = pTaskInfo->oriPath;
+
+        UsnInfo reInfo = { 0 };
+        reInfo.fileNameWstr = GetFileNameAccordPath(pTaskInfo->newPath);
+        reInfo.filePathWstr = pTaskInfo->newPath;
+
+        if (FAILED(pMiniThing->SQLiteUpdateV2(&oriInfo, &reInfo)))
+        {
+            assert(0);
+        }
+        break;
+    }
+
+    case FILE_ACTION_REMOVED:
+    {
+        wprintf(L"Rem: '%s'\n", pTaskInfo->oriPath.c_str());
+
+        UsnInfo tmpUsn = { 0 };
+        tmpUsn.filePathWstr = pTaskInfo->oriPath;
+        if (FAILED(pMiniThing->SQLiteDelete(&tmpUsn)))
+        {
+            assert(0);
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    delete pTaskInfo;
+
+    return 0;
+}
+
 DWORD WINAPI MonitorThread(LPVOID lp)
 {
     MiniThing* pMiniThing = (MiniThing*)lp;
@@ -697,10 +764,9 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         FILE_FLAG_BACKUP_SEMANTICS,
         nullptr);
 
-    // 若网络重定向或目标文件系统不支持该操作，函数失败，同时调用GetLastError()返回ERROR_INVALID_FUNCTION
     if (dirHandle == INVALID_HANDLE_VALUE)
     {
-        std::cout << "Error " << GetLastError() << std::endl;
+        std::cout << "Error: " << GetLastError() << std::endl;
         assert(0);
     }
 
@@ -737,6 +803,11 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             fileRePathWstr = pInfo->FileName;
             fileRePathWstr.resize(pInfo->FileNameLength / 2);
 
+            // We delete pTaskInfo in update thread when task over
+            UpdateDataBaseTaskInfo* pTaskInfo = new UpdateDataBaseTaskInfo;
+            pTaskInfo->pMiniThing = pMiniThing;
+            pTaskInfo->op = 0;
+
             switch (pNotifyInfo->Action)
             {
             case FILE_ACTION_ADDED:
@@ -748,10 +819,10 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     addPath.append(L"\\");
                     addPath.append(filePathWstr);
 
-                    // Here use printf to suit multi-thread
-                    wprintf(L"\nAdd file : %s\n", addPath.c_str());
+                    pTaskInfo->op = FILE_ACTION_ADDED;
+                    pTaskInfo->oriPath = addPath;
 
-                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), addPath, L"", FILE_ACTION_ADDED);
+                    // pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), addPath, L"", FILE_ACTION_ADDED);
                 }
                 break;
 
@@ -764,9 +835,9 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     modPath.append(pMiniThing->GetVolName());
                     modPath.append(L"\\");
                     modPath.append(filePathWstr);
-                    // Here use printf to suit multi-thread
+
+                    // Must use printf here cuase cout is not thread safety
                     wprintf(L"Mod file : %s\n", modPath.c_str());
-                    //add_record(to_utf8(StringToWString(data)));
                 }
                 break;
 
@@ -779,10 +850,10 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     remPath.append(L"\\");
                     remPath.append(filePathWstr);
 
-                    // Here use printf to suit multi-thread
-                    wprintf(L"\nRemove file : %s\n", remPath.c_str());
+                    pTaskInfo->op = FILE_ACTION_REMOVED;
+                    pTaskInfo->oriPath = remPath;
 
-                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), remPath, L"", FILE_ACTION_REMOVED);
+                    // pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), remPath, L"", FILE_ACTION_REMOVED);
                 }
                 break;
 
@@ -801,16 +872,22 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     rePath.append(L"\\");
                     rePath.append(fileRePathWstr);
 
-                    // Here use printf to suit multi-thread
-                    wprintf(L"\nRename file : %s -> %s\n", oriPath.c_str(), rePath.c_str());
+                    pTaskInfo->op = FILE_ACTION_RENAMED_OLD_NAME;
+                    pTaskInfo->oriPath = oriPath;
+                    pTaskInfo->newPath = rePath;
 
-                    pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), oriPath, rePath, FILE_ACTION_RENAMED_OLD_NAME);
+                    // pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), oriPath, rePath, FILE_ACTION_RENAMED_OLD_NAME);
                 }
                 break;
 
             default:
                 std::wcout << L"Unknown command" << std::endl;
             }
+
+            // We dispath those update task in sub thread,
+            //  cause the update sql data base may consume some time,
+            //  and we may lost file change message in this process.
+            CreateThread(0, 0, UpdateDataBaseThread, (VOID*)pTaskInfo, CREATE_NEW_CONSOLE, 0);
         }
     }
 
@@ -963,6 +1040,10 @@ HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
     HRESULT ret = S_OK;
     m_SQLitePath = path;
     int result = sqlite3_open_v2(path, &m_hSQLite, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+
+    // Turn off sqlite write sync
+    char* errMsg = nullptr;
+    sqlite3_exec(m_hSQLite, "PRAGMA synchronous = OFF", NULL, NULL, &errMsg);
 
     if (result == SQLITE_OK)
     {
