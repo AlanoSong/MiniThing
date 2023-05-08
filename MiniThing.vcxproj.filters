@@ -19,6 +19,9 @@
     <Filter Include="ThirdParty\ThreadPool">
       <UniqueIdentifier>{f281a59d-f42c-43c9-9120-8e47accf5a15}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Docs\Pictures">
+      <UniqueIdentifier>{643f23ec-072e-4d5a-91a1-3616cc05f266}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Utility\Utility.cpp">
@@ -69,5 +72,16 @@
     </None>
     <None Include="README.md" />
     <None Include="README.ch.md" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="Docs\Pictures\Use0.png">
+      <Filter>Docs\Pictures</Filter>
+    </Image>
+    <Image Include="Docs\Pictures\Use1.png">
+      <Filter>Docs\Pictures</Filter>
+    </Image>
+    <Image Include="Docs\Pictures\Architecture.png">
+      <Filter>Docs\Pictures</Filter>
+    </Image>
   </ItemGroup>
 </Project>

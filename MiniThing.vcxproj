@@ -150,6 +150,11 @@
     <None Include="README.ch.md" />
     <None Include="README.md" />
   </ItemGroup>
+  <ItemGroup>
+    <Image Include="Docs\Pictures\Architecture.png" />
+    <Image Include="Docs\Pictures\Use0.png" />
+    <Image Include="Docs\Pictures\Use1.png" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
