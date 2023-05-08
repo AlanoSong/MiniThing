@@ -33,6 +33,6 @@
 
 ## 4. Participate in contributing
 - Fork this repository
-- Create a new Feat_xxx branch
+- Create a new Feature_xxx branch
 - Submit the code
 - Create a new pull request
