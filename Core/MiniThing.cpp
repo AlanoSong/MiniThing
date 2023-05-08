@@ -273,7 +273,7 @@ HRESULT MiniThing::RecordUsn(VOID)
             pWchar[pUsnRecord->FileNameLength / 2] = 0x00;
             // wcsncpy_s(pWchar, pUsnRecord->FileNameLength / 2, pUsnRecord->FileName, pUsnRecord->FileNameLength / 2);
             std::wstring fileNameWstr = WcharToWstring(pWchar);
-            delete pWchar;
+            delete [] pWchar;
 
             UsnInfo usnInfo = { 0 };
             usnInfo.fileNameWstr = fileNameWstr;
@@ -752,7 +752,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 {
     MiniThing* pMiniThing = (MiniThing*)lp;
 
-    char notifyInfo[1024];
+    char notifyInfo[1024] = { 0 };
 
     wstring filePathWstr;
     wstring fileRePathWstr;
@@ -932,22 +932,15 @@ HRESULT MiniThing::CreateMonitorThread(VOID)
 
 VOID MiniThing::StartMonitorThread(VOID)
 {
-    // 使线程开始运行
     ResumeThread(m_hMonitorThread);
 }
 
 VOID MiniThing::StopMonitorThread(VOID)
 {
-    // 使事件处于激发的状态
     SetEvent(m_hExitEvent);
-
-    // 等待线程运行结束
     DWORD dwWaitCode = WaitForSingleObject(m_hMonitorThread, INFINITE);
-
-    // 断言判断线程是否正常结束
     assert(dwWaitCode == WAIT_OBJECT_0);
 
-    // 释放线程句柄
     CloseHandle(m_hMonitorThread);
 }
 
@@ -1017,8 +1010,6 @@ HRESULT MiniThing::CreateQueryThread(VOID)
     HRESULT ret = S_OK;
 
     m_hQueryExitEvent = CreateEvent(0, 0, 0, 0);
-
-    // 以挂起方式创建线程
     m_hQueryThread = CreateThread(0, 0, QueryThread, this, CREATE_SUSPENDED, 0);
     if (INVALID_HANDLE_VALUE == m_hQueryThread)
     {
@@ -1031,22 +1022,15 @@ HRESULT MiniThing::CreateQueryThread(VOID)
 
 VOID MiniThing::StartQueryThread(VOID)
 {
-    // 使线程开始运行
     ResumeThread(m_hQueryThread);
 }
 
 VOID MiniThing::StopQueryThread(VOID)
 {
-    // 使事件处于激发的状态
     SetEvent(m_hQueryExitEvent);
-
-    // 等待线程运行结束
     DWORD dwWaitCode = WaitForSingleObject(m_hQueryThread, INFINITE);
-
-    // 断言判断线程是否正常结束
     assert(dwWaitCode == WAIT_OBJECT_0);
 
-    // 释放线程句柄
     CloseHandle(m_hQueryThread);
 }
 
