@@ -11,6 +11,7 @@
 #include <assert.h>
 #include <atlstr.h>
 #include <thread>
+#include <list>
 
 #include "../ThirdParty/SQLite/sqlite3.h"
 
