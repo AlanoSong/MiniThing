@@ -68,5 +68,6 @@
       <Filter>Docs</Filter>
     </None>
     <None Include="README.md" />
+    <None Include="README.ch.md" />
   </ItemGroup>
 </Project>
