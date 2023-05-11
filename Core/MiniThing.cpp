@@ -12,14 +12,13 @@ MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
     std::wcout.imbue(std::locale("chs"));
     setlocale(LC_ALL, "zh-CN");
 
-    // Get folder handle
-    if (FAILED(GetHandle()))
+    if (FAILED(QueryAllVolume()))
     {
         assert(0);
     }
 
-    // Check if folder is ntfs ?
-    if (!IsNtfs())
+    // Get folder handle
+    if (FAILED(GetAllVolumeHandle()))
     {
         assert(0);
     }
@@ -48,7 +47,7 @@ MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
             assert(0);
         }
 
-        if (FAILED(SortUsn()))
+        if (FAILED(SortVolumeSetAndUpdateSql()))
         {
             assert(0);
         }
@@ -71,6 +70,31 @@ MiniThing::~MiniThing(VOID)
 
 }
 
+HRESULT MiniThing::QueryAllVolume(VOID)
+{
+    HRESULT ret = S_OK;
+    // Get all volume
+    wchar_t szLogicDriveStrings[1024];
+    wchar_t* szDrive;
+    ZeroMemory(szLogicDriveStrings, 1024);
+
+    GetLogicalDriveStrings(1024 - 1, szLogicDriveStrings);
+    szDrive = (wchar_t*)szLogicDriveStrings;
+
+    while (*szDrive)
+    {
+        VolumeInfo volInfo;
+        std::wstring name = szDrive;
+        volInfo.volumeName = name.substr(0, name.length() - 1);
+        volInfo.isNtfs = IsNtfs(volInfo.volumeName);
+        m_volumeSet.push_back(volInfo);
+
+        szDrive += (_tcslen(szDrive) + 1);
+    }
+
+    return ret;
+}
+
 BOOL MiniThing::IsWstringSame(std::wstring s1, std::wstring s2)
 {
     CString c1 = s1.c_str();
@@ -84,45 +108,46 @@ BOOL MiniThing::IsSubStr(std::wstring s1, std::wstring s2)
     return (s1.find(s2) != std::wstring::npos);
 }
 
-HRESULT MiniThing::GetHandle()
+HRESULT MiniThing::GetAllVolumeHandle()
 {
-    std::wstring folderPath = L"\\\\.\\";
-    folderPath += m_volumeName;
+    HRESULT ret = S_OK;
 
-    m_hVol = CreateFile(folderPath.c_str(),
-        GENERIC_READ | GENERIC_WRITE,
-        FILE_SHARE_READ | FILE_SHARE_WRITE,
-        nullptr,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        nullptr);
-
-
-    if (INVALID_HANDLE_VALUE != m_hVol)
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        printf("Get handle success : %s\n", WstringToString(m_volumeName).c_str());
-        return S_OK;
+        std::wstring folderPath = L"\\\\.\\";
+        folderPath += it->volumeName;
+
+        it->hVolume = CreateFile(folderPath.c_str(),
+            GENERIC_READ | GENERIC_WRITE,
+            FILE_SHARE_READ | FILE_SHARE_WRITE,
+            nullptr,
+            OPEN_EXISTING,
+            FILE_FLAG_BACKUP_SEMANTICS,
+            nullptr);
+
+        if (INVALID_HANDLE_VALUE != it->hVolume)
+        {
+            printf("Get handle success : %s\n", WstringToString(it->volumeName).c_str());
+        }
+        else
+        {
+            printf("Get handle failed : %s\n", WstringToString(it->volumeName).c_str());
+            GetSystemError();
+            ret = E_FAIL;
+            break;
+        }
     }
-    else
-    {
-        printf("Get handle failed : %s\n", WstringToString(m_volumeName).c_str());
-        GetSystemError();
-        return E_FAIL;
-    }
+
+    return ret;
 }
 
 VOID MiniThing::closeHandle(VOID)
 {
-    if (TRUE == CloseHandle(m_hVol))
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        std::wcout << L"Close handle : " << m_volumeName << std::endl;
+        CloseHandle(it->hVolume);
+        it->hVolume = INVALID_HANDLE_VALUE;
     }
-    else
-    {
-        std::wcout << L"Get handle : " << m_volumeName << std::endl;
-    }
-
-    m_hVol = INVALID_HANDLE_VALUE;
 }
 
 VOID MiniThing::GetSystemError(VOID)
@@ -143,14 +168,14 @@ VOID MiniThing::GetSystemError(VOID)
     _tprintf(_T("ERROR msg : %s\n"), strValue);
 }
 
-BOOL MiniThing::IsNtfs(VOID)
+BOOL MiniThing::IsNtfs(std::wstring volName)
 {
     BOOL isNtfs = FALSE;
     char sysNameBuf[MAX_PATH] = { 0 };
 
-    int len = WstringToChar(m_volumeName + L"\\", nullptr);
+    int len = WstringToChar(volName, nullptr);
     char* pVol = new char[len];
-    WstringToChar(m_volumeName + L"\\", pVol);
+    WstringToChar(volName, pVol);
 
     BOOL status = GetVolumeInformationA(
         pVol,
@@ -188,26 +213,27 @@ HRESULT MiniThing::CreateUsn(VOID)
     CREATE_USN_JOURNAL_DATA cujd;
     cujd.MaximumSize = 0;
     cujd.AllocationDelta = 0;
-    BOOL status = DeviceIoControl(
-        m_hVol,
-        FSCTL_CREATE_USN_JOURNAL,
-        &cujd,
-        sizeof(cujd),
-        NULL,
-        0,
-        &br,
-        NULL);
 
-    if (FALSE != status)
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        std::cout << "Create usn file success" << std::endl;
-        ret = S_OK;
-    }
-    else
-    {
-        std::cout << "Create usn file failed" << std::endl;
-        GetSystemError();
-        ret = E_FAIL;
+        BOOL status = DeviceIoControl(
+            it->hVolume,
+            FSCTL_CREATE_USN_JOURNAL,
+            &cujd,
+            sizeof(cujd),
+            NULL,
+            0,
+            &br,
+            NULL);
+
+        if (FALSE == status)
+        {
+            std::cout << "Create usn file failed" << std::endl;
+            GetSystemError();
+            ret = E_FAIL;
+
+            break;
+        }
     }
 
     return ret;
@@ -217,25 +243,32 @@ HRESULT MiniThing::QueryUsn(VOID)
 {
     HRESULT ret = S_OK;
 
-    DWORD br;
-    BOOL status = DeviceIoControl(m_hVol,
-        FSCTL_QUERY_USN_JOURNAL,
-        NULL,
-        0,
-        &m_usnInfo,
-        sizeof(m_usnInfo),
-        &br,
-        NULL);
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
+    {
+        DWORD br;
+        USN_JOURNAL_DATA usnJournalData;
 
-    if (FALSE != status)
-    {
-        std::cout << "Query usn info success" << std::endl;
-    }
-    else
-    {
-        ret = E_FAIL;
-        std::cout << "Query usn info failed" << std::endl;
-        GetSystemError();
+        BOOL status = DeviceIoControl(it->hVolume,
+            FSCTL_QUERY_USN_JOURNAL,
+            NULL,
+            0,
+            &usnJournalData,
+            sizeof(usnJournalData),
+            &br,
+            NULL);
+
+        if (FALSE == status)
+        {
+            ret = E_FAIL;
+            std::cout << "Query usn info failed" << std::endl;
+            GetSystemError();
+
+            break;
+        }
+        else
+        {
+            it->usnJournalData = usnJournalData;
+        }
     }
 
     return ret;
@@ -243,57 +276,57 @@ HRESULT MiniThing::QueryUsn(VOID)
 
 HRESULT MiniThing::RecordUsn(VOID)
 {
-    MFT_ENUM_DATA med = { 0, 0, m_usnInfo.NextUsn };
-    med.MaxMajorVersion = 2;
-    // Used to record usn info, must big enough
-    char buffer[0x1000];
-    DWORD usnDataSize = 0;
-    PUSN_RECORD pUsnRecord;
-
-    // Find the first USN record
-    // return a USN followed by zero or more change journal records, each in a USN_RECORD structure
-    while (FALSE != DeviceIoControl(m_hVol,
-        FSCTL_ENUM_USN_DATA,
-        &med,
-        sizeof(med),
-        buffer,
-        _countof(buffer),
-        &usnDataSize,
-        NULL))
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        DWORD dwRetBytes = usnDataSize - sizeof(USN);
-        pUsnRecord = (PUSN_RECORD)(((PCHAR)buffer) + sizeof(USN));
-        DWORD cnt = 0;
+        MFT_ENUM_DATA med = { 0, 0, it->usnJournalData.NextUsn };
+        med.MaxMajorVersion = 2;
+        // Used to record usn info, must big enough
+        char buffer[0x1000];
+        DWORD usnDataSize = 0;
+        PUSN_RECORD pUsnRecord;
 
-        while (dwRetBytes > 0)
+        // Find the first USN record
+        // return a USN followed by zero or more change journal records, each in a USN_RECORD structure
+        while (FALSE != DeviceIoControl(it->hVolume,
+            FSCTL_ENUM_USN_DATA,
+            &med,
+            sizeof(med),
+            buffer,
+            _countof(buffer),
+            &usnDataSize,
+            NULL))
         {
-            // Here FileNameLength may count in bytes, and each wchar_t occupy 2 bytes
-            wchar_t* pWchar = new wchar_t[pUsnRecord->FileNameLength / 2 + 1];
-            memcpy(pWchar, pUsnRecord->FileName, pUsnRecord->FileNameLength);
-            pWchar[pUsnRecord->FileNameLength / 2] = 0x00;
-            // wcsncpy_s(pWchar, pUsnRecord->FileNameLength / 2, pUsnRecord->FileName, pUsnRecord->FileNameLength / 2);
-            std::wstring fileNameWstr = WcharToWstring(pWchar);
-            delete [] pWchar;
+            DWORD dwRetBytes = usnDataSize - sizeof(USN);
+            pUsnRecord = (PUSN_RECORD)(((PCHAR)buffer) + sizeof(USN));
+            DWORD cnt = 0;
 
-            UsnInfo usnInfo = { 0 };
-            usnInfo.fileNameWstr = fileNameWstr;
-            usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
-            usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
-            usnInfo.timeStamp = pUsnRecord->TimeStamp;
+            while (dwRetBytes > 0)
+            {
+                // Here FileNameLength may count in bytes, and each wchar_t occupy 2 bytes
+                wchar_t* pWchar = new wchar_t[pUsnRecord->FileNameLength / 2 + 1];
+                memcpy(pWchar, pUsnRecord->FileName, pUsnRecord->FileNameLength);
+                pWchar[pUsnRecord->FileNameLength / 2] = 0x00;
 
-            m_usnRecordMap[usnInfo.pSelfRef] = usnInfo;
+                std::wstring fileNameWstr = WcharToWstring(pWchar);
+                delete[] pWchar;
 
-            // Get the next USN record
-            DWORD recordLen = pUsnRecord->RecordLength;
-            dwRetBytes -= recordLen;
-            pUsnRecord = (PUSN_RECORD)(((PCHAR)pUsnRecord) + recordLen);
+                UsnInfo usnInfo = { 0 };
+                usnInfo.fileNameWstr = fileNameWstr;
+                usnInfo.pParentRef = pUsnRecord->ParentFileReferenceNumber;
+                usnInfo.pSelfRef = pUsnRecord->FileReferenceNumber;
+                usnInfo.timeStamp = pUsnRecord->TimeStamp;
+
+                it->usnRecordMap[usnInfo.pSelfRef] = usnInfo;
+
+                // Get the next USN record
+                DWORD recordLen = pUsnRecord->RecordLength;
+                dwRetBytes -= recordLen;
+                pUsnRecord = (PUSN_RECORD)(((PCHAR)pUsnRecord) + recordLen);
+            }
+
+            // Get next page USN record
+            med.StartFileReferenceNumber = *(USN*)&buffer;
         }
-
-        // Get next page USN record
-        // from MSDN(http://msdn.microsoft.com/en-us/library/aa365736%28v=VS.85%29.aspx ):  
-        // The USN returned as the first item in the output buffer is the USN of the next record number to be retrieved.  
-        // Use this value to continue reading records from the end boundary forward.  
-        med.StartFileReferenceNumber = *(USN*)&buffer;
     }
 
     return S_OK;
@@ -419,6 +452,176 @@ DWORD WINAPI SortThread(LPVOID lp)
     return 0;
 }
 
+HRESULT MiniThing::SortVolumeSetAndUpdateSql(VOID)
+{
+    HRESULT ret = S_OK;
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
+    {
+        SorVolumeAndUpdateSql(*it);
+        it->usnRecordMap.clear();
+    }
+    return ret;
+}
+
+HRESULT MiniThing::SorVolumeAndUpdateSql(VolumeInfo& volume)
+{
+    HRESULT ret = S_OK;
+
+    std::cout << "Generating sql data base......" << std::endl;
+
+    // 1. Get root file node
+    //  cause "System Volume Information" is a system file and just under root folder
+    //  so we use it to find root folder
+    std::wstring cmpStr(L"System Volume Information");
+
+    volume.rootFileRef = 0;
+
+    for (auto ite = volume.usnRecordMap.begin(); ite != volume.usnRecordMap.end(); ite++)
+    {
+        UsnInfo usnInfo = ite->second;
+        if (0 == usnInfo.fileNameWstr.compare(cmpStr))
+        {
+            volume.rootFileRef = usnInfo.pParentRef;
+            break;
+        }
+    }
+
+    if (volume.rootFileRef == 0)
+    {
+        std::cout << "Cannot find root folder" << std::endl;
+        assert(0);
+    }
+
+    volume.rootName = volume.volumeName;
+
+    // 2. Get suitable thread task granularity
+    int hwThreadNum = std::thread::hardware_concurrency();
+    int granularity = volume.usnRecordMap.size() / hwThreadNum;
+    int step = 100;
+    while (granularity * hwThreadNum < volume.usnRecordMap.size())
+    {
+        granularity += 100;
+    }
+
+    // 3. Divide file node into several sort tasks
+    int fileNodeCnt = 0;
+    vector<unordered_map<DWORDLONG, UsnInfo>> sortTaskSet;
+    unordered_map<DWORDLONG, UsnInfo> mapTmp;
+
+    for (auto it = volume.usnRecordMap.begin(); it != volume.usnRecordMap.end(); it++)
+    {
+        UsnInfo usnInfo = it->second;
+        mapTmp[it->first] = it->second;
+        ++fileNodeCnt;
+
+        if (fileNodeCnt % granularity == 0)
+        {
+            sortTaskSet.push_back(mapTmp);
+            mapTmp.clear();
+        }
+        else
+        {
+            continue;
+        }
+    }
+    if (!mapTmp.empty())
+    {
+        fileNodeCnt += mapTmp.size();
+        sortTaskSet.push_back(mapTmp);
+        mapTmp.clear();
+    }
+
+    vector<HANDLE> taskHandleVec;
+    vector<SortTaskInfo> sortTaskVec;
+
+    for (int i = 0; i < sortTaskSet.size(); i++)
+    {
+        SortTaskInfo taskInfo;
+        taskInfo.taskIndex = i;
+        taskInfo.rootFolderName = volume.rootName;
+        taskInfo.sqlPath = m_SQLitePath;
+        taskInfo.pSortTask = &(sortTaskSet[i]);
+        taskInfo.pAllUsnRecordMap = &(volume.usnRecordMap);
+        taskInfo.rootRef = volume.rootFileRef;
+
+        sortTaskVec.push_back(taskInfo);
+    }
+
+    // 4. Execute all sort tasks by threads
+    for (int i = 0; i < sortTaskSet.size(); i++)
+    {
+        HANDLE taskThread = CreateThread(0, 0, SortThread, &(sortTaskVec[i]), CREATE_SUSPENDED, 0);
+        if (taskThread)
+        {
+            ResumeThread(taskThread);
+            taskHandleVec.push_back(taskThread);
+        }
+        else
+        {
+            assert(0);
+        }
+    }
+
+    // 5. Wait all sort thread over
+    for (auto it = taskHandleVec.begin(); it != taskHandleVec.end(); it++)
+    {
+        DWORD dwWaitCode = WaitForSingleObject(*it, INFINITE);
+        assert(dwWaitCode == WAIT_OBJECT_0);
+        CloseHandle(*it);
+    }
+
+    printf("Insert begin...\n");
+    // 6. Write all file node info into sqlite
+    char* errMsg = nullptr;
+    int insertNodeCnt = 0;
+    char sql[1024] = { 0 };
+
+    sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
+
+    sprintf_s(sql, "INSERT INTO UsnInfo (SelfRef, ParentRef, TimeStamp, FileName, FilePath) VALUES(?, ?, ?, ?, ?);");
+    sqlite3_stmt* pPrepare = nullptr;
+    sqlite3_prepare_v2(m_hSQLite, sql, strlen(sql), &pPrepare, 0);
+
+    for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
+    {
+        for (auto i = (*it).begin(); i != (*it).end(); i++)
+        {
+            ++insertNodeCnt;
+            UsnInfo usnInfo = i->second;
+
+            std::string nameUtf8 = UnicodeToUtf8(usnInfo.fileNameWstr);
+            std::string pathUtf8 = UnicodeToUtf8(usnInfo.filePathWstr);
+
+            // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
+            sqlite3_reset(pPrepare);
+            sqlite3_bind_int64(pPrepare, 1, usnInfo.pSelfRef);
+            sqlite3_bind_int64(pPrepare, 2, usnInfo.pParentRef);
+            // sqlite3_bind_int64(pPrepare, 3, (sqlite_int64)usnInfo.timeStamp);
+            sqlite3_bind_text(pPrepare, 4, nameUtf8.c_str(), strlen(nameUtf8.c_str()), nullptr);
+            sqlite3_bind_text(pPrepare, 5, pathUtf8.c_str(), strlen(pathUtf8.c_str()), nullptr);
+            int ret = sqlite3_step(pPrepare);
+            assert(ret == SQLITE_DONE);
+
+            if (insertNodeCnt % SQL_BATCH_INSERT_GRANULARITY == 0)
+            {
+                sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
+                sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
+            }
+        }
+    }
+    sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
+    sqlite3_finalize(pPrepare);
+
+    // 7. After file node sorted, the map can be destroyed
+    taskHandleVec.clear();
+    sortTaskVec.clear();
+    sortTaskSet.clear();
+
+    std::wcout << "Sort file node sum : " << fileNodeCnt << std::endl;
+
+    return ret;
+}
+
 HRESULT MiniThing::SortUsn(VOID)
 {
     HRESULT ret = S_OK;
@@ -429,30 +632,41 @@ HRESULT MiniThing::SortUsn(VOID)
     //  cause "System Volume Information" is a system file and just under root folder
     //  so we use it to find root folder
     std::wstring cmpStr(L"System Volume Information");
-    m_rootFileNode = 0x0;
 
-    for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        UsnInfo usnInfo = it->second;
-        if (0 == usnInfo.fileNameWstr.compare(cmpStr))
+        it->rootFileRef = 0;
+
+        for (auto ite = it->usnRecordMap.begin(); ite != it->usnRecordMap.end(); ite++)
         {
-            m_rootFileNode = usnInfo.pParentRef;
-            break;
+            UsnInfo usnInfo = ite->second;
+            if (0 == usnInfo.fileNameWstr.compare(cmpStr))
+            {
+                it->rootFileRef = usnInfo.pParentRef;
+                break;
+            }
         }
     }
 
-    if (m_rootFileNode == 0)
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        std::cout << "Cannot find root folder" << std::endl;
-        ret = E_FAIL;
-        assert(0);
+        if (it->rootFileRef == 0)
+        {
+            std::cout << "Cannot find root folder" << std::endl;
+            assert(0);
+        }
     }
 
     // 2. Get suitable thread task granularity
+    uint64_t sumSize = 0;
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
+    {
+        sumSize += it->usnRecordMap.size();
+    }
     int hwThreadNum = std::thread::hardware_concurrency();
-    int granularity = m_usnRecordMap.size() / hwThreadNum;
+    int granularity = sumSize / hwThreadNum;
     int step = 100;
-    while (granularity * hwThreadNum < m_usnRecordMap.size())
+    while (granularity * hwThreadNum < sumSize)
     {
         granularity += 100;
     }
@@ -581,29 +795,32 @@ HRESULT MiniThing::DeleteUsn(VOID)
 {
     HRESULT ret = S_OK;
 
-    DELETE_USN_JOURNAL_DATA dujd;
-    dujd.UsnJournalID = m_usnInfo.UsnJournalID;
-    dujd.DeleteFlags = USN_DELETE_FLAG_DELETE;
-    DWORD lenRet = 0;
-
-    int status = DeviceIoControl(m_hVol,
-        FSCTL_DELETE_USN_JOURNAL,
-        &dujd,
-        sizeof(dujd),
-        NULL,
-        0,
-        &lenRet,
-        NULL);
-
-    if (FALSE != status)
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        std::cout << "Delete usn file success" << std::endl;
-    }
-    else
-    {
-        GetSystemError();
-        ret = E_FAIL;
-        std::cout << "Delete usn file failed" << std::endl;
+        DELETE_USN_JOURNAL_DATA dujd;
+        dujd.UsnJournalID = it->usnJournalData.UsnJournalID;
+        dujd.DeleteFlags = USN_DELETE_FLAG_DELETE;
+        DWORD lenRet = 0;
+
+        int status = DeviceIoControl(it->hVolume,
+            FSCTL_DELETE_USN_JOURNAL,
+            &dujd,
+            sizeof(dujd),
+            NULL,
+            0,
+            &lenRet,
+            NULL);
+
+        if (FALSE != status)
+        {
+            std::cout << "Delete usn file success" << std::endl;
+        }
+        else
+        {
+            GetSystemError();
+            ret = E_FAIL;
+            std::cout << "Delete usn file failed" << std::endl;
+        }
     }
 
     return ret;
@@ -692,13 +909,13 @@ DWORD WINAPI UpdateDataBaseThread(LPVOID lp)
             {
             case FILE_ACTION_ADDED:
             {
-                wprintf(L"Add: '%s'\n", taskInfo.oriPath.c_str());
+                // wprintf(L"Add: '%s'\n", taskInfo.oriPath.c_str());
 
                 UsnInfo unsInfo = { 0 };
                 unsInfo.filePathWstr = taskInfo.oriPath;
                 unsInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
-                unsInfo.pParentRef = ((MiniThing*)taskInfo.pMiniThing)->GetParentFileRef();
-                unsInfo.pSelfRef = ((MiniThing*)taskInfo.pMiniThing)->GetNewFileRef();
+                unsInfo.pParentRef = 0;
+                unsInfo.pSelfRef = 0;
 
                 if (FAILED(((MiniThing*)taskInfo.pMiniThing)->SQLiteInsert(&unsInfo)))
                 {
@@ -709,7 +926,7 @@ DWORD WINAPI UpdateDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_RENAMED_OLD_NAME:
             {
-                wprintf(L"Ren: '%s' -> '%s'\n", taskInfo.oriPath.c_str(), taskInfo.newPath.c_str());
+                // wprintf(L"Ren: '%s' -> '%s'\n", taskInfo.oriPath.c_str(), taskInfo.newPath.c_str());
 
                 UsnInfo oriInfo = { 0 };
                 oriInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
@@ -728,7 +945,7 @@ DWORD WINAPI UpdateDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_REMOVED:
             {
-                wprintf(L"Rem: '%s'\n", taskInfo.oriPath.c_str());
+                // wprintf(L"Rem: '%s'\n", taskInfo.oriPath.c_str());
 
                 UsnInfo usnInfo = { 0 };
                 usnInfo.filePathWstr = taskInfo.oriPath;
@@ -750,26 +967,24 @@ DWORD WINAPI UpdateDataBaseThread(LPVOID lp)
 
 DWORD WINAPI MonitorThread(LPVOID lp)
 {
-    MiniThing* pMiniThing = (MiniThing*)lp;
+    MonitorTaskInfo *pTaskInfo = (MonitorTaskInfo*)lp;
+    VolumeInfo* pVolumeInfo = pTaskInfo->pVolumeInfo;
+    MiniThing* pMiniThing = pTaskInfo->pMiniThing;
 
     char notifyInfo[1024] = { 0 };
 
     wstring filePathWstr;
     wstring fileRePathWstr;
 
-    g_updateDataBaseWrMutex = CreateMutex(nullptr, 0, nullptr);
-    assert(g_updateDataBaseWrMutex);
-    CreateThread(0, 0, UpdateDataBaseThread, nullptr, 0, 0);
-
     // Set chinese debug output
     std::wcout.imbue(std::locale("chs"));
     setlocale(LC_ALL, "zh-CN");
 
-    std::wcout << L"Start monitor : " << pMiniThing->GetVolName() << std::endl;
+    std::wcout << L"Start monitor : " << pVolumeInfo->volumeName << std::endl;
 
-    std::wstring folderPath = pMiniThing->GetVolName();
+    std::wstring folderPath = pVolumeInfo->volumeName;
 
-    HANDLE dirHandle = CreateFile(folderPath.c_str(),
+    HANDLE hVolume = CreateFile(folderPath.c_str(),
         GENERIC_READ | GENERIC_WRITE | FILE_LIST_DIRECTORY,
         FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
         nullptr,
@@ -777,7 +992,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         FILE_FLAG_BACKUP_SEMANTICS,
         nullptr);
 
-    if (dirHandle == INVALID_HANDLE_VALUE)
+    if (hVolume == INVALID_HANDLE_VALUE)
     {
         std::cout << "Error: " << GetLastError() << std::endl;
         assert(0);
@@ -788,7 +1003,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
     while (true)
     {
         // Check if need exit thread
-        DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hExitEvent, 0x0);
+        DWORD dwWaitCode = WaitForSingleObject(pVolumeInfo->hMonitorExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
             std::cout << "Recv the quit event" << std::endl;
@@ -798,7 +1013,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         DWORD retBytes;
 
         if (ReadDirectoryChangesW(
-            dirHandle,
+            hVolume,
             &notifyInfo,
             sizeof(notifyInfo),
             true, // Monitor sub directory
@@ -818,6 +1033,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
             // We delete pTaskInfo in update thread when task over
             UpdateDataBaseTaskInfo updateTaskInfo;
+            updateTaskInfo.pVolumeInfo = pVolumeInfo;
             updateTaskInfo.pMiniThing = pMiniThing;
             updateTaskInfo.op = 0;
 
@@ -828,14 +1044,14 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 {
                     std::wstring addPath;
                     addPath.clear();
-                    addPath.append(pMiniThing->GetVolName());
+                    addPath.append(pVolumeInfo->volumeName);
                     addPath.append(L"\\");
                     addPath.append(filePathWstr);
 
                     updateTaskInfo.op = FILE_ACTION_ADDED;
                     updateTaskInfo.oriPath = addPath;
 
-                    // pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), addPath, L"", FILE_ACTION_ADDED);
+                    // pVolumeInfo->AdjustUsnRecord(pVolumeInfo->GetVolName(), addPath, L"", FILE_ACTION_ADDED);
                 }
                 break;
 
@@ -845,12 +1061,12 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     filePathWstr.find(L"fileRemoved.txt") == wstring::npos)
                 {
                     std::wstring modPath;
-                    modPath.append(pMiniThing->GetVolName());
+                    modPath.append(pVolumeInfo->volumeName);
                     modPath.append(L"\\");
                     modPath.append(filePathWstr);
 
                     // Must use printf here cuase cout is not thread safety
-                    wprintf(L"Mod file : %s\n", modPath.c_str());
+                    // wprintf(L"Mod file : %s\n", modPath.c_str());
                 }
                 break;
 
@@ -859,14 +1075,14 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 {
                     std::wstring remPath;
                     remPath.clear();
-                    remPath.append(pMiniThing->GetVolName());
+                    remPath.append(pVolumeInfo->volumeName);
                     remPath.append(L"\\");
                     remPath.append(filePathWstr);
 
                     updateTaskInfo.op = FILE_ACTION_REMOVED;
                     updateTaskInfo.oriPath = remPath;
 
-                    // pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), remPath, L"", FILE_ACTION_REMOVED);
+                    // pVolumeInfo->AdjustUsnRecord(pVolumeInfo->GetVolName(), remPath, L"", FILE_ACTION_REMOVED);
                 }
                 break;
 
@@ -875,13 +1091,13 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 {
                     wstring oriPath;
                     oriPath.clear();
-                    oriPath.append(pMiniThing->GetVolName());
+                    oriPath.append(pVolumeInfo->volumeName);
                     oriPath.append(L"\\");
                     oriPath.append(filePathWstr);
 
                     wstring rePath;
                     rePath.clear();
-                    rePath.append(pMiniThing->GetVolName());
+                    rePath.append(pVolumeInfo->volumeName);
                     rePath.append(L"\\");
                     rePath.append(fileRePathWstr);
 
@@ -889,7 +1105,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                     updateTaskInfo.oriPath = oriPath;
                     updateTaskInfo.newPath = rePath;
 
-                    // pMiniThing->AdjustUsnRecord(pMiniThing->GetVolName(), oriPath, rePath, FILE_ACTION_RENAMED_OLD_NAME);
+                    // pVolumeInfo->AdjustUsnRecord(pVolumeInfo->GetVolName(), oriPath, rePath, FILE_ACTION_RENAMED_OLD_NAME);
                 }
                 break;
 
@@ -906,7 +1122,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         }
     }
 
-    CloseHandle(dirHandle);
+    CloseHandle(hVolume);
 
     std::cout << "Monitor thread stop" << std::endl;
 
@@ -917,14 +1133,25 @@ HRESULT MiniThing::CreateMonitorThread(VOID)
 {
     HRESULT ret = S_OK;
 
-    m_hExitEvent = CreateEvent(0, 0, 0, 0);
+    g_updateDataBaseTaskList.clear();
+    g_updateDataBaseWrMutex = CreateMutex(nullptr, 0, nullptr);
+    assert(g_updateDataBaseWrMutex);
+    CreateThread(0, 0, UpdateDataBaseThread, nullptr, 0, 0);
 
-    // 以挂起方式创建线程
-    m_hMonitorThread = CreateThread(0, 0, MonitorThread, this, CREATE_SUSPENDED, 0);
-    if (INVALID_HANDLE_VALUE == m_hMonitorThread)
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        GetSystemError();
-        ret = E_FAIL;
+        it->hMonitorExitEvent = CreateEvent(0, 0, 0, 0);
+        it->pMonitorTaskInfo = new MonitorTaskInfo;
+        MonitorTaskInfo *pTask = (MonitorTaskInfo * )it->pMonitorTaskInfo;
+        pTask->pMiniThing = this;
+        pTask->pVolumeInfo = &(*it);
+
+        it->hMonitor = CreateThread(0, 0, MonitorThread, it->pMonitorTaskInfo, 0, 0);
+        if (INVALID_HANDLE_VALUE == it->hMonitor)
+        {
+            GetSystemError();
+            ret = E_FAIL;
+        }
     }
 
     return ret;
@@ -932,16 +1159,18 @@ HRESULT MiniThing::CreateMonitorThread(VOID)
 
 VOID MiniThing::StartMonitorThread(VOID)
 {
-    ResumeThread(m_hMonitorThread);
 }
 
 VOID MiniThing::StopMonitorThread(VOID)
 {
-    SetEvent(m_hExitEvent);
-    DWORD dwWaitCode = WaitForSingleObject(m_hMonitorThread, INFINITE);
-    assert(dwWaitCode == WAIT_OBJECT_0);
+    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
+    {
+        SetEvent(it->hMonitorExitEvent);
+        DWORD dwWaitCode = WaitForSingleObject(it->hMonitor, INFINITE);
+        assert(dwWaitCode == WAIT_OBJECT_0);
 
-    CloseHandle(m_hMonitorThread);
+        CloseHandle(it->hMonitor);
+    }
 }
 
 DWORD WINAPI QueryThread(LPVOID lp)

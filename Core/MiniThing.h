@@ -20,6 +20,8 @@ using namespace std;
 #define SORT_TASK_GRANULARITY           ( 1024 )
 #define SQL_BATCH_INSERT_GRANULARITY    ( 256 )
 
+class MiniThing;
+
 struct UsnInfo
 {
     // File reference number
@@ -36,6 +38,29 @@ struct UsnInfo
 
 typedef struct
 {
+    std::wstring volumeName;
+    HANDLE hVolume;
+
+    bool isNtfs;
+    USN_JOURNAL_DATA usnJournalData;
+    unordered_map<DWORDLONG, UsnInfo> usnRecordMap;
+    DWORDLONG rootFileRef;
+    std::wstring rootName;
+
+    HANDLE hMonitor;
+    HANDLE hMonitorExitEvent;
+
+    VOID* pMonitorTaskInfo;
+}VolumeInfo;
+
+typedef struct
+{
+    VolumeInfo* pVolumeInfo;
+    MiniThing* pMiniThing;
+}MonitorTaskInfo;
+
+typedef struct
+{
     UINT taskIndex;
     std::string sqlPath;
     std::wstring rootFolderName;
@@ -46,6 +71,7 @@ typedef struct
 
 typedef struct
 {
+    VOID* pVolumeInfo;
     VOID* pMiniThing;
     DWORD op;
     std::wstring folder;
@@ -71,6 +97,8 @@ class MiniThing
 public:
     MiniThing(std::wstring volumeName, const char* sqlDBPath);
     ~MiniThing(VOID);
+
+    HRESULT QueryAllVolume(VOID);
 
     std::wstring GetVolName(VOID)
     {
@@ -129,6 +157,8 @@ public:
     HANDLE      m_hQueryThread;
 
 private:
+    std::vector<VolumeInfo> m_volumeSet;
+
     std::wstring        m_volumeName;
     BOOL                m_isSqlExist;
     HANDLE              m_hVol = INVALID_HANDLE_VALUE;
@@ -137,9 +167,9 @@ private:
     DWORDLONG           m_rootFileNode;
 
 private:
-    HRESULT GetHandle(VOID);
+    HRESULT GetAllVolumeHandle(VOID);
     VOID closeHandle(VOID);
-    BOOL IsNtfs(VOID);
+    BOOL IsNtfs(std::wstring volName);
 
     VOID GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
     VOID GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
@@ -147,6 +177,8 @@ private:
     HRESULT QueryUsn(VOID);
     HRESULT RecordUsn(VOID);
     HRESULT SortUsn(VOID);
+    HRESULT SorVolumeAndUpdateSql(VolumeInfo &volumeInfo);
+    HRESULT SortVolumeSetAndUpdateSql(VOID);
     HRESULT DeleteUsn(VOID);
 
     VOID GetSystemError(VOID);
