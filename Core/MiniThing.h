@@ -41,7 +41,6 @@ typedef struct
     std::wstring volumeName;
     HANDLE hVolume;
 
-    bool isNtfs;
     USN_JOURNAL_DATA usnJournalData;
     unordered_map<DWORDLONG, UsnInfo> usnRecordMap;
     DWORDLONG rootFileRef;
@@ -136,9 +135,6 @@ public:
     HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
     HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec);
 
-    BOOL IsWstringSame(std::wstring s1, std::wstring s2);
-    BOOL IsSubStr(std::wstring s1, std::wstring s2);
-
     BOOL IsSqlExist(VOID)
     {
         return m_isSqlExist;
@@ -155,6 +151,10 @@ public:
     // Query thread
     HANDLE      m_hQueryExitEvent;
     HANDLE      m_hQueryThread;
+
+    // Update sql data base thread
+    HANDLE      m_hUpdateSqlDataBaseExitEvent;
+    HANDLE      m_hUpdateSqlDataBaseThread;
 
 private:
     std::vector<VolumeInfo> m_volumeSet;
@@ -177,7 +177,7 @@ private:
     HRESULT QueryUsn(VOID);
     HRESULT RecordUsn(VOID);
     HRESULT SortUsn(VOID);
-    HRESULT SorVolumeAndUpdateSql(VolumeInfo &volumeInfo);
+    HRESULT SortVolumeAndUpdateSql(VolumeInfo &volumeInfo);
     HRESULT SortVolumeSetAndUpdateSql(VOID);
     HRESULT DeleteUsn(VOID);
 

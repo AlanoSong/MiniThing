@@ -67,7 +67,6 @@ MiniThing::~MiniThing(VOID)
     {
         assert(0);
     }
-
 }
 
 HRESULT MiniThing::QueryAllVolume(VOID)
@@ -86,26 +85,16 @@ HRESULT MiniThing::QueryAllVolume(VOID)
         VolumeInfo volInfo;
         std::wstring name = szDrive;
         volInfo.volumeName = name.substr(0, name.length() - 1);
-        volInfo.isNtfs = IsNtfs(volInfo.volumeName);
-        m_volumeSet.push_back(volInfo);
+
+        if (IsNtfs(volInfo.volumeName))
+        {
+            m_volumeSet.push_back(volInfo);
+        }
 
         szDrive += (_tcslen(szDrive) + 1);
     }
 
     return ret;
-}
-
-BOOL MiniThing::IsWstringSame(std::wstring s1, std::wstring s2)
-{
-    CString c1 = s1.c_str();
-    CString c2 = s2.c_str();
-
-    return c1.CompareNoCase(c2) == 0 ? TRUE : FALSE;
-}
-
-BOOL MiniThing::IsSubStr(std::wstring s1, std::wstring s2)
-{
-    return (s1.find(s2) != std::wstring::npos);
 }
 
 HRESULT MiniThing::GetAllVolumeHandle()
@@ -189,8 +178,6 @@ BOOL MiniThing::IsNtfs(std::wstring volName)
 
     if (FALSE != status)
     {
-        std::cout << "File system name : " << sysNameBuf << std::endl;
-
         if (0 == strcmp(sysNameBuf, "NTFS"))
         {
             isNtfs = true;
@@ -276,6 +263,8 @@ HRESULT MiniThing::QueryUsn(VOID)
 
 HRESULT MiniThing::RecordUsn(VOID)
 {
+    printf("Recording usn ...\n");
+
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
         MFT_ENUM_DATA med = { 0, 0, it->usnJournalData.NextUsn };
@@ -457,17 +446,17 @@ HRESULT MiniThing::SortVolumeSetAndUpdateSql(VOID)
     HRESULT ret = S_OK;
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        SorVolumeAndUpdateSql(*it);
+        SortVolumeAndUpdateSql(*it);
         it->usnRecordMap.clear();
     }
     return ret;
 }
 
-HRESULT MiniThing::SorVolumeAndUpdateSql(VolumeInfo& volume)
+HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
 {
     HRESULT ret = S_OK;
 
-    std::cout << "Generating sql data base......" << std::endl;
+    std::cout << "Generating sql data base ..." << std::endl;
 
     // 1. Get root file node
     //  cause "System Volume Information" is a system file and just under root folder
@@ -890,14 +879,24 @@ VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std:
     }
 }
 
-DWORD WINAPI UpdateDataBaseThread(LPVOID lp)
+DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 {
     // Set chinese debug output
     std::wcout.imbue(std::locale("chs"));
     setlocale(LC_ALL, "zh-CN");
 
+    MiniThing *pMiniThing = (MiniThing*)lp;
+
     while (TRUE)
     {
+        // Check if need exit thread
+        DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hUpdateSqlDataBaseExitEvent, 0x0);
+        if (WAIT_OBJECT_0 == dwWaitCode)
+        {
+            std::cout << "Recv the quit event" << std::endl;
+            break;
+        }
+
         if (!g_updateDataBaseTaskList.empty())
         {
             WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
@@ -1113,9 +1112,9 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 std::wcout << L"Unknown command" << std::endl;
             }
 
-            // We dispath those update task into list and handle them in sub thread,
+            // We dispath those update task into list and handle them in UpdateSqlDataBaseThread,
             //  cause updating sql data base may consume some time,
-            //  and we may lost file change message next.
+            //  and we may lost more file change event at the same time.
             WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
             g_updateDataBaseTaskList.push_back(updateTaskInfo);
             ReleaseMutex(g_updateDataBaseWrMutex);
@@ -1133,10 +1132,16 @@ HRESULT MiniThing::CreateMonitorThread(VOID)
 {
     HRESULT ret = S_OK;
 
+    // Create UpdateSqlDataBaseThread, to handle all file update event from monitor thread
     g_updateDataBaseTaskList.clear();
     g_updateDataBaseWrMutex = CreateMutex(nullptr, 0, nullptr);
     assert(g_updateDataBaseWrMutex);
-    CreateThread(0, 0, UpdateDataBaseThread, nullptr, 0, 0);
+
+    m_hUpdateSqlDataBaseExitEvent = CreateEvent(0, 0, 0, 0);
+    assert(m_hUpdateSqlDataBaseExitEvent);
+
+    m_hUpdateSqlDataBaseThread = CreateThread(0, 0, UpdateSqlDataBaseThread, this, 0, 0);
+    assert(m_hUpdateSqlDataBaseThread);
 
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -1170,7 +1175,13 @@ VOID MiniThing::StopMonitorThread(VOID)
         assert(dwWaitCode == WAIT_OBJECT_0);
 
         CloseHandle(it->hMonitor);
+
+        delete it->pMonitorTaskInfo;
     }
+
+    SetEvent(m_hUpdateSqlDataBaseExitEvent);
+    DWORD dwWaitCode = WaitForSingleObject(m_hUpdateSqlDataBaseThread, INFINITE);
+    assert(dwWaitCode == WAIT_OBJECT_0);
 }
 
 DWORD WINAPI QueryThread(LPVOID lp)
