@@ -8,7 +8,6 @@
 #include <tchar.h>
 
 #include "MiniThing.h"
-#include "../Utility/Utility.h"
 
 int main()
 {
@@ -19,11 +18,11 @@ int main()
     double quadpart = (double)frequency.QuadPart;
     QueryPerformanceCounter(&timeStart);
 
-    MiniThing* pMiniThing = new MiniThing(L"", ".\\MiniThing.db");
+    MiniThing* pMiniThing = new MiniThing(".\\MiniThing.db");
 
     QueryPerformanceCounter(&timeEnd);
     double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
-    std::cout << "Time elapsed : " << elapsed << " S" << std::endl;
+    printf_s("Time elasped: %f S\n", elapsed);
 
     if (FAILED(pMiniThing->CreateMonitorThread()))
     {

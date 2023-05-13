@@ -131,29 +131,24 @@
   <ItemGroup>
     <ClCompile Include="Core\Main.cpp" />
     <ClCompile Include="Core\MiniThing.cpp" />
-    <ClCompile Include="Core\MonitorThread.cpp" />
+    <ClCompile Include="Core\TaskThreads.cpp" />
     <ClCompile Include="ThirdParty\SQLite\shell.c" />
     <ClCompile Include="ThirdParty\SQLite\sqlite3.c" />
     <ClCompile Include="Utility\Utility.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\MiniThing.h" />
-    <ClInclude Include="Core\MonitorThread.h" />
+    <ClInclude Include="Core\TaskThreads.h" />
     <ClInclude Include="ThirdParty\SQLite\sqlite3.h" />
     <ClInclude Include="ThirdParty\SQLite\sqlite3ext.h" />
-    <ClInclude Include="ThirdParty\ThreadPool\SafeQueue.h" />
-    <ClInclude Include="ThirdParty\ThreadPool\ThreadPool.h" />
     <ClInclude Include="Utility\Utility.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Docs\Unicode.md" />
     <None Include="README.ch.md" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Docs\Pictures\Architecture.png" />
-    <Image Include="Docs\Pictures\Use0.png" />
-    <Image Include="Docs\Pictures\Use1.png" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

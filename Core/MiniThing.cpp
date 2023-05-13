@@ -1,23 +1,29 @@
 #include "MiniThing.h"
+#include "TaskThreads.h"
 #include "../Utility/Utility.h"
 
-static std::list<UpdateDataBaseTaskInfo> g_updateDataBaseTaskList;
-static HANDLE g_updateDataBaseWrMutex;
+//==========================================================================
+//                        Static Functions                                //
+//==========================================================================
 
-MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
+//==========================================================================
+//                        Public Parameters                               //
+//==========================================================================
+extern std::list<UpdateDataBaseTaskInfo> g_updateDataBaseTaskList;
+extern HANDLE g_updateDataBaseWrMutex;
+
+//==========================================================================
+//                        MiniThing Functions                             //
+//==========================================================================
+MiniThing::MiniThing(const char* sqlDBPath)
 {
-    m_volumeName = volumeName;
-
-    // Set chinese debug output
-    std::wcout.imbue(std::locale("chs"));
-    setlocale(LC_ALL, "zh-CN");
+    SetChsPrintEnv();
 
     if (FAILED(QueryAllVolume()))
     {
         assert(0);
     }
 
-    // Get folder handle
     if (FAILED(GetAllVolumeHandle()))
     {
         assert(0);
@@ -61,7 +67,7 @@ MiniThing::MiniThing(std::wstring volumeName, const char* sqlDBPath)
     closeHandle();
 }
 
-MiniThing::~MiniThing(VOID)
+MiniThing::~MiniThing(void)
 {
     if (FAILED(SQLiteClose()))
     {
@@ -69,7 +75,7 @@ MiniThing::~MiniThing(VOID)
     }
 }
 
-HRESULT MiniThing::QueryAllVolume(VOID)
+HRESULT MiniThing::QueryAllVolume(void)
 {
     HRESULT ret = S_OK;
     // Get all volume
@@ -114,13 +120,9 @@ HRESULT MiniThing::GetAllVolumeHandle()
             FILE_FLAG_BACKUP_SEMANTICS,
             nullptr);
 
-        if (INVALID_HANDLE_VALUE != it->hVolume)
+        if (INVALID_HANDLE_VALUE == it->hVolume)
         {
-            printf("Get handle success : %s\n", WstringToString(it->volumeName).c_str());
-        }
-        else
-        {
-            printf("Get handle failed : %s\n", WstringToString(it->volumeName).c_str());
+            printf_s("Get handle failed : %s\n", WstringToString(it->volumeName).c_str());
             GetSystemError();
             ret = E_FAIL;
             break;
@@ -130,7 +132,7 @@ HRESULT MiniThing::GetAllVolumeHandle()
     return ret;
 }
 
-VOID MiniThing::closeHandle(VOID)
+void MiniThing::closeHandle(void)
 {
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -139,32 +141,20 @@ VOID MiniThing::closeHandle(VOID)
     }
 }
 
-VOID MiniThing::GetSystemError(VOID)
-{
-    LPCTSTR   lpMsgBuf;
-    DWORD lastError = GetLastError();
-    FormatMessage(
-        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL,
-        lastError,
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPTSTR)&lpMsgBuf,
-        0,
-        NULL
-    );
-
-    LPCTSTR strValue = lpMsgBuf;
-    _tprintf(_T("ERROR msg : %s\n"), strValue);
-}
-
 BOOL MiniThing::IsNtfs(std::wstring volName)
 {
     BOOL isNtfs = FALSE;
     char sysNameBuf[MAX_PATH] = { 0 };
+    char sysNameBuf2[MAX_PATH] = { 0 };
 
     int len = WstringToChar(volName, nullptr);
     char* pVol = new char[len];
     WstringToChar(volName, pVol);
+
+    std::wstring volName2 = volName + L"\\";
+    len = WstringToChar(volName2, nullptr);
+    char* pVol2 = new char[len];
+    WstringToChar(volName2, pVol2);
 
     BOOL status = GetVolumeInformationA(
         pVol,
@@ -176,23 +166,44 @@ BOOL MiniThing::IsNtfs(std::wstring volName)
         sysNameBuf,
         MAX_PATH);
 
-    if (FALSE != status)
+    // Sometimes if pVol = 'X:', GetVolumeInformationA() not success,
+    //      so we try with 'X:\' again.
+    BOOL status2 = GetVolumeInformationA(
+        pVol2,
+        NULL,
+        0,
+        NULL,
+        NULL,
+        NULL,
+        sysNameBuf2,
+        MAX_PATH);
+
+    if (status)
     {
         if (0 == strcmp(sysNameBuf, "NTFS"))
         {
             isNtfs = true;
         }
-        else
+    }
+    else if (status2)
+    {
+        if (0 == strcmp(sysNameBuf2, "NTFS"))
         {
-            std::cout << "File system not NTFS format !!!" << std::endl;
-            GetSystemError();
+            isNtfs = true;
         }
     }
+    else
+    {
+        GetSystemError();
+    }
+
+    delete [] pVol;
+    delete [] pVol2;
 
     return isNtfs;
 }
 
-HRESULT MiniThing::CreateUsn(VOID)
+HRESULT MiniThing::CreateUsn(void)
 {
     HRESULT ret = S_OK;
 
@@ -215,7 +226,6 @@ HRESULT MiniThing::CreateUsn(VOID)
 
         if (FALSE == status)
         {
-            std::cout << "Create usn file failed" << std::endl;
             GetSystemError();
             ret = E_FAIL;
 
@@ -226,7 +236,7 @@ HRESULT MiniThing::CreateUsn(VOID)
     return ret;
 }
 
-HRESULT MiniThing::QueryUsn(VOID)
+HRESULT MiniThing::QueryUsn(void)
 {
     HRESULT ret = S_OK;
 
@@ -247,7 +257,6 @@ HRESULT MiniThing::QueryUsn(VOID)
         if (FALSE == status)
         {
             ret = E_FAIL;
-            std::cout << "Query usn info failed" << std::endl;
             GetSystemError();
 
             break;
@@ -261,9 +270,9 @@ HRESULT MiniThing::QueryUsn(VOID)
     return ret;
 }
 
-HRESULT MiniThing::RecordUsn(VOID)
+HRESULT MiniThing::RecordUsn(void)
 {
-    printf("Recording usn ...\n");
+    printf_s("Record usn ...\n");
 
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -321,127 +330,7 @@ HRESULT MiniThing::RecordUsn(VOID)
     return S_OK;
 }
 
-VOID MiniThing::GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef)
-{
-    // 1. This is root node, just add root path and return
-    if (currentRef == rootRef)
-    {
-        path = m_volumeName + L"\\" + path;
-        return;
-    }
-
-    if (m_usnRecordMap.find(currentRef) != m_usnRecordMap.end())
-    {
-        // 2. Normal node, loop more
-        std::wstring str = m_usnRecordMap[currentRef].fileNameWstr;
-        path = str + L"\\" + path;
-        GetCurrentFilePath(path, m_usnRecordMap[currentRef].pParentRef, rootRef);
-    }
-    else
-    {
-        // 3. Some system files's root node is not in current folder
-        std::wstring str = L"?";
-        path = str + L"\\" + path;
-
-        return;
-    }
-}
-
-VOID GetCurrentFilePathV2(std::wstring& path, std::wstring volName, DWORDLONG currentRef, DWORDLONG rootRef, unordered_map<DWORDLONG, UsnInfo>& recordMapAll)
-{
-    // 1. This is root node, just add root path and return
-    if (currentRef == rootRef)
-    {
-        path = volName + L"\\" + path;
-        return;
-    }
-
-    if (recordMapAll.find(currentRef) != recordMapAll.end())
-    {
-        // 2. Normal node, loop more
-        std::wstring str = recordMapAll[currentRef].fileNameWstr;
-        path = str + L"\\" + path;
-        GetCurrentFilePathV2(path, volName, recordMapAll[currentRef].pParentRef, rootRef, recordMapAll);
-    }
-    else
-    {
-        // 3. Some system files's root node is not in current folder
-        std::wstring str = L"?";
-        path = str + L"\\" + path;
-
-        return;
-    }
-}
-
-HRESULT SQLiteInsertV2(sqlite3* hSql, UsnInfo* pUsnInfo)
-{
-    HRESULT ret = S_OK;
-
-    // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-    char sql[1024] = { 0 };
-    std::string nameUtf8 = UnicodeToUtf8(pUsnInfo->fileNameWstr);
-    std::string pathUtf8 = UnicodeToUtf8(pUsnInfo->filePathWstr);
-    sprintf_s(sql, "INSERT INTO UsnInfo VALUES(%llu, %llu, %lld, '%s', '%s');",
-        pUsnInfo->pSelfRef, pUsnInfo->pParentRef, pUsnInfo->timeStamp, nameUtf8.c_str(), pathUtf8.c_str());
-
-    char* errMsg = nullptr;
-    if (sqlite3_exec(hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
-    {
-        ret = E_FAIL;
-        printf("sqlite : insert failed\n");
-        printf("error : %s\n", errMsg);
-    }
-    else
-    {
-        // printf("sqlite : insert done\n");
-    }
-
-    return ret;
-}
-
-DWORD WINAPI SortThread(LPVOID lp)
-{
-    SortTaskInfo* pTaskInfo = (SortTaskInfo*)lp;
-
-    // Set chinese debug output
-    std::wcout.imbue(std::locale("chs"));
-    setlocale(LC_ALL, "zh-CN");
-
-    printf("Sort task %d start\n", pTaskInfo->taskIndex);
-
-    int ret = 0;
-
-    if(ret == SQLITE_OK)
-    {
-        // 1. Get start time
-        LARGE_INTEGER timeStart;
-        LARGE_INTEGER timeEnd;
-        LARGE_INTEGER frequency;
-        QueryPerformanceFrequency(&frequency);
-        double quadpart = (double)frequency.QuadPart;
-        QueryPerformanceCounter(&timeStart);
-
-        for (auto it = (*pTaskInfo->pSortTask).begin(); it != (*pTaskInfo->pSortTask).end(); it++)
-        {
-            UsnInfo usnInfo = it->second;
-            std::wstring path(usnInfo.fileNameWstr);
-            GetCurrentFilePathV2(path, pTaskInfo->rootFolderName, usnInfo.pParentRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
-            (*pTaskInfo->pSortTask)[it->first].filePathWstr = path;
-        }
-
-        QueryPerformanceCounter(&timeEnd);
-        double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
-        printf("Sort task %d over, %f S\n", pTaskInfo->taskIndex, elapsed);
-    }
-    else
-    {
-        std::cout << "Cannot connect to sqlite db" << std::endl;
-    }
-
-    return 0;
-}
-
-HRESULT MiniThing::SortVolumeSetAndUpdateSql(VOID)
+HRESULT MiniThing::SortVolumeSetAndUpdateSql(void)
 {
     HRESULT ret = S_OK;
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
@@ -456,7 +345,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
 {
     HRESULT ret = S_OK;
 
-    std::cout << "Generating sql data base ..." << std::endl;
+    printf_s("Build sql data base ...\n");
 
     // 1. Get root file node
     //  cause "System Volume Information" is a system file and just under root folder
@@ -477,7 +366,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
     if (volume.rootFileRef == 0)
     {
-        std::cout << "Cannot find root folder" << std::endl;
+        printf_s("Cannot find root folder\n");
         assert(0);
     }
 
@@ -485,7 +374,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
     // 2. Get suitable thread task granularity
     int hwThreadNum = std::thread::hardware_concurrency();
-    int granularity = volume.usnRecordMap.size() / hwThreadNum;
+    int granularity = (int)volume.usnRecordMap.size() / hwThreadNum;
     int step = 100;
     while (granularity * hwThreadNum < volume.usnRecordMap.size())
     {
@@ -515,7 +404,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
     }
     if (!mapTmp.empty())
     {
-        fileNodeCnt += mapTmp.size();
+        fileNodeCnt += (int)mapTmp.size();
         sortTaskSet.push_back(mapTmp);
         mapTmp.clear();
     }
@@ -559,7 +448,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
         CloseHandle(*it);
     }
 
-    printf("Insert begin...\n");
+    printf_s("Insert begin ...\n");
     // 6. Write all file node info into sqlite
     char* errMsg = nullptr;
     int insertNodeCnt = 0;
@@ -569,7 +458,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
     sprintf_s(sql, "INSERT INTO UsnInfo (SelfRef, ParentRef, TimeStamp, FileName, FilePath) VALUES(?, ?, ?, ?, ?);");
     sqlite3_stmt* pPrepare = nullptr;
-    sqlite3_prepare_v2(m_hSQLite, sql, strlen(sql), &pPrepare, 0);
+    sqlite3_prepare_v2(m_hSQLite, sql, (int)strlen(sql), &pPrepare, 0);
 
     for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
     {
@@ -586,8 +475,8 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
             sqlite3_bind_int64(pPrepare, 1, usnInfo.pSelfRef);
             sqlite3_bind_int64(pPrepare, 2, usnInfo.pParentRef);
             // sqlite3_bind_int64(pPrepare, 3, (sqlite_int64)usnInfo.timeStamp);
-            sqlite3_bind_text(pPrepare, 4, nameUtf8.c_str(), strlen(nameUtf8.c_str()), nullptr);
-            sqlite3_bind_text(pPrepare, 5, pathUtf8.c_str(), strlen(pathUtf8.c_str()), nullptr);
+            sqlite3_bind_text(pPrepare, 4, nameUtf8.c_str(), (int)strlen(nameUtf8.c_str()), nullptr);
+            sqlite3_bind_text(pPrepare, 5, pathUtf8.c_str(), (int)strlen(pathUtf8.c_str()), nullptr);
             int ret = sqlite3_step(pPrepare);
             assert(ret == SQLITE_DONE);
 
@@ -606,181 +495,12 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
     sortTaskVec.clear();
     sortTaskSet.clear();
 
-    std::wcout << "Sort file node sum : " << fileNodeCnt << std::endl;
+    wprintf_s(L"%s file node: %d\n", volume.volumeName.c_str(), fileNodeCnt);
 
     return ret;
 }
 
-HRESULT MiniThing::SortUsn(VOID)
-{
-    HRESULT ret = S_OK;
-
-    std::cout << "Generating sql data base......" << std::endl;
-
-    // 1. Get root file node
-    //  cause "System Volume Information" is a system file and just under root folder
-    //  so we use it to find root folder
-    std::wstring cmpStr(L"System Volume Information");
-
-    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
-    {
-        it->rootFileRef = 0;
-
-        for (auto ite = it->usnRecordMap.begin(); ite != it->usnRecordMap.end(); ite++)
-        {
-            UsnInfo usnInfo = ite->second;
-            if (0 == usnInfo.fileNameWstr.compare(cmpStr))
-            {
-                it->rootFileRef = usnInfo.pParentRef;
-                break;
-            }
-        }
-    }
-
-    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
-    {
-        if (it->rootFileRef == 0)
-        {
-            std::cout << "Cannot find root folder" << std::endl;
-            assert(0);
-        }
-    }
-
-    // 2. Get suitable thread task granularity
-    uint64_t sumSize = 0;
-    for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
-    {
-        sumSize += it->usnRecordMap.size();
-    }
-    int hwThreadNum = std::thread::hardware_concurrency();
-    int granularity = sumSize / hwThreadNum;
-    int step = 100;
-    while (granularity * hwThreadNum < sumSize)
-    {
-        granularity += 100;
-    }
-
-    // 3. Divide file node into several sort tasks
-    int fileNodeCnt = 0;
-    vector<unordered_map<DWORDLONG, UsnInfo>> sortTaskSet;
-    unordered_map<DWORDLONG, UsnInfo> mapTmp;
-
-    for (auto it = m_usnRecordMap.begin(); it != m_usnRecordMap.end(); it++)
-    {
-        UsnInfo usnInfo = it->second;
-        mapTmp[it->first] = it->second;
-        ++fileNodeCnt;
-
-        if (fileNodeCnt % granularity == 0)
-        {
-            sortTaskSet.push_back(mapTmp);
-            mapTmp.clear();
-        }
-        else
-        {
-            continue;
-        }
-    }
-    if (!mapTmp.empty())
-    {
-        fileNodeCnt += mapTmp.size();
-        sortTaskSet.push_back(mapTmp);
-        mapTmp.clear();
-    }
-
-    vector<HANDLE> taskHandleVec;
-    vector<SortTaskInfo> sortTaskVec;
-
-    for (int i = 0; i < sortTaskSet.size(); i++)
-    {
-        SortTaskInfo taskInfo;
-        taskInfo.taskIndex = i;
-        taskInfo.rootFolderName = m_volumeName;
-        taskInfo.sqlPath = m_SQLitePath;
-        taskInfo.pSortTask = &(sortTaskSet[i]);
-        taskInfo.pAllUsnRecordMap = &m_usnRecordMap;
-        taskInfo.rootRef = m_rootFileNode;
-
-        sortTaskVec.push_back(taskInfo);
-    }
-
-    // 4. Execute all sort tasks by threads
-    for (int i = 0; i < sortTaskSet.size(); i++)
-    {
-        HANDLE taskThread = CreateThread(0, 0, SortThread, &(sortTaskVec[i]), CREATE_SUSPENDED, 0);
-        if (taskThread)
-        {
-            ResumeThread(taskThread);
-            taskHandleVec.push_back(taskThread);
-        }
-        else
-        {
-            assert(0);
-        }
-    }
-
-    // 5. Wait all sort thread over
-    for (auto it = taskHandleVec.begin(); it != taskHandleVec.end(); it++)
-    {
-        DWORD dwWaitCode = WaitForSingleObject(*it, INFINITE);
-        assert(dwWaitCode == WAIT_OBJECT_0);
-        CloseHandle(*it);
-    }
-
-    printf("Insert begin...\n");
-    // 6. Write all file node info into sqlite
-    char* errMsg = nullptr;
-    int insertNodeCnt = 0;
-    char sql[1024] = { 0 };
-
-    sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
-
-    sprintf_s(sql, "INSERT INTO UsnInfo (SelfRef, ParentRef, TimeStamp, FileName, FilePath) VALUES(?, ?, ?, ?, ?);");
-    sqlite3_stmt* pPrepare = nullptr;
-    sqlite3_prepare_v2(m_hSQLite, sql, strlen(sql), &pPrepare, 0);
-
-    for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
-    {
-        for (auto i = (*it).begin(); i != (*it).end(); i++)
-        {
-            ++insertNodeCnt;
-            UsnInfo usnInfo = i->second;
-
-            std::string nameUtf8 = UnicodeToUtf8(usnInfo.fileNameWstr);
-            std::string pathUtf8 = UnicodeToUtf8(usnInfo.filePathWstr);
-
-            // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-            sqlite3_reset(pPrepare);
-            sqlite3_bind_int64(pPrepare, 1, usnInfo.pSelfRef);
-            sqlite3_bind_int64(pPrepare, 2, usnInfo.pParentRef);
-            // sqlite3_bind_int64(pPrepare, 3, (sqlite_int64)usnInfo.timeStamp);
-            sqlite3_bind_text(pPrepare, 4, nameUtf8.c_str(), strlen(nameUtf8.c_str()), nullptr);
-            sqlite3_bind_text(pPrepare, 5, pathUtf8.c_str(), strlen(pathUtf8.c_str()), nullptr);
-            int ret = sqlite3_step(pPrepare);
-            assert(ret == SQLITE_DONE);
-
-            if (insertNodeCnt % SQL_BATCH_INSERT_GRANULARITY == 0)
-            {
-                sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
-                sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
-            }
-        }
-    }
-    sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
-    sqlite3_finalize(pPrepare);
-
-    // 7. After file node sorted, the map can be destroyed
-    taskHandleVec.clear();
-    sortTaskVec.clear();
-    sortTaskSet.clear();
-    m_usnRecordMap.clear();
-
-    std::wcout << "Sort file node sum : " << fileNodeCnt << std::endl;
-
-    return ret;
-}
-
-HRESULT MiniThing::DeleteUsn(VOID)
+HRESULT MiniThing::DeleteUsn(void)
 {
     HRESULT ret = S_OK;
 
@@ -800,339 +520,21 @@ HRESULT MiniThing::DeleteUsn(VOID)
             &lenRet,
             NULL);
 
-        if (FALSE != status)
+        if (FALSE == status)
         {
-            std::cout << "Delete usn file success" << std::endl;
-        }
-        else
-        {
+            printf_s("Delete usn file failed\n");
             GetSystemError();
             ret = E_FAIL;
-            std::cout << "Delete usn file failed" << std::endl;
         }
     }
 
     return ret;
 }
 
-static std::wstring GetFileNameAccordPath(std::wstring path)
-{
-    return path.substr(path.find_last_of(L"\\") + 1);
-}
-
-static std::wstring GetPathAccordPath(std::wstring path)
-{
-    wstring name = GetFileNameAccordPath(path);
-    return path.substr(0, path.length() - name.length());
-}
-
-VOID MiniThing::AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring fileRePath, DWORD op)
-{
-    switch (op)
-    {
-    case FILE_ACTION_ADDED:
-    {
-        UsnInfo tmp = { 0 };
-        tmp.filePathWstr = filePath;
-        tmp.fileNameWstr = GetFileNameAccordPath(filePath);
-        tmp.pParentRef = m_constFileRefNumMax;
-        tmp.pSelfRef = m_unusedFileRefNum--;
-
-        // Update sql db
-        if (FAILED(SQLiteInsert(&tmp)))
-        {
-            assert(0);
-        }
-        break;
-    }
-
-    case FILE_ACTION_RENAMED_OLD_NAME:
-    {
-        // Update sql db
-        UsnInfo oriInfo = { 0 };
-        oriInfo.fileNameWstr = GetFileNameAccordPath(filePath);
-        oriInfo.filePathWstr = filePath;
-        UsnInfo reInfo = { 0 };
-        reInfo.fileNameWstr = GetFileNameAccordPath(fileRePath);
-        reInfo.filePathWstr = fileRePath;
-        if (FAILED(SQLiteUpdateV2(&oriInfo, &reInfo)))
-        {
-            assert(0);
-        }
-        break;
-    }
-
-    case FILE_ACTION_REMOVED:
-    {
-        // Update sql db
-        UsnInfo tmpUsn = { 0 };
-        tmpUsn.filePathWstr = filePath;
-        if (FAILED(SQLiteDelete(&tmpUsn)))
-        {
-            assert(0);
-        }
-        break;
-    }
-
-    default:
-        assert(0);
-    }
-}
-
-DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
-{
-    // Set chinese debug output
-    std::wcout.imbue(std::locale("chs"));
-    setlocale(LC_ALL, "zh-CN");
-
-    MiniThing *pMiniThing = (MiniThing*)lp;
-
-    while (TRUE)
-    {
-        // Check if need exit thread
-        DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hUpdateSqlDataBaseExitEvent, 0x0);
-        if (WAIT_OBJECT_0 == dwWaitCode)
-        {
-            std::cout << "Recv the quit event" << std::endl;
-            break;
-        }
-
-        if (!g_updateDataBaseTaskList.empty())
-        {
-            WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
-            UpdateDataBaseTaskInfo taskInfo = g_updateDataBaseTaskList.front();
-            g_updateDataBaseTaskList.pop_front();
-            ReleaseMutex(g_updateDataBaseWrMutex);
-
-            switch (taskInfo.op)
-            {
-            case FILE_ACTION_ADDED:
-            {
-                // wprintf(L"Add: '%s'\n", taskInfo.oriPath.c_str());
-
-                UsnInfo unsInfo = { 0 };
-                unsInfo.filePathWstr = taskInfo.oriPath;
-                unsInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
-                unsInfo.pParentRef = 0;
-                unsInfo.pSelfRef = 0;
-
-                if (FAILED(((MiniThing*)taskInfo.pMiniThing)->SQLiteInsert(&unsInfo)))
-                {
-                    assert(0);
-                }
-                break;
-            }
-
-            case FILE_ACTION_RENAMED_OLD_NAME:
-            {
-                // wprintf(L"Ren: '%s' -> '%s'\n", taskInfo.oriPath.c_str(), taskInfo.newPath.c_str());
-
-                UsnInfo oriInfo = { 0 };
-                oriInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
-                oriInfo.filePathWstr = taskInfo.oriPath;
-
-                UsnInfo reInfo = { 0 };
-                reInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.newPath);
-                reInfo.filePathWstr = taskInfo.newPath;
-
-                if (FAILED(((MiniThing*)taskInfo.pMiniThing)->SQLiteUpdateV2(&oriInfo, &reInfo)))
-                {
-                    assert(0);
-                }
-                break;
-            }
-
-            case FILE_ACTION_REMOVED:
-            {
-                // wprintf(L"Rem: '%s'\n", taskInfo.oriPath.c_str());
-
-                UsnInfo usnInfo = { 0 };
-                usnInfo.filePathWstr = taskInfo.oriPath;
-                if (FAILED(((MiniThing*)taskInfo.pMiniThing)->SQLiteDelete(&usnInfo)))
-                {
-                    assert(0);
-                }
-                break;
-            }
-
-            default:
-                break;
-            }
-        }
-    }
-
-    return 0;
-}
-
-DWORD WINAPI MonitorThread(LPVOID lp)
-{
-    MonitorTaskInfo *pTaskInfo = (MonitorTaskInfo*)lp;
-    VolumeInfo* pVolumeInfo = pTaskInfo->pVolumeInfo;
-    MiniThing* pMiniThing = pTaskInfo->pMiniThing;
-
-    char notifyInfo[1024] = { 0 };
-
-    wstring filePathWstr;
-    wstring fileRePathWstr;
-
-    // Set chinese debug output
-    std::wcout.imbue(std::locale("chs"));
-    setlocale(LC_ALL, "zh-CN");
-
-    std::wcout << L"Start monitor : " << pVolumeInfo->volumeName << std::endl;
-
-    std::wstring folderPath = pVolumeInfo->volumeName;
-
-    HANDLE hVolume = CreateFile(folderPath.c_str(),
-        GENERIC_READ | GENERIC_WRITE | FILE_LIST_DIRECTORY,
-        FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
-        nullptr,
-        OPEN_EXISTING,
-        FILE_FLAG_BACKUP_SEMANTICS,
-        nullptr);
-
-    if (hVolume == INVALID_HANDLE_VALUE)
-    {
-        std::cout << "Error: " << GetLastError() << std::endl;
-        assert(0);
-    }
-
-    auto* pNotifyInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION*>(notifyInfo);
-
-    while (true)
-    {
-        // Check if need exit thread
-        DWORD dwWaitCode = WaitForSingleObject(pVolumeInfo->hMonitorExitEvent, 0x0);
-        if (WAIT_OBJECT_0 == dwWaitCode)
-        {
-            std::cout << "Recv the quit event" << std::endl;
-            break;
-        }
-
-        DWORD retBytes;
-
-        if (ReadDirectoryChangesW(
-            hVolume,
-            &notifyInfo,
-            sizeof(notifyInfo),
-            true, // Monitor sub directory
-            FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE,
-            &retBytes,
-            nullptr,
-            nullptr))
-        {
-            // Change file name
-            filePathWstr = pNotifyInfo->FileName;
-            filePathWstr.resize(pNotifyInfo->FileNameLength / 2);
-
-            // Rename file new name
-            auto pInfo = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(reinterpret_cast<char*>(pNotifyInfo) + pNotifyInfo->NextEntryOffset);
-            fileRePathWstr = pInfo->FileName;
-            fileRePathWstr.resize(pInfo->FileNameLength / 2);
-
-            // We delete pTaskInfo in update thread when task over
-            UpdateDataBaseTaskInfo updateTaskInfo;
-            updateTaskInfo.pVolumeInfo = pVolumeInfo;
-            updateTaskInfo.pMiniThing = pMiniThing;
-            updateTaskInfo.op = 0;
-
-            switch (pNotifyInfo->Action)
-            {
-            case FILE_ACTION_ADDED:
-                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos)
-                {
-                    std::wstring addPath;
-                    addPath.clear();
-                    addPath.append(pVolumeInfo->volumeName);
-                    addPath.append(L"\\");
-                    addPath.append(filePathWstr);
-
-                    updateTaskInfo.op = FILE_ACTION_ADDED;
-                    updateTaskInfo.oriPath = addPath;
-
-                    // pVolumeInfo->AdjustUsnRecord(pVolumeInfo->GetVolName(), addPath, L"", FILE_ACTION_ADDED);
-                }
-                break;
-
-            case FILE_ACTION_MODIFIED:
-                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos &&
-                    filePathWstr.find(L"fileAdded.txt") == wstring::npos &&
-                    filePathWstr.find(L"fileRemoved.txt") == wstring::npos)
-                {
-                    std::wstring modPath;
-                    modPath.append(pVolumeInfo->volumeName);
-                    modPath.append(L"\\");
-                    modPath.append(filePathWstr);
-
-                    // Must use printf here cuase cout is not thread safety
-                    // wprintf(L"Mod file : %s\n", modPath.c_str());
-                }
-                break;
-
-            case FILE_ACTION_REMOVED:
-                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos)
-                {
-                    std::wstring remPath;
-                    remPath.clear();
-                    remPath.append(pVolumeInfo->volumeName);
-                    remPath.append(L"\\");
-                    remPath.append(filePathWstr);
-
-                    updateTaskInfo.op = FILE_ACTION_REMOVED;
-                    updateTaskInfo.oriPath = remPath;
-
-                    // pVolumeInfo->AdjustUsnRecord(pVolumeInfo->GetVolName(), remPath, L"", FILE_ACTION_REMOVED);
-                }
-                break;
-
-            case FILE_ACTION_RENAMED_OLD_NAME:
-                if (filePathWstr.find(L"$RECYCLE.BIN") == wstring::npos)
-                {
-                    wstring oriPath;
-                    oriPath.clear();
-                    oriPath.append(pVolumeInfo->volumeName);
-                    oriPath.append(L"\\");
-                    oriPath.append(filePathWstr);
-
-                    wstring rePath;
-                    rePath.clear();
-                    rePath.append(pVolumeInfo->volumeName);
-                    rePath.append(L"\\");
-                    rePath.append(fileRePathWstr);
-
-                    updateTaskInfo.op = FILE_ACTION_RENAMED_OLD_NAME;
-                    updateTaskInfo.oriPath = oriPath;
-                    updateTaskInfo.newPath = rePath;
-
-                    // pVolumeInfo->AdjustUsnRecord(pVolumeInfo->GetVolName(), oriPath, rePath, FILE_ACTION_RENAMED_OLD_NAME);
-                }
-                break;
-
-            default:
-                std::wcout << L"Unknown command" << std::endl;
-            }
-
-            // We dispath those update task into list and handle them in UpdateSqlDataBaseThread,
-            //  cause updating sql data base may consume some time,
-            //  and we may lost more file change event at the same time.
-            WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
-            g_updateDataBaseTaskList.push_back(updateTaskInfo);
-            ReleaseMutex(g_updateDataBaseWrMutex);
-        }
-    }
-
-    CloseHandle(hVolume);
-
-    std::cout << "Monitor thread stop" << std::endl;
-
-    return 0;
-}
-
-HRESULT MiniThing::CreateMonitorThread(VOID)
+HRESULT MiniThing::CreateMonitorThread(void)
 {
     HRESULT ret = S_OK;
 
-    // Create UpdateSqlDataBaseThread, to handle all file update event from monitor thread
     g_updateDataBaseTaskList.clear();
     g_updateDataBaseWrMutex = CreateMutex(nullptr, 0, nullptr);
     assert(g_updateDataBaseWrMutex);
@@ -1162,11 +564,11 @@ HRESULT MiniThing::CreateMonitorThread(VOID)
     return ret;
 }
 
-VOID MiniThing::StartMonitorThread(VOID)
+void MiniThing::StartMonitorThread(void)
 {
 }
 
-VOID MiniThing::StopMonitorThread(VOID)
+void MiniThing::StopMonitorThread(void)
 {
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -1184,68 +586,7 @@ VOID MiniThing::StopMonitorThread(VOID)
     assert(dwWaitCode == WAIT_OBJECT_0);
 }
 
-DWORD WINAPI QueryThread(LPVOID lp)
-{
-    MiniThing* pMiniThing = (MiniThing*)lp;
-
-    // Set chinese debug output
-    std::wcout.imbue(std::locale("chs"));
-    setlocale(LC_ALL, "zh-CN");
-
-    printf("Query thread start\n");
-
-    while (TRUE)
-    {
-        // Check if need exit thread
-        DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hQueryExitEvent, 0x0);
-        if (WAIT_OBJECT_0 == dwWaitCode)
-        {
-            std::cout << "Recv the quit event" << std::endl;
-            break;
-        }
-
-        std::wcout << std::endl << L"==============================" << std::endl;
-        std::wcout << L"Input query file info here:" << std::endl;
-
-        std::wstring query;
-        std::wcin >> query;
-
-        std::vector<std::wstring> vec;
-
-        LARGE_INTEGER timeStart;
-        LARGE_INTEGER timeEnd;
-        LARGE_INTEGER frequency;
-        QueryPerformanceFrequency(&frequency);
-        double quadpart = (double)frequency.QuadPart;
-
-        QueryPerformanceCounter(&timeStart);
-
-        pMiniThing->SQLiteQuery(query, vec);
-
-        QueryPerformanceCounter(&timeEnd);
-        double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
-        std::cout << "Time elapsed : " << elapsed << " S" << std::endl;
-
-        if (vec.empty())
-        {
-            std::wcout << "Not found" << std::endl;
-        }
-        else
-        {
-            int cnt = 0;
-            for (auto it = vec.begin(); it != vec.end(); it++)
-            {
-                std::wcout << L"No." << cnt++ << " : " << *it << endl;
-            }
-        }
-        std::wcout << L"==============================" << std::endl;
-    }
-
-    printf("Query thread stop\n");
-    return 0;
-}
-
-HRESULT MiniThing::CreateQueryThread(VOID)
+HRESULT MiniThing::CreateQueryThread(void)
 {
     HRESULT ret = S_OK;
 
@@ -1260,12 +601,12 @@ HRESULT MiniThing::CreateQueryThread(VOID)
     return ret;
 }
 
-VOID MiniThing::StartQueryThread(VOID)
+void MiniThing::StartQueryThread(void)
 {
     ResumeThread(m_hQueryThread);
 }
 
-VOID MiniThing::StopQueryThread(VOID)
+void MiniThing::StopQueryThread(void)
 {
     SetEvent(m_hQueryExitEvent);
     DWORD dwWaitCode = WaitForSingleObject(m_hQueryThread, INFINITE);
@@ -1298,16 +639,14 @@ HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
         }
         else
         {
-            std::cout << "SQLite : data base already exist" << std::endl;
+            printf_s("Sqlite: data base already exist\n");
             m_isSqlExist = TRUE;
         }
-
-        std::cout << "SQLite : open success" << std::endl;
     }
     else
     {
         ret = E_FAIL;
-        std::cout << "SQLite : open failed" << std::endl;
+        printf_s("Sqlite: %s\n", errMsg);
     }
 
     return ret;
@@ -1328,12 +667,12 @@ HRESULT MiniThing::SQLiteInsert(UsnInfo* pUsnInfo)
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
-        printf("sqlite : insert failed\n");
-        printf("error : %s\n", errMsg);
+        printf_s("sqlite : insert failed\n");
+        printf_s("error : %s\n", errMsg);
     }
     else
     {
-        // printf("sqlite : insert done\n");
+        // printf_s("sqlite : insert done\n");
     }
 
     return ret;
@@ -1372,7 +711,7 @@ HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>
     else
     {
         ret = E_FAIL;
-        printf("sqlite : query failed\n");
+        printf_s("sqlite : query failed\n");
     }
 
     sqlite3_finalize(stmt);
@@ -1446,7 +785,7 @@ HRESULT MiniThing::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec
     else
     {
         ret = E_FAIL;
-        printf("sqlite : query failed\n");
+        printf_s("sqlite : query failed\n");
     }
 
     sqlite3_finalize(stmt);
@@ -1468,12 +807,12 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
-        printf("sqlite : delete failed\n");
-        printf("error : %s\n", errMsg);
+        printf_s("sqlite : delete failed\n");
+        printf_s("error : %s\n", errMsg);
     }
     else
     {
-        // printf("sqlite : delete done\n");
+        // printf_s("sqlite : delete done\n");
     }
 
     char sql1[1024] = { 0 };
@@ -1481,44 +820,18 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
     if (sqlite3_exec(m_hSQLite, sql1, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
-        printf("sqlite : delete failed\n");
-        printf("error : %s\n", errMsg);
+        printf_s("sqlite : delete failed\n");
+        printf_s("error : %s\n", errMsg);
     }
     else
     {
-        // printf("sqlite : delete done\n");
+        // printf_s("sqlite : delete done\n");
     }
 
     return ret;
 }
 
-HRESULT MiniThing::SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath)
-{
-    HRESULT ret = S_OK;
-
-    char sql[1024] = { 0 };
-    char* errMsg = nullptr;
-
-    // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
-    std::string oriPath = UnicodeToUtf8(originPath);
-    std::string newPath = UnicodeToUtf8(pUsnInfo->filePathWstr);
-    std::string newName = UnicodeToUtf8(pUsnInfo->fileNameWstr);
-    sprintf_s(sql, "UPDATE UsnInfo SET FileName = '%s', FilePath = '%s' WHERE FilePath = '%s';", newName.c_str(), newPath.c_str(), oriPath.c_str());
-    if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
-    {
-        ret = E_FAIL;
-        printf("sqlite : update failed\n");
-        printf("error : %s\n", errMsg);
-    }
-    else
-    {
-        // printf("sqlite : update done\n");
-    }
-
-    return ret;
-}
-
-HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
+HRESULT MiniThing::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
 {
     HRESULT ret = S_OK;
 
@@ -1537,12 +850,12 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
     if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
-        printf("sqlite : update failed\n");
-        printf("error : %s\n", errMsg);
+        printf_s("sqlite : update failed\n");
+        printf_s("error : %s\n", errMsg);
     }
     else
     {
-        // printf("sqlite : update done\n");
+        // printf_s("sqlite : update done\n");
     }
 
     // Update file node under folder if exist
@@ -1568,12 +881,12 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
             if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
             {
                 ret = E_FAIL;
-                printf("sqlite : update failed\n");
-                printf("error : %s\n", errMsg);
+                printf_s("sqlite : update failed\n");
+                printf_s("error : %s\n", errMsg);
             }
             else
             {
-                // printf("sqlite : update done\n");
+                // printf_s("sqlite : update done\n");
             }
         }
     }
@@ -1581,7 +894,7 @@ HRESULT MiniThing::SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
     return ret;
 }
 
-HRESULT MiniThing::SQLiteClose(VOID)
+HRESULT MiniThing::SQLiteClose(void)
 {
     sqlite3_close_v2(m_hSQLite);
 

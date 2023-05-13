@@ -238,3 +238,39 @@ inline std::wstring Utf8ToUnicode(const std::string& utf8Str)
 
     return wStr;
 }
+
+inline void SetChsPrintEnv(void)
+{
+    // Set chinese debug output
+    std::wcout.imbue(std::locale("chs"));
+    setlocale(LC_ALL, "zh-CN");
+}
+
+inline std::wstring GetFileNameAccordPath(std::wstring path)
+{
+    return path.substr(path.find_last_of(L"\\") + 1);
+}
+
+inline std::wstring GetPathAccordPath(std::wstring path)
+{
+    std::wstring name = GetFileNameAccordPath(path);
+    return path.substr(0, path.length() - name.length());
+}
+
+inline void GetSystemError(void)
+{
+    LPCTSTR   lpMsgBuf;
+    DWORD lastError = GetLastError();
+    FormatMessage(
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL,
+        lastError,
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+        (LPTSTR)&lpMsgBuf,
+        0,
+        NULL
+    );
+
+    LPCTSTR strValue = lpMsgBuf;
+    wprintf_s(L"Err msg: %s\n", strValue);
+}

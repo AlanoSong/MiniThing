@@ -32,8 +32,8 @@ struct UsnInfo
     LARGE_INTEGER timeStamp;
 
     // File path & name
-    wstring fileNameWstr;
-    wstring filePathWstr;
+    std::wstring fileNameWstr;
+    std::wstring filePathWstr;
 };
 
 typedef struct
@@ -49,7 +49,7 @@ typedef struct
     HANDLE hMonitor;
     HANDLE hMonitorExitEvent;
 
-    VOID* pMonitorTaskInfo;
+    void* pMonitorTaskInfo;
 }VolumeInfo;
 
 typedef struct
@@ -70,8 +70,8 @@ typedef struct
 
 typedef struct
 {
-    VOID* pVolumeInfo;
-    VOID* pMiniThing;
+    void* pVolumeInfo;
+    void* pMiniThing;
     DWORD op;
     std::wstring folder;
     std::wstring oriPath;
@@ -94,31 +94,25 @@ typedef struct _QueryInfo
 class MiniThing
 {
 public:
-    MiniThing(std::wstring volumeName, const char* sqlDBPath);
-    ~MiniThing(VOID);
+    MiniThing(const char* sqlDBPath);
+    ~MiniThing(void);
 
-    HRESULT QueryAllVolume(VOID);
+    HRESULT QueryAllVolume(void);
+    void AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring reFileName, DWORD op);
 
-    std::wstring GetVolName(VOID)
-    {
-        return m_volumeName;
-    }
+    HRESULT CreateMonitorThread(void);
+    void StartMonitorThread(void);
+    void StopMonitorThread(void);
 
-    VOID AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring reFileName, DWORD op);
+    HRESULT CreateQueryThread(void);
+    void StartQueryThread(void);
+    void StopQueryThread(void);
 
-    HRESULT CreateMonitorThread(VOID);
-    VOID StartMonitorThread(VOID);
-    VOID StopMonitorThread(VOID);
-
-    HRESULT CreateQueryThread(VOID);
-    VOID StartQueryThread(VOID);
-    VOID StopQueryThread(VOID);
-
-    DWORDLONG GetNewFileRef(VOID)
+    DWORDLONG GetNewFileRef(void)
     {
         return m_unusedFileRefNum--;
     }
-    DWORDLONG GetParentFileRef(VOID)
+    DWORDLONG GetParentFileRef(void)
     {
         return m_constFileRefNumMax;
     }
@@ -129,13 +123,12 @@ public:
     HRESULT SQLiteOpen(CONST CHAR* path);
     HRESULT SQLiteInsert(UsnInfo* pUsnInfo);
     HRESULT SQLiteDelete(UsnInfo* pUsnInfo);
-    HRESULT SQLiteUpdate(UsnInfo* pUsnInfo, std::wstring originPath);
-    HRESULT SQLiteUpdateV2(UsnInfo* pOriInfo, UsnInfo* pNewInfo);
-    HRESULT SQLiteClose(VOID);
+    HRESULT SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo);
+    HRESULT SQLiteClose(void);
     HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
     HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec);
 
-    BOOL IsSqlExist(VOID)
+    BOOL IsSqlExist(void)
     {
         return m_isSqlExist;
     }
@@ -159,7 +152,6 @@ public:
 private:
     std::vector<VolumeInfo> m_volumeSet;
 
-    std::wstring        m_volumeName;
     BOOL                m_isSqlExist;
     HANDLE              m_hVol = INVALID_HANDLE_VALUE;
     const DWORDLONG     m_constFileRefNumMax = ((DWORDLONG)(-1));
@@ -167,20 +159,18 @@ private:
     DWORDLONG           m_rootFileNode;
 
 private:
-    HRESULT GetAllVolumeHandle(VOID);
-    VOID closeHandle(VOID);
+    HRESULT GetAllVolumeHandle(void);
+    void closeHandle(void);
     BOOL IsNtfs(std::wstring volName);
 
-    VOID GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
-    VOID GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
-    HRESULT CreateUsn(VOID);
-    HRESULT QueryUsn(VOID);
-    HRESULT RecordUsn(VOID);
-    HRESULT SortUsn(VOID);
+    void GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
+    void GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
+    HRESULT CreateUsn(void);
+    HRESULT QueryUsn(void);
+    HRESULT RecordUsn(void);
+    HRESULT SortUsn(void);
     HRESULT SortVolumeAndUpdateSql(VolumeInfo &volumeInfo);
-    HRESULT SortVolumeSetAndUpdateSql(VOID);
-    HRESULT DeleteUsn(VOID);
-
-    VOID GetSystemError(VOID);
+    HRESULT SortVolumeSetAndUpdateSql(void);
+    HRESULT DeleteUsn(void);
 };
 
