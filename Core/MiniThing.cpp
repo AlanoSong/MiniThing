@@ -64,7 +64,7 @@ MiniThing::MiniThing(const char* sqlDBPath)
         }
     }
 
-    closeHandle();
+    CloseVolumeHandle();
 }
 
 MiniThing::~MiniThing(void)
@@ -132,7 +132,7 @@ HRESULT MiniThing::GetAllVolumeHandle()
     return ret;
 }
 
-void MiniThing::closeHandle(void)
+void MiniThing::CloseVolumeHandle(void)
 {
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -141,9 +141,9 @@ void MiniThing::closeHandle(void)
     }
 }
 
-BOOL MiniThing::IsNtfs(std::wstring volName)
+bool MiniThing::IsNtfs(std::wstring volName)
 {
-    BOOL isNtfs = FALSE;
+    bool isNtfs = false;
     char sysNameBuf[MAX_PATH] = { 0 };
     char sysNameBuf2[MAX_PATH] = { 0 };
 
@@ -156,7 +156,7 @@ BOOL MiniThing::IsNtfs(std::wstring volName)
     char* pVol2 = new char[len];
     WstringToChar(volName2, pVol2);
 
-    BOOL status = GetVolumeInformationA(
+    bool status = GetVolumeInformationA(
         pVol,
         NULL,
         0,
@@ -168,7 +168,7 @@ BOOL MiniThing::IsNtfs(std::wstring volName)
 
     // Sometimes if pVol = 'X:', GetVolumeInformationA() not success,
     //      so we try with 'X:\' again.
-    BOOL status2 = GetVolumeInformationA(
+    bool status2 = GetVolumeInformationA(
         pVol2,
         NULL,
         0,
@@ -197,8 +197,8 @@ BOOL MiniThing::IsNtfs(std::wstring volName)
         GetSystemError();
     }
 
-    delete [] pVol;
-    delete [] pVol2;
+    delete[] pVol;
+    delete[] pVol2;
 
     return isNtfs;
 }
@@ -214,7 +214,7 @@ HRESULT MiniThing::CreateUsn(void)
 
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        BOOL status = DeviceIoControl(
+        bool status = DeviceIoControl(
             it->hVolume,
             FSCTL_CREATE_USN_JOURNAL,
             &cujd,
@@ -224,7 +224,7 @@ HRESULT MiniThing::CreateUsn(void)
             &br,
             NULL);
 
-        if (FALSE == status)
+        if (false == status)
         {
             GetSystemError();
             ret = E_FAIL;
@@ -245,7 +245,7 @@ HRESULT MiniThing::QueryUsn(void)
         DWORD br;
         USN_JOURNAL_DATA usnJournalData;
 
-        BOOL status = DeviceIoControl(it->hVolume,
+        bool status = DeviceIoControl(it->hVolume,
             FSCTL_QUERY_USN_JOURNAL,
             NULL,
             0,
@@ -254,7 +254,7 @@ HRESULT MiniThing::QueryUsn(void)
             &br,
             NULL);
 
-        if (FALSE == status)
+        if (false == status)
         {
             ret = E_FAIL;
             GetSystemError();
@@ -285,7 +285,7 @@ HRESULT MiniThing::RecordUsn(void)
 
         // Find the first USN record
         // return a USN followed by zero or more change journal records, each in a USN_RECORD structure
-        while (FALSE != DeviceIoControl(it->hVolume,
+        while (false != DeviceIoControl(it->hVolume,
             FSCTL_ENUM_USN_DATA,
             &med,
             sizeof(med),
@@ -373,7 +373,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
     volume.rootName = volume.volumeName;
 
     // 2. Get suitable thread task granularity
-    int hwThreadNum = std::thread::hardware_concurrency();
+    int hwThreadNum = std::thread::hardware_concurrency() * 2;
     int granularity = (int)volume.usnRecordMap.size() / hwThreadNum;
     int step = 100;
     while (granularity * hwThreadNum < volume.usnRecordMap.size())
@@ -520,7 +520,7 @@ HRESULT MiniThing::DeleteUsn(void)
             &lenRet,
             NULL);
 
-        if (FALSE == status)
+        if (false == status)
         {
             printf_s("Delete usn file failed\n");
             GetSystemError();
@@ -549,7 +549,7 @@ HRESULT MiniThing::CreateMonitorThread(void)
     {
         it->hMonitorExitEvent = CreateEvent(0, 0, 0, 0);
         it->pMonitorTaskInfo = new MonitorTaskInfo;
-        MonitorTaskInfo *pTask = (MonitorTaskInfo * )it->pMonitorTaskInfo;
+        MonitorTaskInfo* pTask = (MonitorTaskInfo*)it->pMonitorTaskInfo;
         pTask->pMiniThing = this;
         pTask->pVolumeInfo = &(*it);
 
@@ -635,12 +635,12 @@ HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
         int res = sqlite3_exec(m_hSQLite, create.c_str(), 0, 0, &errMsg);
         if (res == SQLITE_OK)
         {
-            m_isSqlExist = FALSE;
+            m_isSqlExist = false;
         }
         else
         {
             printf_s("Sqlite: data base already exist\n");
-            m_isSqlExist = TRUE;
+            m_isSqlExist = true;
         }
     }
     else
@@ -729,18 +729,18 @@ HRESULT MiniThing::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec
     {
         switch (queryInfo->type)
         {
-        case BY_REF:
+        case QUERY_BY_REF:
         {
             sprintf_s(sql, "SELECT * FROM UsnInfo WHERE SelfRef = %llu;", queryInfo->info.pSelfRef);
             break;
         }
-        case BY_NAME:
+        case QUERY_BY_NAME:
         {
             std::string str = UnicodeToUtf8(queryInfo->info.fileNameWstr);
             sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
             break;
         }
-        case BY_PREPATH:
+        case QUERY_BY_PREPATH:
         {
             std::string str = UnicodeToUtf8(queryInfo->info.filePathWstr);
             sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FilePath LIKE '%s\\%%';", str.c_str());
@@ -798,7 +798,8 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
     HRESULT ret = S_OK;
 
     // Update sql db
-    char sql[1024] = { 0 };
+    char sql[2048] = { 0 };
+    memset(sql, 0x00, 2048);
     char* errMsg = nullptr;
 
     // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
@@ -815,7 +816,8 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
         // printf_s("sqlite : delete done\n");
     }
 
-    char sql1[1024] = { 0 };
+    char sql1[2048] = { 0 };
+    memset(sql1, 0x00, 2048);
     sprintf_s(sql1, "DELETE FROM UsnInfo WHERE FilePath LIKE '%s\\%%';", path.c_str());
     if (sqlite3_exec(m_hSQLite, sql1, NULL, NULL, &errMsg) != SQLITE_OK)
     {
@@ -835,7 +837,8 @@ HRESULT MiniThing::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
 {
     HRESULT ret = S_OK;
 
-    char sql[1024] = { 0 };
+    char sql[2048];
+    memset(sql, 0x00, 2048);
     char* errMsg = nullptr;
 
     // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
@@ -862,7 +865,7 @@ HRESULT MiniThing::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
     std::vector<UsnInfo> vec;
 
     QueryInfo queryInfo;
-    queryInfo.type = BY_PREPATH;
+    queryInfo.type = QUERY_BY_PREPATH;
     queryInfo.info.filePathWstr = pOriInfo->filePathWstr;
     SQLiteQueryV2(&queryInfo, vec);
 

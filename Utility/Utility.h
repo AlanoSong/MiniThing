@@ -41,7 +41,7 @@ inline std::wstring CharToWstring(const char* pChar)
     pWchar[len] = 0x00;
 
     std::wstring wStr = pWchar;
-    delete [] pWchar;
+    delete[] pWchar;
 
     return wStr;
 }
@@ -80,7 +80,7 @@ inline std::string WcharToString(const wchar_t* pWchar)
     WcharToChar(pWchar, pChar);
 
     std::string str = pChar;
-    delete [] pChar;
+    delete[] pChar;
 
     return str;
 }
@@ -127,7 +127,7 @@ inline std::wstring StringToWstring(const std::string str)
 
     std::wstring wStr(pWchar);
 
-    delete [] pWchar;
+    delete[] pWchar;
 
     return wStr;
 }
@@ -182,7 +182,7 @@ inline std::string WstringToString(const std::wstring& wStr)
 
     std::string str(pChar);
 
-    delete [] pChar;
+    delete[] pChar;
 
     return str;
 }
@@ -204,7 +204,7 @@ inline std::string UnicodeToUtf8(const std::wstring& wStr)
     }
 
     std::string str(pChar);
-    delete [] pChar;
+    delete[] pChar;
 
     return str;
 }
@@ -234,7 +234,7 @@ inline std::wstring Utf8ToUnicode(const std::string& utf8Str)
     }
 
     std::wstring wStr(pWchar);
-    delete [] pWchar;
+    delete[] pWchar;
 
     return wStr;
 }

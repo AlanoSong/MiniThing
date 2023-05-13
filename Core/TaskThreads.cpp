@@ -57,7 +57,7 @@ DWORD WINAPI SortThread(LPVOID lp)
     QueryPerformanceFrequency(&frequency);
     double quadpart = (double)frequency.QuadPart;
     QueryPerformanceCounter(&timeStart);
-    
+
     for (auto it = (*pTaskInfo->pSortTask).begin(); it != (*pTaskInfo->pSortTask).end(); it++)
     {
         UsnInfo usnInfo = it->second;
@@ -65,7 +65,7 @@ DWORD WINAPI SortThread(LPVOID lp)
         GetCurrentFilePath(path, pTaskInfo->rootFolderName, usnInfo.pParentRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
         (*pTaskInfo->pSortTask)[it->first].filePathWstr = path;
     }
-    
+
     QueryPerformanceCounter(&timeEnd);
     double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
     printf_s("Sort thread %d over, %f S\n", pTaskInfo->taskIndex, elapsed);
@@ -79,7 +79,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
     MiniThing* pMiniThing = (MiniThing*)lp;
 
-    while (TRUE)
+    while (true)
     {
         // Check if need exit thread
         DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hUpdateSqlDataBaseExitEvent, 0x0);
@@ -105,6 +105,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
                 UsnInfo unsInfo = { 0 };
                 unsInfo.filePathWstr = taskInfo.oriPath;
                 unsInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
+                // TODO: assign valid ref
                 unsInfo.pParentRef = 0;
                 unsInfo.pSelfRef = 0;
 
@@ -320,7 +321,7 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
     printf_s("Query thread start\n");
 
-    while (TRUE)
+    while (true)
     {
         // Check if need exit thread
         DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hQueryExitEvent, 0x0);
@@ -330,7 +331,7 @@ DWORD WINAPI QueryThread(LPVOID lp)
             break;
         }
 
-        printf_s("\n>>>\n");
+        printf_s("\n==============================\n");
         printf_s("Input file name: ");
 
         std::wstring query;
@@ -361,10 +362,10 @@ DWORD WINAPI QueryThread(LPVOID lp)
             int cnt = 0;
             for (auto it = vec.begin(); it != vec.end(); it++)
             {
-                wprintf_s(L"NO.%d\t:%s\n", cnt++, (*it).c_str());
+                wprintf_s(L"NO.%d\t: %s\n", cnt++, (*it).c_str());
             }
         }
-        printf_s("<<<\n");
+        printf_s("==============================\n");
     }
 
     printf_s("Query thread stop\n");

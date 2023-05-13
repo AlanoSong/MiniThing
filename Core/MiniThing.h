@@ -17,8 +17,7 @@
 
 using namespace std;
 
-#define SORT_TASK_GRANULARITY           ( 1024 )
-#define SQL_BATCH_INSERT_GRANULARITY    ( 256 )
+#define SQL_BATCH_INSERT_GRANULARITY    ( 4096 )
 
 class MiniThing;
 
@@ -80,9 +79,9 @@ typedef struct
 
 typedef enum _QUERY_TYPE
 {
-    BY_NAME = 0,
-    BY_REF,
-    BY_PREPATH,
+    QUERY_BY_NAME = 0,
+    QUERY_BY_REF,
+    QUERY_BY_PREPATH,
 }QUERY_TYPE;
 
 typedef struct _QueryInfo
@@ -97,80 +96,65 @@ public:
     MiniThing(const char* sqlDBPath);
     ~MiniThing(void);
 
+public:
+    // System related functions
     HRESULT QueryAllVolume(void);
-    void AdjustUsnRecord(std::wstring folder, std::wstring filePath, std::wstring reFileName, DWORD op);
+    HRESULT GetAllVolumeHandle(void);
+    void CloseVolumeHandle(void);
+    bool IsNtfs(std::wstring volName);
+    bool IsSqlExist(void) { return m_isSqlExist; }
 
+public:
+    // Monitor thread related parameters
+    HANDLE      m_hExitEvent;
+    HANDLE      m_hMonitorThread;
+
+    // Monitor thread related functions
     HRESULT CreateMonitorThread(void);
     void StartMonitorThread(void);
     void StopMonitorThread(void);
 
+public:
+    // Query thread related parameters
+    HANDLE      m_hQueryExitEvent;
+    HANDLE      m_hQueryThread;
+
+    // Query thread thread related functions
     HRESULT CreateQueryThread(void);
     void StartQueryThread(void);
     void StopQueryThread(void);
 
-    DWORDLONG GetNewFileRef(void)
-    {
-        return m_unusedFileRefNum--;
-    }
-    DWORDLONG GetParentFileRef(void)
-    {
-        return m_constFileRefNumMax;
-    }
+public:
+    // Sqlite data base related paremeters
+    HANDLE      m_hUpdateSqlDataBaseExitEvent;
+    HANDLE      m_hUpdateSqlDataBaseThread;
 
-    // For SQLite
-    sqlite3* m_hSQLite;
-    string m_SQLitePath;
+    // Sqlite data base related functions
+    HRESULT SortVolumeAndUpdateSql(VolumeInfo& volumeInfo);
+    HRESULT SortVolumeSetAndUpdateSql(void);
+
     HRESULT SQLiteOpen(CONST CHAR* path);
     HRESULT SQLiteInsert(UsnInfo* pUsnInfo);
     HRESULT SQLiteDelete(UsnInfo* pUsnInfo);
     HRESULT SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo);
-    HRESULT SQLiteClose(void);
     HRESULT SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec);
     HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec);
-
-    BOOL IsSqlExist(void)
-    {
-        return m_isSqlExist;
-    }
-
-    unordered_map<DWORDLONG, UsnInfo>   m_usnRecordMap;
-
-    DWORDLONG   m_unusedFileRefNum = ((DWORDLONG)(-1)) - 1;
-
-    // Monitor thread
-    HANDLE      m_hExitEvent;
-    HANDLE      m_hMonitorThread;
-
-    // Query thread
-    HANDLE      m_hQueryExitEvent;
-    HANDLE      m_hQueryThread;
-
-    // Update sql data base thread
-    HANDLE      m_hUpdateSqlDataBaseExitEvent;
-    HANDLE      m_hUpdateSqlDataBaseThread;
+    HRESULT SQLiteClose(void);
 
 private:
-    std::vector<VolumeInfo> m_volumeSet;
-
-    BOOL                m_isSqlExist;
-    HANDLE              m_hVol = INVALID_HANDLE_VALUE;
-    const DWORDLONG     m_constFileRefNumMax = ((DWORDLONG)(-1));
-    USN_JOURNAL_DATA    m_usnInfo;
-    DWORDLONG           m_rootFileNode;
-
-private:
-    HRESULT GetAllVolumeHandle(void);
-    void closeHandle(void);
-    BOOL IsNtfs(std::wstring volName);
-
-    void GetCurrentFilePath(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
-    void GetCurrentFilePathBySql(std::wstring& path, DWORDLONG currentRef, DWORDLONG rootRef);
+    // Usn related functions
     HRESULT CreateUsn(void);
     HRESULT QueryUsn(void);
     HRESULT RecordUsn(void);
-    HRESULT SortUsn(void);
-    HRESULT SortVolumeAndUpdateSql(VolumeInfo &volumeInfo);
-    HRESULT SortVolumeSetAndUpdateSql(void);
     HRESULT DeleteUsn(void);
+
+private:
+    std::vector<VolumeInfo> m_volumeSet;
+    unordered_map<DWORDLONG, UsnInfo>   m_usnRecordMap;
+
+    sqlite3* m_hSQLite;
+    string m_SQLitePath;
+
+    bool                m_isSqlExist;
 };
 
