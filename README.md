@@ -5,7 +5,7 @@
 ## 1. Introduction
 - The Everything software on Windows is very fast in file location, with the advantage of utilizing NTFS's USN logs and the file monitoring mechanism on Windows
 - This project follows a similar principle by querying USN logs, monitoring Windows platform file changes, using sqlite databases to store file nodes, and providing file searching
-![](./Docs/Pictures/Architecture.png)
+![Architecture](./Docs/Pictures/Architecture.png)
 
 ## 2. How to use
 
