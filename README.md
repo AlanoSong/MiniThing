@@ -8,12 +8,13 @@
 - Enviroment: Visual Studio 2022 + QT 5.14.2
 
 ## 3. To be added
-- CMake build
 - Display more file info
-- Fix bugs
 - Perfermance enhance
+- Fix bugs
+- CMake build
+- Graceful Qt UI
 
-## 3. Participate in contributing
+## 4. Participate in contributing
 - Fork this repository
 - Create a new Feature_xxx branch
 - Submit the code
