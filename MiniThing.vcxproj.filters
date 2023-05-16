@@ -83,11 +83,13 @@
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="LICENSE" />
-    <None Include="README.ch.md" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Docs\Pictures\Architecture.png">
+      <Filter>Docs\Pictures</Filter>
+    </Image>
+    <Image Include="Docs\Pictures\Usage.png">
       <Filter>Docs\Pictures</Filter>
     </Image>
   </ItemGroup>
