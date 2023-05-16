@@ -1,15 +1,12 @@
-// MiniThing.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
 #include <iostream>
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <tchar.h>
 
-#include "MiniThing.h"
+#include "./MiniThing/Core/MiniThingCore.h"
 
-int main()
+int CommandLineMain(int argc, char *argv[])
 {
     LARGE_INTEGER timeStart;
     LARGE_INTEGER timeEnd;
@@ -18,25 +15,27 @@ int main()
     double quadpart = (double)frequency.QuadPart;
     QueryPerformanceCounter(&timeStart);
 
-    MiniThing* pMiniThing = new MiniThing(".\\MiniThing.db");
+    MiniThingCore* pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
 
     QueryPerformanceCounter(&timeEnd);
     double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
     printf_s("Time elasped: %f S\n", elapsed);
 
-    if (FAILED(pMiniThing->CreateMonitorThread()))
+    if (FAILED(pMiniThingCore->CreateMonitorThread()))
     {
         assert(0);
     }
-    if (FAILED(pMiniThing->CreateQueryThread()))
+    if (FAILED(pMiniThingCore->CreateQueryThread()))
     {
         assert(0);
     }
-    pMiniThing->StartMonitorThread();
-    pMiniThing->StartQueryThread();
+    pMiniThingCore->StartMonitorThread();
+    pMiniThingCore->StartQueryThread();
 
     Sleep(1000 * 1200);
 
-    pMiniThing->StopMonitorThread();
-    pMiniThing->StopQueryThread();
+    pMiniThingCore->StopMonitorThread();
+    pMiniThingCore->StopQueryThread();
+
+    return 0;
 }

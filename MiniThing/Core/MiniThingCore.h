@@ -13,13 +13,15 @@
 #include <thread>
 #include <list>
 
+#include "TaskThreads.h"
+#include "../Utility/Utility.h"
 #include "../ThirdParty/SQLite/sqlite3.h"
 
 using namespace std;
 
 #define SQL_BATCH_INSERT_GRANULARITY    ( 4096 )
 
-class MiniThing;
+class MiniThingCore;
 
 struct UsnInfo
 {
@@ -54,7 +56,7 @@ typedef struct
 typedef struct
 {
     VolumeInfo* pVolumeInfo;
-    MiniThing* pMiniThing;
+    MiniThingCore* pMiniThingCore;
 }MonitorTaskInfo;
 
 typedef struct
@@ -70,7 +72,7 @@ typedef struct
 typedef struct
 {
     void* pVolumeInfo;
-    void* pMiniThing;
+    void* pMiniThingCore;
     DWORD op;
     std::wstring folder;
     std::wstring oriPath;
@@ -90,11 +92,12 @@ typedef struct _QueryInfo
     UsnInfo info;
 }QueryInfo;
 
-class MiniThing
+class MiniThingCore
 {
 public:
-    MiniThing(const char* sqlDBPath);
-    ~MiniThing(void);
+    MiniThingCore() {};
+    MiniThingCore(const char* sqlDBPath);
+    ~MiniThingCore(void);
 
 public:
     // System related functions

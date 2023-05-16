@@ -1,6 +1,4 @@
-#include "MiniThing.h"
-#include "TaskThreads.h"
-#include "../Utility/Utility.h"
+#include "MiniThingCore.h"
 
 //==========================================================================
 //                        Static Functions                                //
@@ -15,7 +13,7 @@ extern HANDLE g_updateDataBaseWrMutex;
 //==========================================================================
 //                        MiniThing Functions                             //
 //==========================================================================
-MiniThing::MiniThing(const char* sqlDBPath)
+MiniThingCore::MiniThingCore(const char* sqlDBPath)
 {
     SetChsPrintEnv();
 
@@ -67,7 +65,7 @@ MiniThing::MiniThing(const char* sqlDBPath)
     CloseVolumeHandle();
 }
 
-MiniThing::~MiniThing(void)
+MiniThingCore::~MiniThingCore(void)
 {
     if (FAILED(SQLiteClose()))
     {
@@ -75,7 +73,7 @@ MiniThing::~MiniThing(void)
     }
 }
 
-HRESULT MiniThing::QueryAllVolume(void)
+HRESULT MiniThingCore::QueryAllVolume(void)
 {
     HRESULT ret = S_OK;
     // Get all volume
@@ -103,7 +101,7 @@ HRESULT MiniThing::QueryAllVolume(void)
     return ret;
 }
 
-HRESULT MiniThing::GetAllVolumeHandle()
+HRESULT MiniThingCore::GetAllVolumeHandle()
 {
     HRESULT ret = S_OK;
 
@@ -132,7 +130,7 @@ HRESULT MiniThing::GetAllVolumeHandle()
     return ret;
 }
 
-void MiniThing::CloseVolumeHandle(void)
+void MiniThingCore::CloseVolumeHandle(void)
 {
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -141,7 +139,7 @@ void MiniThing::CloseVolumeHandle(void)
     }
 }
 
-bool MiniThing::IsNtfs(std::wstring volName)
+bool MiniThingCore::IsNtfs(std::wstring volName)
 {
     bool isNtfs = false;
     char sysNameBuf[MAX_PATH] = { 0 };
@@ -203,7 +201,7 @@ bool MiniThing::IsNtfs(std::wstring volName)
     return isNtfs;
 }
 
-HRESULT MiniThing::CreateUsn(void)
+HRESULT MiniThingCore::CreateUsn(void)
 {
     HRESULT ret = S_OK;
 
@@ -236,7 +234,7 @@ HRESULT MiniThing::CreateUsn(void)
     return ret;
 }
 
-HRESULT MiniThing::QueryUsn(void)
+HRESULT MiniThingCore::QueryUsn(void)
 {
     HRESULT ret = S_OK;
 
@@ -270,7 +268,7 @@ HRESULT MiniThing::QueryUsn(void)
     return ret;
 }
 
-HRESULT MiniThing::RecordUsn(void)
+HRESULT MiniThingCore::RecordUsn(void)
 {
     printf_s("Record usn ...\n");
 
@@ -330,7 +328,7 @@ HRESULT MiniThing::RecordUsn(void)
     return S_OK;
 }
 
-HRESULT MiniThing::SortVolumeSetAndUpdateSql(void)
+HRESULT MiniThingCore::SortVolumeSetAndUpdateSql(void)
 {
     HRESULT ret = S_OK;
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
@@ -341,7 +339,7 @@ HRESULT MiniThing::SortVolumeSetAndUpdateSql(void)
     return ret;
 }
 
-HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
+HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
 {
     HRESULT ret = S_OK;
 
@@ -500,7 +498,7 @@ HRESULT MiniThing::SortVolumeAndUpdateSql(VolumeInfo& volume)
     return ret;
 }
 
-HRESULT MiniThing::DeleteUsn(void)
+HRESULT MiniThingCore::DeleteUsn(void)
 {
     HRESULT ret = S_OK;
 
@@ -531,7 +529,7 @@ HRESULT MiniThing::DeleteUsn(void)
     return ret;
 }
 
-HRESULT MiniThing::CreateMonitorThread(void)
+HRESULT MiniThingCore::CreateMonitorThread(void)
 {
     HRESULT ret = S_OK;
 
@@ -550,7 +548,7 @@ HRESULT MiniThing::CreateMonitorThread(void)
         it->hMonitorExitEvent = CreateEvent(0, 0, 0, 0);
         it->pMonitorTaskInfo = new MonitorTaskInfo;
         MonitorTaskInfo* pTask = (MonitorTaskInfo*)it->pMonitorTaskInfo;
-        pTask->pMiniThing = this;
+        pTask->pMiniThingCore = this;
         pTask->pVolumeInfo = &(*it);
 
         it->hMonitor = CreateThread(0, 0, MonitorThread, it->pMonitorTaskInfo, 0, 0);
@@ -564,11 +562,11 @@ HRESULT MiniThing::CreateMonitorThread(void)
     return ret;
 }
 
-void MiniThing::StartMonitorThread(void)
+void MiniThingCore::StartMonitorThread(void)
 {
 }
 
-void MiniThing::StopMonitorThread(void)
+void MiniThingCore::StopMonitorThread(void)
 {
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -586,7 +584,7 @@ void MiniThing::StopMonitorThread(void)
     assert(dwWaitCode == WAIT_OBJECT_0);
 }
 
-HRESULT MiniThing::CreateQueryThread(void)
+HRESULT MiniThingCore::CreateQueryThread(void)
 {
     HRESULT ret = S_OK;
 
@@ -601,12 +599,12 @@ HRESULT MiniThing::CreateQueryThread(void)
     return ret;
 }
 
-void MiniThing::StartQueryThread(void)
+void MiniThingCore::StartQueryThread(void)
 {
     ResumeThread(m_hQueryThread);
 }
 
-void MiniThing::StopQueryThread(void)
+void MiniThingCore::StopQueryThread(void)
 {
     SetEvent(m_hQueryExitEvent);
     DWORD dwWaitCode = WaitForSingleObject(m_hQueryThread, INFINITE);
@@ -615,7 +613,7 @@ void MiniThing::StopQueryThread(void)
     CloseHandle(m_hQueryThread);
 }
 
-HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
+HRESULT MiniThingCore::SQLiteOpen(CONST CHAR* path)
 {
     HRESULT ret = S_OK;
     m_SQLitePath = path;
@@ -652,7 +650,7 @@ HRESULT MiniThing::SQLiteOpen(CONST CHAR* path)
     return ret;
 }
 
-HRESULT MiniThing::SQLiteInsert(UsnInfo* pUsnInfo)
+HRESULT MiniThingCore::SQLiteInsert(UsnInfo* pUsnInfo)
 {
     HRESULT ret = S_OK;
 
@@ -678,7 +676,7 @@ HRESULT MiniThing::SQLiteInsert(UsnInfo* pUsnInfo)
     return ret;
 }
 
-HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec)
+HRESULT MiniThingCore::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>& vec)
 {
     HRESULT ret = S_OK;
     char sql[1024] = { 0 };
@@ -692,6 +690,7 @@ HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>
 
     sqlite3_stmt* stmt = NULL;
     int res = sqlite3_prepare_v2(m_hSQLite, sql, (int)strlen(sql), &stmt, NULL);
+
     if (SQLITE_OK == res && NULL != stmt)
     {
         // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
@@ -719,7 +718,7 @@ HRESULT MiniThing::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstring>
     return ret;
 }
 
-HRESULT MiniThing::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec)
+HRESULT MiniThingCore::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec)
 {
     HRESULT ret = S_OK;
     char sql[1024] = { 0 };
@@ -793,7 +792,7 @@ HRESULT MiniThing::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>& vec
     return ret;
 }
 
-HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
+HRESULT MiniThingCore::SQLiteDelete(UsnInfo* pUsnInfo)
 {
     HRESULT ret = S_OK;
 
@@ -833,7 +832,7 @@ HRESULT MiniThing::SQLiteDelete(UsnInfo* pUsnInfo)
     return ret;
 }
 
-HRESULT MiniThing::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
+HRESULT MiniThingCore::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
 {
     HRESULT ret = S_OK;
 
@@ -897,7 +896,7 @@ HRESULT MiniThing::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
     return ret;
 }
 
-HRESULT MiniThing::SQLiteClose(void)
+HRESULT MiniThingCore::SQLiteClose(void)
 {
     sqlite3_close_v2(m_hSQLite);
 

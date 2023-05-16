@@ -77,12 +77,12 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 {
     SetChsPrintEnv();
 
-    MiniThing* pMiniThing = (MiniThing*)lp;
+    MiniThingCore* pMiniThingCore = (MiniThingCore*)lp;
 
     while (true)
     {
         // Check if need exit thread
-        DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hUpdateSqlDataBaseExitEvent, 0x0);
+        DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hUpdateSqlDataBaseExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
             printf_s("Recv the quit event\n");
@@ -109,7 +109,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
                 unsInfo.pParentRef = 0;
                 unsInfo.pSelfRef = 0;
 
-                if (FAILED(((MiniThing*)taskInfo.pMiniThing)->SQLiteInsert(&unsInfo)))
+                if (FAILED(((MiniThingCore*)taskInfo.pMiniThingCore)->SQLiteInsert(&unsInfo)))
                 {
                     assert(0);
                 }
@@ -128,7 +128,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
                 reInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.newPath);
                 reInfo.filePathWstr = taskInfo.newPath;
 
-                if (FAILED(((MiniThing*)taskInfo.pMiniThing)->SQLiteUpdate(&oriInfo, &reInfo)))
+                if (FAILED(((MiniThingCore*)taskInfo.pMiniThingCore)->SQLiteUpdate(&oriInfo, &reInfo)))
                 {
                     assert(0);
                 }
@@ -141,7 +141,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
                 UsnInfo usnInfo = { 0 };
                 usnInfo.filePathWstr = taskInfo.oriPath;
-                if (FAILED(((MiniThing*)taskInfo.pMiniThing)->SQLiteDelete(&usnInfo)))
+                if (FAILED(((MiniThingCore*)taskInfo.pMiniThingCore)->SQLiteDelete(&usnInfo)))
                 {
                     assert(0);
                 }
@@ -161,7 +161,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 {
     MonitorTaskInfo* pTaskInfo = (MonitorTaskInfo*)lp;
     VolumeInfo* pVolumeInfo = pTaskInfo->pVolumeInfo;
-    MiniThing* pMiniThing = pTaskInfo->pMiniThing;
+    MiniThingCore* pMiniThingCore = pTaskInfo->pMiniThingCore;
 
     char notifyInfo[1024] = { 0 };
 
@@ -224,7 +224,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             // We delete pTaskInfo in update thread when task over
             UpdateDataBaseTaskInfo updateTaskInfo;
             updateTaskInfo.pVolumeInfo = pVolumeInfo;
-            updateTaskInfo.pMiniThing = pMiniThing;
+            updateTaskInfo.pMiniThingCore = pMiniThingCore;
             updateTaskInfo.op = 0;
 
             switch (pNotifyInfo->Action)
@@ -315,7 +315,7 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
 DWORD WINAPI QueryThread(LPVOID lp)
 {
-    MiniThing* pMiniThing = (MiniThing*)lp;
+    MiniThingCore* pMiniThingCore = (MiniThingCore*)lp;
 
     SetChsPrintEnv();
 
@@ -324,7 +324,7 @@ DWORD WINAPI QueryThread(LPVOID lp)
     while (true)
     {
         // Check if need exit thread
-        DWORD dwWaitCode = WaitForSingleObject(pMiniThing->m_hQueryExitEvent, 0x0);
+        DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hQueryExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
             printf_s("Recv the quit event\n");
@@ -347,7 +347,7 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
         QueryPerformanceCounter(&timeStart);
 
-        pMiniThing->SQLiteQuery(query, vec);
+        pMiniThingCore->SQLiteQuery(query, vec);
 
         QueryPerformanceCounter(&timeEnd);
         double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;

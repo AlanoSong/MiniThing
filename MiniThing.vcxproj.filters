@@ -1,65 +1,90 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Utility">
-      <UniqueIdentifier>{72679f85-31e0-4019-b968-515f7d02006e}</UniqueIdentifier>
+    <Filter Include="MiniThing">
+      <UniqueIdentifier>{5a0e9b94-d23e-4810-9e49-3eb3e62293c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\Core">
+      <UniqueIdentifier>{9b6dfb12-5032-4d6d-9af0-8f23f890e470}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty">
+      <UniqueIdentifier>{73da5e00-58b9-4a95-b235-1407d81918dd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\Utility">
+      <UniqueIdentifier>{d2561a47-3d4b-41fb-a692-cb0ddaaea6a6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\SQLite">
+      <UniqueIdentifier>{e32d0517-06db-46ce-81c9-a641c9b0b7ac}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\Qt">
+      <UniqueIdentifier>{9d37ba03-a137-45f6-bb5b-f61bbd3130a4}</UniqueIdentifier>
     </Filter>
     <Filter Include="Docs">
-      <UniqueIdentifier>{e53a5590-5162-4e22-acad-fd5061df0115}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Core">
-      <UniqueIdentifier>{00e72164-637e-4f53-b3e3-c856ba943913}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty">
-      <UniqueIdentifier>{bd4ac306-dca9-475d-a077-0ac519dd5b87}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ThirdParty\SQLite">
-      <UniqueIdentifier>{ecfa402a-d2ff-4c3e-8a2d-85b7dc704163}</UniqueIdentifier>
+      <UniqueIdentifier>{2f3b1c77-689e-4d24-9af3-78bff8f0d92c}</UniqueIdentifier>
     </Filter>
     <Filter Include="Docs\Pictures">
-      <UniqueIdentifier>{643f23ec-072e-4d5a-91a1-3616cc05f266}</UniqueIdentifier>
+      <UniqueIdentifier>{2b0d7bfb-57d6-4daf-81ce-6bee1b033d94}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Utility\Utility.cpp">
-      <Filter>Utility</Filter>
+    <ClCompile Include="MiniThing\Core\MiniThingCore.cpp">
+      <Filter>MiniThing\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\MiniThing.cpp">
-      <Filter>Core</Filter>
+    <ClCompile Include="MiniThing\Core\TaskThreads.cpp">
+      <Filter>MiniThing\Core</Filter>
     </ClCompile>
-    <ClCompile Include="Core\Main.cpp">
-      <Filter>Core</Filter>
+    <ClCompile Include="MiniThing\Utility\Utility.cpp">
+      <Filter>MiniThing\Utility</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\SQLite\shell.c">
-      <Filter>ThirdParty\SQLite</Filter>
+    <ClCompile Include="MiniThing\ThirdParty\SQLite\shell.c">
+      <Filter>MiniThing\ThirdParty\SQLite</Filter>
     </ClCompile>
-    <ClCompile Include="ThirdParty\SQLite\sqlite3.c">
-      <Filter>ThirdParty\SQLite</Filter>
+    <ClCompile Include="MiniThing\ThirdParty\SQLite\sqlite3.c">
+      <Filter>MiniThing\ThirdParty\SQLite</Filter>
     </ClCompile>
-    <ClCompile Include="Core\TaskThreads.cpp">
-      <Filter>Core</Filter>
+    <ClCompile Include="Main.cpp" />
+    <ClCompile Include="MiniThing\Qt\MiniThingQt.cpp">
+      <Filter>MiniThing\Qt</Filter>
     </ClCompile>
+    <ClCompile Include="CommandLineMain.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Utility\Utility.h">
-      <Filter>Utility</Filter>
+    <ClInclude Include="MiniThing\Core\MiniThingCore.h">
+      <Filter>MiniThing\Core</Filter>
     </ClInclude>
-    <ClInclude Include="Core\MiniThing.h">
-      <Filter>Core</Filter>
+    <ClInclude Include="MiniThing\Core\TaskThreads.h">
+      <Filter>MiniThing\Core</Filter>
     </ClInclude>
-    <ClInclude Include="ThirdParty\SQLite\sqlite3.h">
-      <Filter>ThirdParty\SQLite</Filter>
+    <ClInclude Include="MiniThing\Utility\Utility.h">
+      <Filter>MiniThing\Utility</Filter>
     </ClInclude>
-    <ClInclude Include="ThirdParty\SQLite\sqlite3ext.h">
-      <Filter>ThirdParty\SQLite</Filter>
+    <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3.h">
+      <Filter>MiniThing\ThirdParty\SQLite</Filter>
     </ClInclude>
-    <ClInclude Include="Core\TaskThreads.h">
-      <Filter>Core</Filter>
+    <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3ext.h">
+      <Filter>MiniThing\ThirdParty\SQLite</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
+    <QtMoc Include="MiniThing\Qt\MiniThingQt.h">
+      <Filter>MiniThing\Qt</Filter>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="MiniThing\Qt\MiniThing.qrc">
+      <Filter>MiniThing\Qt</Filter>
+    </QtRcc>
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="MiniThing\Qt\MiniThing.ui">
+      <Filter>MiniThing\Qt</Filter>
+    </QtUic>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".gitignore" />
+    <None Include="LICENSE" />
     <None Include="README.ch.md" />
+    <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Docs\Pictures\Architecture.png">

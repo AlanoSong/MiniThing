@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MiniThing.h"
+#include "MiniThingCore.h"
 
 DWORD WINAPI SortThread(LPVOID lp);
 DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp);
