@@ -51,7 +51,20 @@ typedef struct
     HANDLE hMonitorExitEvent;
 
     void* pMonitorTaskInfo;
-}VolumeInfo;
+} VolumeInfo;
+
+typedef enum _QUERY_TYPE
+{
+    QUERY_BY_NAME = 0,
+    QUERY_BY_REF,
+    QUERY_BY_PREPATH,
+} QUERY_TYPE;
+
+typedef struct _QueryInfo
+{
+    QUERY_TYPE type;
+    UsnInfo info;
+} QueryInfo;
 
 typedef struct
 {
@@ -79,28 +92,16 @@ typedef struct
     std::wstring newPath;
 } UpdateDataBaseTaskInfo;
 
-typedef enum _QUERY_TYPE
-{
-    QUERY_BY_NAME = 0,
-    QUERY_BY_REF,
-    QUERY_BY_PREPATH,
-}QUERY_TYPE;
-
-typedef struct _QueryInfo
-{
-    QUERY_TYPE type;
-    UsnInfo info;
-}QueryInfo;
-
 class MiniThingCore
 {
 public:
     MiniThingCore() {};
-    MiniThingCore(const char* sqlDBPath);
+    MiniThingCore(const char* sqlDbPath);
     ~MiniThingCore(void);
 
 public:
     // System related functions
+    HRESULT StartInstance(void);
     HRESULT QueryAllVolume(void);
     HRESULT GetAllVolumeHandle(void);
     void CloseVolumeHandle(void);
@@ -136,7 +137,7 @@ public:
     HRESULT SortVolumeAndUpdateSql(VolumeInfo& volumeInfo);
     HRESULT SortVolumeSetAndUpdateSql(void);
 
-    HRESULT SQLiteOpen(CONST CHAR* path);
+    HRESULT SQLiteOpen(void);
     HRESULT SQLiteInsert(UsnInfo* pUsnInfo);
     HRESULT SQLiteDelete(UsnInfo* pUsnInfo);
     HRESULT SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo);
@@ -152,12 +153,10 @@ private:
     HRESULT DeleteUsn(void);
 
 private:
-    std::vector<VolumeInfo> m_volumeSet;
+    std::vector<VolumeInfo>             m_volumeSet;
     unordered_map<DWORDLONG, UsnInfo>   m_usnRecordMap;
-
-    sqlite3* m_hSQLite;
-    string m_SQLitePath;
-
-    bool                m_isSqlExist;
+    sqlite3                             *m_hSql;
+    std::string                         m_sqlDbPath;
+    bool                                m_isSqlExist;
 };
 

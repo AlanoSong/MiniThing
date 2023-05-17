@@ -13,8 +13,24 @@ extern HANDLE g_updateDataBaseWrMutex;
 //==========================================================================
 //                        MiniThing Functions                             //
 //==========================================================================
-MiniThingCore::MiniThingCore(const char* sqlDBPath)
+
+MiniThingCore::MiniThingCore(const char* sqlDbPath)
 {
+    m_sqlDbPath = sqlDbPath;
+}
+
+MiniThingCore::~MiniThingCore(void)
+{
+    if (FAILED(SQLiteClose()))
+    {
+        assert(0);
+    }
+}
+
+HRESULT MiniThingCore::StartInstance(void)
+{
+    HRESULT ret = S_OK;
+
     SetChsPrintEnv();
 
     if (FAILED(QueryAllVolume()))
@@ -28,7 +44,7 @@ MiniThingCore::MiniThingCore(const char* sqlDBPath)
     }
 
     // Create or open sql data base file
-    if (FAILED(SQLiteOpen(sqlDBPath)))
+    if (FAILED(SQLiteOpen()))
     {
         assert(0);
     }
@@ -63,14 +79,8 @@ MiniThingCore::MiniThingCore(const char* sqlDBPath)
     }
 
     CloseVolumeHandle();
-}
 
-MiniThingCore::~MiniThingCore(void)
-{
-    if (FAILED(SQLiteClose()))
-    {
-        assert(0);
-    }
+    return ret;
 }
 
 HRESULT MiniThingCore::QueryAllVolume(void)
@@ -415,7 +425,7 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
         SortTaskInfo taskInfo;
         taskInfo.taskIndex = i;
         taskInfo.rootFolderName = volume.rootName;
-        taskInfo.sqlPath = m_SQLitePath;
+        taskInfo.sqlPath = m_sqlDbPath;
         taskInfo.pSortTask = &(sortTaskSet[i]);
         taskInfo.pAllUsnRecordMap = &(volume.usnRecordMap);
         taskInfo.rootRef = volume.rootFileRef;
@@ -452,11 +462,11 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
     int insertNodeCnt = 0;
     char sql[1024] = { 0 };
 
-    sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
+    sqlite3_exec(m_hSql, "BEGIN", NULL, NULL, &errMsg);
 
     sprintf_s(sql, "INSERT INTO UsnInfo (SelfRef, ParentRef, TimeStamp, FileName, FilePath) VALUES(?, ?, ?, ?, ?);");
     sqlite3_stmt* pPrepare = nullptr;
-    sqlite3_prepare_v2(m_hSQLite, sql, (int)strlen(sql), &pPrepare, 0);
+    sqlite3_prepare_v2(m_hSql, sql, (int)strlen(sql), &pPrepare, 0);
 
     for (auto it = sortTaskSet.begin(); it != sortTaskSet.end(); it++)
     {
@@ -480,12 +490,12 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
             if (insertNodeCnt % SQL_BATCH_INSERT_GRANULARITY == 0)
             {
-                sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
-                sqlite3_exec(m_hSQLite, "BEGIN", NULL, NULL, &errMsg);
+                sqlite3_exec(m_hSql, "COMMIT", NULL, NULL, &errMsg);
+                sqlite3_exec(m_hSql, "BEGIN", NULL, NULL, &errMsg);
             }
         }
     }
-    sqlite3_exec(m_hSQLite, "COMMIT", NULL, NULL, &errMsg);
+    sqlite3_exec(m_hSql, "COMMIT", NULL, NULL, &errMsg);
     sqlite3_finalize(pPrepare);
 
     // 7. After file node sorted, the map can be destroyed
@@ -613,15 +623,17 @@ void MiniThingCore::StopQueryThread(void)
     CloseHandle(m_hQueryThread);
 }
 
-HRESULT MiniThingCore::SQLiteOpen(CONST CHAR* path)
+HRESULT MiniThingCore::SQLiteOpen(void)
 {
     HRESULT ret = S_OK;
-    m_SQLitePath = path;
-    int result = sqlite3_open_v2(path, &m_hSQLite, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+
+    // TODO: if m_SQLitePath contain wstring ?
+    assert(!m_sqlDbPath.empty());
+    int result = sqlite3_open_v2(m_sqlDbPath.c_str(), &m_hSql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 
     // Turn off sqlite write sync
     char* errMsg = nullptr;
-    sqlite3_exec(m_hSQLite, "PRAGMA synchronous = OFF", NULL, NULL, &errMsg);
+    sqlite3_exec(m_hSql, "PRAGMA synchronous = OFF", NULL, NULL, &errMsg);
 
     if (result == SQLITE_OK)
     {
@@ -630,7 +642,7 @@ HRESULT MiniThingCore::SQLiteOpen(CONST CHAR* path)
         std::string create;
         create.append("CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);");
 
-        int res = sqlite3_exec(m_hSQLite, create.c_str(), 0, 0, &errMsg);
+        int res = sqlite3_exec(m_hSql, create.c_str(), 0, 0, &errMsg);
         if (res == SQLITE_OK)
         {
             m_isSqlExist = false;
@@ -662,7 +674,7 @@ HRESULT MiniThingCore::SQLiteInsert(UsnInfo* pUsnInfo)
         pUsnInfo->pSelfRef, pUsnInfo->pParentRef, pUsnInfo->timeStamp, nameUtf8.c_str(), pathUtf8.c_str());
 
     char* errMsg = nullptr;
-    if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+    if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : insert failed\n");
@@ -689,7 +701,7 @@ HRESULT MiniThingCore::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstr
     sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
 
     sqlite3_stmt* stmt = NULL;
-    int res = sqlite3_prepare_v2(m_hSQLite, sql, (int)strlen(sql), &stmt, NULL);
+    int res = sqlite3_prepare_v2(m_hSql, sql, (int)strlen(sql), &stmt, NULL);
 
     if (SQLITE_OK == res && NULL != stmt)
     {
@@ -756,7 +768,7 @@ HRESULT MiniThingCore::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>&
     }
 
     sqlite3_stmt* stmt = NULL;
-    int res = sqlite3_prepare_v2(m_hSQLite, sql, (int)strlen(sql), &stmt, NULL);
+    int res = sqlite3_prepare_v2(m_hSql, sql, (int)strlen(sql), &stmt, NULL);
     if (SQLITE_OK == res && NULL != stmt)
     {
         // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
@@ -804,7 +816,7 @@ HRESULT MiniThingCore::SQLiteDelete(UsnInfo* pUsnInfo)
     // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
     std::string path = UnicodeToUtf8(pUsnInfo->filePathWstr);
     sprintf_s(sql, "DELETE FROM UsnInfo WHERE FilePath = '%s';", path.c_str());
-    if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+    if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : delete failed\n");
@@ -818,7 +830,7 @@ HRESULT MiniThingCore::SQLiteDelete(UsnInfo* pUsnInfo)
     char sql1[2048] = { 0 };
     memset(sql1, 0x00, 2048);
     sprintf_s(sql1, "DELETE FROM UsnInfo WHERE FilePath LIKE '%s\\%%';", path.c_str());
-    if (sqlite3_exec(m_hSQLite, sql1, NULL, NULL, &errMsg) != SQLITE_OK)
+    if (sqlite3_exec(m_hSql, sql1, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : delete failed\n");
@@ -849,7 +861,7 @@ HRESULT MiniThingCore::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
 
     // Update file node itself
     sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s', FileName = '%s' WHERE FilePath = '%s';", newPath.c_str(), newName.c_str(), oriPath.c_str());
-    if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+    if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : update failed\n");
@@ -880,7 +892,7 @@ HRESULT MiniThingCore::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
             std::wstring newName = GetFileNameAccordPath(newPath);
 
             sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s', FileName = '%s' WHERE SelfRef = %llu;", UnicodeToUtf8(newPath).c_str(), UnicodeToUtf8(newName).c_str(), (*it).pSelfRef);
-            if (sqlite3_exec(m_hSQLite, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+            if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
             {
                 ret = E_FAIL;
                 printf_s("sqlite : update failed\n");
@@ -898,7 +910,7 @@ HRESULT MiniThingCore::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
 
 HRESULT MiniThingCore::SQLiteClose(void)
 {
-    sqlite3_close_v2(m_hSQLite);
+    sqlite3_close_v2(m_hSql);
 
     return S_OK;
 }

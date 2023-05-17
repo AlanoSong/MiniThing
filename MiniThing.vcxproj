@@ -89,6 +89,7 @@
     <ClCompile Include="MiniThing\Core\MiniThingCore.cpp" />
     <ClCompile Include="MiniThing\Core\TaskThreads.cpp" />
     <ClCompile Include="MiniThing\Qt\MiniThingQt.cpp" />
+    <ClCompile Include="MiniThing\Qt\MiniThingQtBackgroud.cpp" />
     <ClCompile Include="MiniThing\ThirdParty\SQLite\shell.c" />
     <ClCompile Include="MiniThing\ThirdParty\SQLite\sqlite3.c" />
     <ClCompile Include="MiniThing\Utility\Utility.cpp" />
@@ -98,15 +99,10 @@
     <ClInclude Include="MiniThing\Core\MiniThingCore.h" />
     <ClInclude Include="MiniThing\Core\TaskThreads.h" />
     <QtMoc Include="MiniThing\Qt\MiniThingQt.h" />
+    <ClInclude Include="MiniThing\Qt\MiniThingBackgroud.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3ext.h" />
     <ClInclude Include="MiniThing\Utility\Utility.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtRcc Include="MiniThing\Qt\MiniThing.qrc" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtUic Include="MiniThing\Qt\MiniThing.ui" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".gitignore" />
@@ -116,6 +112,12 @@
   <ItemGroup>
     <Image Include="Docs\Pictures\Architecture.png" />
     <Image Include="Docs\Pictures\Usage.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtRcc Include="MiniThing\Qt\Resources\MiniThing.qrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <QtUic Include="MiniThing\Qt\Resources\MiniThing.ui" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

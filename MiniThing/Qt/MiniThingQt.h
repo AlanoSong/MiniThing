@@ -13,6 +13,7 @@
 #include "ui_MiniThing.h"
 #include "../Core/MiniThingCore.h"
 #include "../Utility/Utility.h"
+#include "MiniThingBackgroud.h"
 
 class MiniThingQt : public QMainWindow
 {
@@ -22,13 +23,15 @@ public:
     MiniThingQt(QWidget *parent = nullptr);
     ~MiniThingQt();
 
-    void UpdateFiles(void);
+    void UpdateTableView(bool isInitUpdate = false);
 
 private:
     Ui::MiniThingClass ui;
-    MiniThingCore *m_pMiniThingCore;
     QStandardItemModel m_model;
     QAction* m_actionSearch;
+
+    MiniThingCore *m_pMiniThingCore;
+    MiniThingQtWorkThread* m_pMiniThingQtWorkThread;
 
 private slots:
     void ButtonSearchClicked();
