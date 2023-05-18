@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>2165</width>
-    <height>1206</height>
+    <width>1170</width>
+    <height>730</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,8 +33,8 @@
         <widget class="QLineEdit" name="lineEdit">
          <property name="font">
           <font>
-           <family>微软雅黑</family>
-           <pointsize>10</pointsize>
+           <family>Microsoft YaHei UI</family>
+           <pointsize>9</pointsize>
           </font>
          </property>
          <property name="text">
@@ -46,15 +46,15 @@
         <widget class="QLabel" name="label">
          <property name="font">
           <font>
-           <family>微软雅黑</family>
-           <pointsize>10</pointsize>
+           <family>Microsoft YaHei UI</family>
+           <pointsize>9</pointsize>
           </font>
          </property>
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
          <property name="text">
-          <string>搜索框</string>
+          <string>File Name</string>
          </property>
         </widget>
        </item>
@@ -62,12 +62,14 @@
         <widget class="QPushButton" name="pushButton_2">
          <property name="font">
           <font>
-           <family>微软雅黑</family>
-           <pointsize>10</pointsize>
+           <family>Microsoft YaHei UI</family>
+           <pointsize>9</pointsize>
+           <weight>50</weight>
+           <bold>false</bold>
           </font>
          </property>
          <property name="text">
-          <string>搜索(Ctrl+f)</string>
+          <string>Start (Ctrl+f)</string>
          </property>
         </widget>
        </item>
@@ -75,7 +77,8 @@
         <widget class="QTableView" name="tableView">
          <property name="font">
           <font>
-           <family>微软雅黑</family>
+           <family>Microsoft YaHei UI</family>
+           <pointsize>9</pointsize>
           </font>
          </property>
         </widget>
@@ -90,7 +93,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>2165</width>
+     <width>1170</width>
      <height>23</height>
     </rect>
    </property>

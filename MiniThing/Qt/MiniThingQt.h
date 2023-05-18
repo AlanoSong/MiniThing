@@ -16,6 +16,8 @@
 #include "../Utility/Utility.h"
 #include "MiniThingQtBackgroud.h"
 
+
+
 class MiniThingQt : public QMainWindow
 {
     Q_OBJECT

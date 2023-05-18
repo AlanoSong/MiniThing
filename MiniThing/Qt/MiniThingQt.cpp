@@ -77,17 +77,15 @@ void MiniThingQt::UpdateTableView(bool isInitUpdate)
         QStandardItem* pItemSize = nullptr;
         QStandardItem* pItemLastMod = nullptr;
 
-
         QFileInfo fileInfo(filePath);
         if (fileInfo.exists())
         {
             pItemSize = new QStandardItem(QString::number(fileInfo.size() / 1024) + " KB");
-            pItemLastMod = new QStandardItem(QString(fileInfo.lastModified().toString("yyyy-MM-dd hh:mm:ss")));
+            pItemLastMod = new QStandardItem(QString(fileInfo.lastModified().toString("MM/dd/yyyy hh:mm:ss")));
         }
 
         lRow.clear();
         lRow << pItemName << pItemPath << pItemSize << pItemLastMod;
-
 
         m_model.appendRow(lRow);
     }
@@ -118,7 +116,7 @@ void MiniThingQt::RightKeyMenu(QPoint pos)
 
         if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath())))
         {
-            QMessageBox::information(this, tr("warning"), tr("Failed to open the help guide."), QMessageBox::Ok);
+            QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         }
     }
 }
