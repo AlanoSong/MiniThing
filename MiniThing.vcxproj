@@ -99,7 +99,7 @@
     <ClInclude Include="MiniThing\Core\MiniThingCore.h" />
     <ClInclude Include="MiniThing\Core\TaskThreads.h" />
     <QtMoc Include="MiniThing\Qt\MiniThingQt.h" />
-    <ClInclude Include="MiniThing\Qt\MiniThingBackgroud.h" />
+    <ClInclude Include="MiniThing\Qt\MiniThingQtBackgroud.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3ext.h" />
     <ClInclude Include="MiniThing\Utility\Utility.h" />

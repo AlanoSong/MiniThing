@@ -70,7 +70,7 @@
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3ext.h">
       <Filter>MiniThing\ThirdParty\SQLite</Filter>
     </ClInclude>
-    <ClInclude Include="MiniThing\Qt\MiniThingBackgroud.h">
+    <ClInclude Include="MiniThing\Qt\MiniThingQtBackgroud.h">
       <Filter>MiniThing\Qt</Filter>
     </ClInclude>
   </ItemGroup>

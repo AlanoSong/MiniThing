@@ -2,17 +2,29 @@
 
 MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
 {
-    ui.setupUi(this);
+    m_ui.setupUi(this);
 
     m_pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore);
     m_pMiniThingQtWorkThread->start();
 
-    // ui.tableView->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
-    ui.tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_ui.tableView->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
+    m_ui.tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_ui.tableView->verticalHeader()->setVisible(false);
     // ui.tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     // ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     // ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+
+    m_rightKeyMenu = new QMenu(m_ui.tableView);
+    m_rightKeyActionOpen = new QAction();
+    m_rightKeyActionLocation = new QAction();
+
+    m_rightKeyActionOpen->setText(QString("Open"));
+    // m_rightKeyActionLocation->setText(QString("Locate"));
+    m_rightKeyMenu->addAction(m_rightKeyActionOpen);
+    // m_rightKeyMenu->addAction(m_rightKeyActionLocation);
+    connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(RightKeyMenu(QPoint)));
 
     UpdateTableView(true);
 
@@ -30,7 +42,7 @@ MiniThingQt::~MiniThingQt()
 
 void MiniThingQt::UpdateTableView(bool isInitUpdate)
 {
-    QString searchStr = ui.lineEdit->text();
+    QString searchStr = m_ui.lineEdit->text();
     std::wstring queryStr = StringToWstring(searchStr.toStdString());
 
     QueryInfo queryInfo;
@@ -80,7 +92,7 @@ void MiniThingQt::UpdateTableView(bool isInitUpdate)
         m_model.appendRow(lRow);
     }
 
-    ui.tableView->setModel(&m_model);
+    m_ui.tableView->setModel(&m_model);
 }
 
 void MiniThingQt::ButtonSearchClicked()
@@ -91,5 +103,23 @@ void MiniThingQt::ButtonSearchClicked()
 void MiniThingQt::RefreshFunc(void)
 {
     UpdateTableView();
+}
+
+void MiniThingQt::RightKeyMenu(QPoint pos)
+{
+    auto currentIndex = m_ui.tableView->currentIndex();
+    if (currentIndex.isValid())
+    {
+        m_rightKeyMenu->exec(QCursor::pos());
+
+        // Get file path info from current line
+        QModelIndex index = m_model.index(currentIndex.row(), 1);
+        QString filePath = m_model.data(index).toString();
+
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath())))
+        {
+            QMessageBox::information(this, tr("warning"), tr("Failed to open the help guide."), QMessageBox::Ok);
+        }
+    }
 }
 

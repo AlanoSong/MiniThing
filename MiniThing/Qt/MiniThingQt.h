@@ -9,11 +9,12 @@
 #include <qmessagebox.h>
 #include <qdesktopservices.h>
 #include <QAction>
+#include <qmenu.h>
 
 #include "ui_MiniThing.h"
 #include "../Core/MiniThingCore.h"
 #include "../Utility/Utility.h"
-#include "MiniThingBackgroud.h"
+#include "MiniThingQtBackgroud.h"
 
 class MiniThingQt : public QMainWindow
 {
@@ -26,14 +27,20 @@ public:
     void UpdateTableView(bool isInitUpdate = false);
 
 private:
-    Ui::MiniThingClass ui;
+    Ui::MiniThingClass m_ui;
     QStandardItemModel m_model;
     QAction* m_actionSearch;
 
     MiniThingCore *m_pMiniThingCore;
     MiniThingQtWorkThread* m_pMiniThingQtWorkThread;
 
+    QMenu* m_rightKeyMenu;
+    QAction* m_rightKeyActionOpen;
+    QAction* m_rightKeyActionLocation;
+
 private slots:
     void ButtonSearchClicked();
     void RefreshFunc();
+
+    void RightKeyMenu(QPoint pos);
 };

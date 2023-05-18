@@ -1,4 +1,4 @@
-#include "MiniThingBackgroud.h"
+#include "MiniThingQtBackgroud.h"
 
 
 MiniThingQtWorkThread::MiniThingQtWorkThread()
