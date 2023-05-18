@@ -8,11 +8,12 @@
 - Enviroment: Visual Studio 2022 + QT 5.14.2
 
 ## 3. To be added
-- ~~Display more file info (include file name, path, size, last modified date)~~
-- Perfermance enhance
-- Fix bugs
-- CMake build
-- Graceful Qt UI
+- [x] Display more file info (include file name, path, size, last modified date)
+- [ ] Add right key to open file or file location
+- [ ] Perfermance enhance
+- [ ] Fix bugs
+- [ ] CMake build
+- [ ] Graceful Qt UI
 
 ## 4. Participate in contributing
 - Fork this repository
