@@ -1,5 +1,8 @@
 #include "MiniThingQt.h"
 
+//==========================================================================
+//                        Common Functions                                //
+//==========================================================================
 MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
 {
     m_ui.setupUi(this);
@@ -48,8 +51,15 @@ MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
 
 MiniThingQt::~MiniThingQt()
 {
-    delete m_shortKeySearch;
     delete m_pMiniThingCore;
+    delete m_pMiniThingQtWorkThread;
+
+    delete m_rightKeyMenu;
+    delete m_rightKeyActionOpen;
+    delete m_rightKeyActionOpenPath;
+    delete m_shortKeySearch;
+    delete m_shortKeyOpen;
+    delete m_shortKeyOpenPath;
 }
 
 void MiniThingQt::UpdateTableView(void)
