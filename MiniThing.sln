@@ -7,14 +7,20 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "MiniThing", "MiniThing.vcxp
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
-		Debug|x64 = Debug|x64
-		Release|x64 = Release|x64
+		CmdLineDebug|x64 = CmdLineDebug|x64
+		CmdLineRelease|x64 = CmdLineRelease|x64
+		QtDebug|x64 = QtDebug|x64
+		QtRelease|x64 = QtRelease|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{94F10E31-C90F-42B4-8EE2-7E953A006641}.Debug|x64.ActiveCfg = Debug|x64
-		{94F10E31-C90F-42B4-8EE2-7E953A006641}.Debug|x64.Build.0 = Debug|x64
-		{94F10E31-C90F-42B4-8EE2-7E953A006641}.Release|x64.ActiveCfg = Release|x64
-		{94F10E31-C90F-42B4-8EE2-7E953A006641}.Release|x64.Build.0 = Release|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.CmdLineDebug|x64.ActiveCfg = CmdLineDebug|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.CmdLineDebug|x64.Build.0 = CmdLineDebug|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.CmdLineRelease|x64.ActiveCfg = CmdLineRelease|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.CmdLineRelease|x64.Build.0 = CmdLineRelease|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.QtDebug|x64.ActiveCfg = QtDebug|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.QtDebug|x64.Build.0 = QtDebug|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.QtRelease|x64.ActiveCfg = QtRelease|x64
+		{94F10E31-C90F-42B4-8EE2-7E953A006641}.QtRelease|x64.Build.0 = QtRelease|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

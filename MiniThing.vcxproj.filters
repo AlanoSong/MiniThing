@@ -49,7 +49,6 @@
     <ClCompile Include="MiniThing\Qt\MiniThingQt.cpp">
       <Filter>MiniThing\Qt</Filter>
     </ClCompile>
-    <ClCompile Include="CommandLineMain.cpp" />
     <ClCompile Include="MiniThing\Qt\MiniThingQtBackgroud.cpp">
       <Filter>MiniThing\Qt</Filter>
     </ClCompile>
