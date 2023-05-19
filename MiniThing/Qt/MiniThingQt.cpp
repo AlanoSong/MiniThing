@@ -148,10 +148,15 @@ void MiniThingQt::ShortKeyOpenPath()
         QModelIndex index = m_model.index(currentIndex.row(), 1);
         QString filePath = m_model.data(index).toString();
 
-        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absolutePath())))
-        {
-            QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
-        }
+        //if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absolutePath())))
+        //{
+        //    QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
+        //}
+
+        QProcess process;
+        filePath.replace("/", "\\");
+        QString cmd = QString("explorer.exe /select,\"%1\"").arg(filePath);
+        process.startDetached(cmd);
     }
 }
 

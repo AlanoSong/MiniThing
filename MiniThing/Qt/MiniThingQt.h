@@ -10,6 +10,7 @@
 #include <qdesktopservices.h>
 #include <QAction>
 #include <qmenu.h>
+#include <qprocess.h>
 
 #include "ui_MiniThing.h"
 #include "../Core/MiniThingCore.h"
