@@ -3,6 +3,7 @@
 MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
 {
     m_ui.setupUi(this);
+    m_usnSet.clear();
 
     m_pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore);
@@ -18,57 +19,48 @@ MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
 
     m_rightKeyMenu = new QMenu(m_ui.tableView);
     m_rightKeyActionOpen = new QAction();
-    m_rightKeyActionLocation = new QAction();
+    m_rightKeyActionOpenPath = new QAction();
 
-    m_rightKeyActionOpen->setText(QString("Open"));
-    // m_rightKeyActionLocation->setText(QString("Locate"));
+    m_rightKeyActionOpen->setText(QString("Open(ctrl+o)"));
+    m_rightKeyActionOpenPath->setText(QString("Open path(ctrl+p)"));
     m_rightKeyMenu->addAction(m_rightKeyActionOpen);
-    // m_rightKeyMenu->addAction(m_rightKeyActionLocation);
+    m_rightKeyMenu->addAction(m_rightKeyActionOpenPath);
     connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(RightKeyMenu(QPoint)));
 
-    UpdateTableView(true);
+    UpdateTableView();
 
-    m_actionSearch = new QAction(this);
-    m_actionSearch->setShortcut(tr("ctrl+f"));
-    this->addAction(m_actionSearch);
-    connect(m_actionSearch, SIGNAL(triggered()), this, SLOT(RefreshFunc()));
+    // Registe all shortcut keys
+    m_shortKeySearch = new QAction(this);
+    m_shortKeySearch->setShortcut(tr("ctrl+f"));
+    this->addAction(m_shortKeySearch);
+    connect(m_shortKeySearch, SIGNAL(triggered()), this, SLOT(ShortKeySearch()));
+
+    m_shortKeyOpen = new QAction(this);
+    m_shortKeyOpen->setShortcut(tr("ctrl+o"));
+    this->addAction(m_shortKeyOpen);
+    connect(m_shortKeyOpen, SIGNAL(triggered()), this, SLOT(ShortKeyOpen()));
+
+    m_shortKeyOpenPath = new QAction(this);
+    m_shortKeyOpenPath->setShortcut(tr("ctrl+p"));
+    this->addAction(m_shortKeyOpenPath);
+    connect(m_shortKeyOpenPath, SIGNAL(triggered()), this, SLOT(ShortKeyOpenPath()));
 }
 
 MiniThingQt::~MiniThingQt()
 {
-    delete m_actionSearch;
+    delete m_shortKeySearch;
     delete m_pMiniThingCore;
 }
 
-void MiniThingQt::UpdateTableView(bool isInitUpdate)
+void MiniThingQt::UpdateTableView(void)
 {
-    QString searchStr = m_ui.lineEdit->text();
-    std::wstring queryStr = StringToWstring(searchStr.toStdString());
-
-    QueryInfo queryInfo;
-    std::vector<UsnInfo> retVec;
-
-    if (m_pMiniThingQtWorkThread->isMiniThingCoreReady())
-    {
-        queryInfo.type = QUERY_BY_NAME;
-        queryInfo.info.fileNameWstr = queryStr;
-        m_pMiniThingCore->SQLiteQueryV2(&queryInfo, retVec);
-    }
-    else
-    {
-        if (!isInitUpdate)
-        {
-            QMessageBox::warning(nullptr, "Warnning", "Scanning all volumes ...", QMessageBox::Close);
-        }
-    }
-
     m_model.clear();
     QStringList lHeader = { "Name", "Path", "Size", "Last Modified"};
     m_model.setHorizontalHeaderLabels(lHeader);
 
     QList<QStandardItem *> lRow;
 
-    for (auto it = retVec.begin(); it != retVec.end(); it++)
+    for (auto it = m_usnSet.begin(); it != m_usnSet.end(); it++)
     {
         QString filePath = QString::fromStdWString(it->filePathWstr);
 
@@ -93,16 +85,79 @@ void MiniThingQt::UpdateTableView(bool isInitUpdate)
     m_ui.tableView->setModel(&m_model);
 }
 
+//==========================================================================
+//                        Button Press Functions                          //
+//==========================================================================
 void MiniThingQt::ButtonSearchClicked()
 {
-    UpdateTableView();
+    // Here reuse short key func
+    ShortKeySearch();
 }
 
-void MiniThingQt::RefreshFunc(void)
+//==========================================================================
+//                        Short Key Functions                             //
+//==========================================================================
+void MiniThingQt::ShortKeySearch()
 {
+    // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
+    m_usnSet.clear();
+
+    if (m_pMiniThingQtWorkThread->isMiniThingCoreReady())
+    {
+        QString searchStr = m_ui.lineEdit->text();
+        std::wstring queryStr = StringToWstring(searchStr.toStdString());
+
+        QueryInfo queryInfo;
+        queryInfo.type = QUERY_BY_NAME;
+        queryInfo.info.fileNameWstr = queryStr;
+
+        m_pMiniThingCore->SQLiteQueryV2(&queryInfo, m_usnSet);
+    }
+    else
+    {
+        QMessageBox::warning(nullptr, "Warnning", "Scanning all volumes ...", QMessageBox::Close);
+        // TODO: show status msg
+    }
+
+    // Call update table view to refresh all msg show
     UpdateTableView();
 }
 
+void MiniThingQt::ShortKeyOpen()
+{
+    auto currentIndex = m_ui.tableView->currentIndex();
+    if (currentIndex.isValid())
+    {
+        // Get file path info from current line
+        QModelIndex index = m_model.index(currentIndex.row(), 1);
+        QString filePath = m_model.data(index).toString();
+
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath())))
+        {
+            QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
+        }
+    }
+}
+
+void MiniThingQt::ShortKeyOpenPath()
+{
+    auto currentIndex = m_ui.tableView->currentIndex();
+    if (currentIndex.isValid())
+    {
+        // Get file path info from current line
+        QModelIndex index = m_model.index(currentIndex.row(), 1);
+        QString filePath = m_model.data(index).toString();
+
+        if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absolutePath())))
+        {
+            QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
+        }
+    }
+}
+
+//==========================================================================
+//                        Right Key Functions                             //
+//==========================================================================
 void MiniThingQt::RightKeyMenu(QPoint pos)
 {
     auto currentIndex = m_ui.tableView->currentIndex();

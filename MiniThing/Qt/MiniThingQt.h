@@ -26,23 +26,38 @@ public:
     MiniThingQt(QWidget *parent = nullptr);
     ~MiniThingQt();
 
-    void UpdateTableView(bool isInitUpdate = false);
+    void UpdateTableView(void);
 
 private:
     Ui::MiniThingClass m_ui;
     QStandardItemModel m_model;
-    QAction* m_actionSearch;
 
-    MiniThingCore *m_pMiniThingCore;
+    MiniThingCore* m_pMiniThingCore;
     MiniThingQtWorkThread* m_pMiniThingQtWorkThread;
 
+    // Usn info to be show
+    std::vector<UsnInfo> m_usnSet;
+
+    // Short keys
+    QAction* m_shortKeySearch;
+    QAction* m_shortKeyOpen;
+    QAction* m_shortKeyOpenPath;
+    QAction* m_shortKeyFocusOnInput;
+
+    // Right keys
     QMenu* m_rightKeyMenu;
     QAction* m_rightKeyActionOpen;
-    QAction* m_rightKeyActionLocation;
+    QAction* m_rightKeyActionOpenPath;
 
 private slots:
+    // Button funcs
     void ButtonSearchClicked();
-    void RefreshFunc();
 
+    // Right key funcs
     void RightKeyMenu(QPoint pos);
+
+    // Short key funcs
+    void ShortKeySearch();
+    void ShortKeyOpen();
+    void ShortKeyOpenPath();
 };
