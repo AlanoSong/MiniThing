@@ -90,6 +90,12 @@
     <Image Include="Docs\Pictures\Usage.png">
       <Filter>Docs\Pictures</Filter>
     </Image>
+    <Image Include="MiniThing\Qt\Resources\Logo.png">
+      <Filter>MiniThing\Qt\Resources</Filter>
+    </Image>
+    <Image Include="MiniThing\Qt\Resources\Logo.ico">
+      <Filter>MiniThing\Qt\Resources</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="MiniThing\Qt\Resources\MiniThing.qrc">

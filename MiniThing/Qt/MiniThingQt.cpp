@@ -8,6 +8,10 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     m_ui.setupUi(this);
     m_usnSet.clear();
 
+    // Setup logo icon
+    QIcon logo("Logo.ico");
+    this->setWindowIcon(logo);
+
     // Setup status bar
     m_statusBar = new QLabel;
     statusBar()->addWidget(m_statusBar);
@@ -151,12 +155,12 @@ void MiniThingQt::ShortKeySearch()
     {
         QString search = m_ui.lineEdit->text();
 
-        if (search == m_searchBefore)
-        {
-            // Search content is the same with before, do nothing
-            goto JUST_SHOW_MSG;
-        }
-        else
+        //if (search == m_searchBefore)
+        //{
+        //    // Search content is the same with before, do nothing
+        //    goto JUST_SHOW_MSG;
+        //}
+        //else
         {
             // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
             m_usnSet.clear();

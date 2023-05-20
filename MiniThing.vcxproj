@@ -78,11 +78,17 @@
     <ClCompile>
       <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_FOR_QT;</PreprocessorDefinitions>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(ProjectDir)\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QtRelease|x64'">
     <ClCompile>
       <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_FOR_QT;</PreprocessorDefinitions>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(ProjectDir)\</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='CmdLineDebug|x64'">
     <QtInstall>5.14.2_msvc2017_64</QtInstall>
@@ -148,6 +154,8 @@
   <ItemGroup>
     <Image Include="Docs\Pictures\Architecture.png" />
     <Image Include="Docs\Pictures\Usage.png" />
+    <Image Include="MiniThing\Qt\Resources\Logo.ico" />
+    <Image Include="MiniThing\Qt\Resources\Logo.png" />
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="MiniThing\Qt\Resources\MiniThing.qrc" />
