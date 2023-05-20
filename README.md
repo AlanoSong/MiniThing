@@ -3,12 +3,10 @@
 ## 1. Usage
 ![Usage](./Docs/Pictures/Usage.png)
 
-### 1.1 Use it by click button and right key
-### 1.2 Short key
-- `ctrl+f`: search
-- `ctrl+o`: open seleted file
-- `ctrl+p`: open seleted file folder
-- add more ...
+- Start search: `ctrl+f`/`enter`/click search button
+- Open seleted file: `ctrl+o`/right key
+- Open seleted file path: `ctrl+p`/right key
+- Add more...
 
 ## 2. Build
 - Enviroment: Visual Studio 2022 + QT 5.14.2

@@ -3,7 +3,7 @@
 //==========================================================================
 //                        Common Functions                                //
 //==========================================================================
-MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
+MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
 {
     m_ui.setupUi(this);
     m_usnSet.clear();
@@ -13,13 +13,12 @@ MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore);
     m_pMiniThingQtWorkThread->start();
 
+    connect(m_ui.lineEdit, SIGNAL(returnPressed()), this, SLOT(EnterPressDown()));
+
     // Setup status bar
     m_statusBar = new QLabel;
     statusBar()->addWidget(m_statusBar);
-
     statusBar()->setStyleSheet("QLabel{ color: black }");
-    QString status;
-    status.append(tr("Scanning files ..."));
 
     // Setup right key
     m_rightKeyMenu = new QMenu(m_ui.tableView);
@@ -67,18 +66,21 @@ MiniThingQt::~MiniThingQt()
     delete m_rightKeyMenu;
     delete m_rightKeyActionOpen;
     delete m_rightKeyActionOpenPath;
+
     delete m_shortKeySearch;
     delete m_shortKeyOpen;
     delete m_shortKeyOpenPath;
+
+    delete m_statusBar;
 }
 
 void MiniThingQt::UpdateTableView(void)
 {
     m_model.clear();
-    QStringList lHeader = { "Name", "Path", "Size", "Last Modified"};
+    QStringList lHeader = { "Name", "Path", "Size", "Last Modified" };
     m_model.setHorizontalHeaderLabels(lHeader);
 
-    QList<QStandardItem *> lRow;
+    QList<QStandardItem*> lRow;
 
     for (auto it = m_usnSet.begin(); it != m_usnSet.end(); it++)
     {
@@ -119,6 +121,15 @@ void MiniThingQt::SetStatusBar(QString str)
 }
 
 //==========================================================================
+//                 Enter Press Down For Line Edit Functions               //
+//==========================================================================
+void MiniThingQt::EnterPressDown(void)
+{
+    // Here reuse short key func
+    ShortKeySearch();
+}
+
+//==========================================================================
 //                        Button Press Functions                          //
 //==========================================================================
 void MiniThingQt::ButtonSearchClicked()
@@ -134,27 +145,31 @@ void MiniThingQt::ShortKeySearch()
 {
     // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
     m_usnSet.clear();
-    QString status;
 
     if (m_pMiniThingQtWorkThread->isMiniThingCoreReady())
     {
-        QString searchStr = m_ui.lineEdit->text();
-        std::wstring queryStr = StringToWstring(searchStr.toStdString());
+        QString search = m_ui.lineEdit->text();
 
-        QueryInfo queryInfo;
-        queryInfo.type = QUERY_BY_NAME;
-        queryInfo.info.fileNameWstr = queryStr;
+        if (search == m_searchBefore)
+        {
+            // Search content is the same with before, do nothing
+            return;
+        }
+        else
+        {
+            QueryInfo queryInfo;
+            queryInfo.type = QUERY_BY_NAME;
+            queryInfo.info.fileNameWstr = StringToWstring(search.toStdString());
 
-        m_pMiniThingCore->SQLiteQueryV2(&queryInfo, m_usnSet);
+            m_pMiniThingCore->SQLiteQueryV2(&queryInfo, m_usnSet);
 
-        status.append(tr("Search over"));
+            m_searchBefore = search;
+        }
     }
     else
     {
-        status.append(tr("Scanning files..."));
+        // TODO:
     }
-
-    this->SetStatusBar(status);
 
     // Call update table view to refresh all msg show
     UpdateTableView();

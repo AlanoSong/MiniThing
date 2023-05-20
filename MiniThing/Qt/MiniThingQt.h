@@ -37,6 +37,8 @@ private:
     MiniThingCore* m_pMiniThingCore;
     MiniThingQtWorkThread* m_pMiniThingQtWorkThread;
 
+    QString m_searchBefore;
+
     // Usn info to be show
     std::vector<UsnInfo> m_usnSet;
 
@@ -68,4 +70,7 @@ private slots:
 
     // Status bar funcs
     void SetStatusBar(QString str);
+
+    // Enter press funcs for line text
+    void EnterPressDown(void);
 };
