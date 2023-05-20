@@ -3,7 +3,7 @@
 ## 1. Usage
 ![Usage](./Docs/Pictures/Usage.png)
 
-- Start search: `ctrl+f` / `enter` / `search button2
+- Start search: `ctrl+f` / `enter` / `search button`
 - Open seleted file: `ctrl+o` / `right key`
 - Open seleted file path: `ctrl+p` / `right key`
 - Add more...
