@@ -3,13 +3,14 @@
 ## 1. Usage
 ![Usage](./Docs/Pictures/Usage.png)
 
-- Start search: `ctrl+f`/`enter`/click search button
-- Open seleted file: `ctrl+o`/right key
-- Open seleted file path: `ctrl+p`/right key
+- Start search: `ctrl+f` / `enter` / `search button2
+- Open seleted file: `ctrl+o` / `right key`
+- Open seleted file path: `ctrl+p` / `right key`
 - Add more...
 
 ## 2. Build
 - Enviroment: Visual Studio 2022 + QT 5.14.2
+- VS config: Qt / CmdLine
 
 ## 3. To be added
 - [x] Display more file info (include file name, path, size, last modified date)
