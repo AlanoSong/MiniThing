@@ -19,4 +19,7 @@ MiniThingQtWorkThread::MiniThingQtWorkThread(MiniThingCore* pMiniThingCore)
 void MiniThingQtWorkThread::run()
 {
     m_pMiniThingCore->StartInstance();
+
+    m_pMiniThingCore->CreateMonitorThread();
+    m_pMiniThingCore->StartMonitorThread();
 }
