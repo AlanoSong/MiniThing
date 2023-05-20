@@ -13,7 +13,7 @@ public:
 
     MiniThingQtWorkThread(MiniThingCore* pMiniThingCore);
 
-    bool isMiniThingCoreReady(void) { return m_isMiniThingCoreReady; };
+    bool isMiniThingCoreReady(void) { return m_pMiniThingCore->IsCoreReady(); };
 
 private:
     virtual void run();

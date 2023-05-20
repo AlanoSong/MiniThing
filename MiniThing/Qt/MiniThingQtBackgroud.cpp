@@ -14,12 +14,9 @@ MiniThingQtWorkThread::~MiniThingQtWorkThread()
 MiniThingQtWorkThread::MiniThingQtWorkThread(MiniThingCore* pMiniThingCore)
 {
     m_pMiniThingCore = pMiniThingCore;
-    m_isMiniThingCoreReady = false;
 }
 
 void MiniThingQtWorkThread::run()
 {
-    m_isMiniThingCoreReady = false;
     m_pMiniThingCore->StartInstance();
-    m_isMiniThingCoreReady = true;
 }

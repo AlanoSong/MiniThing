@@ -17,6 +17,7 @@ extern HANDLE g_updateDataBaseWrMutex;
 MiniThingCore::MiniThingCore(const char* sqlDbPath)
 {
     m_sqlDbPath = sqlDbPath;
+    m_isCoreReady = false;
 }
 
 MiniThingCore::~MiniThingCore(void)
@@ -79,6 +80,8 @@ HRESULT MiniThingCore::StartInstance(void)
     }
 
     CloseVolumeHandle();
+
+    m_isCoreReady = true;
 
     return ret;
 }

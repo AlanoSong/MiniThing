@@ -8,17 +8,20 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     m_ui.setupUi(this);
     m_usnSet.clear();
 
+    // Setup status bar
+    m_statusBar = new QLabel;
+    statusBar()->addWidget(m_statusBar);
+    statusBar()->setStyleSheet("QLabel{ color: black }");
+
+    this->SetStatusBar(QString("Scan files..."));
+
     // Create MiniThingCore instance, put it in background
     m_pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore);
     m_pMiniThingQtWorkThread->start();
 
+    // Monitor enter press in line edit
     connect(m_ui.lineEdit, SIGNAL(returnPressed()), this, SLOT(EnterPressDown()));
-
-    // Setup status bar
-    m_statusBar = new QLabel;
-    statusBar()->addWidget(m_statusBar);
-    statusBar()->setStyleSheet("QLabel{ color: black }");
 
     // Setup right key
     m_rightKeyMenu = new QMenu(m_ui.tableView);
@@ -55,6 +58,7 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     // ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
     // ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+
     UpdateTableView();
 }
 
@@ -97,6 +101,11 @@ void MiniThingQt::UpdateTableView(void)
             pItemSize = new QStandardItem(QString::number(fileInfo.size() / 1024) + " KB");
             pItemLastMod = new QStandardItem(QString(fileInfo.lastModified().toString("MM/dd/yyyy hh:mm:ss")));
         }
+        else
+        {
+            pItemSize = new QStandardItem(tr(""));
+            pItemLastMod = new QStandardItem(tr(""));
+        }
 
         lRow.clear();
         lRow << pItemName << pItemPath << pItemSize << pItemLastMod;
@@ -105,11 +114,6 @@ void MiniThingQt::UpdateTableView(void)
     }
 
     m_ui.tableView->setModel(&m_model);
-
-    QString status;
-    status.append(QString::number(m_usnSet.size()));
-    status.append(tr(" objests"));
-    this->SetStatusBar(status);
 }
 
 //==========================================================================
@@ -143,9 +147,6 @@ void MiniThingQt::ButtonSearchClicked()
 //==========================================================================
 void MiniThingQt::ShortKeySearch()
 {
-    // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
-    m_usnSet.clear();
-
     if (m_pMiniThingQtWorkThread->isMiniThingCoreReady())
     {
         QString search = m_ui.lineEdit->text();
@@ -153,10 +154,13 @@ void MiniThingQt::ShortKeySearch()
         if (search == m_searchBefore)
         {
             // Search content is the same with before, do nothing
-            return;
+            goto JUST_SHOW_MSG;
         }
         else
         {
+            // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
+            m_usnSet.clear();
+
             QueryInfo queryInfo;
             queryInfo.type = QUERY_BY_NAME;
             queryInfo.info.fileNameWstr = StringToWstring(search.toStdString());
@@ -165,14 +169,20 @@ void MiniThingQt::ShortKeySearch()
 
             m_searchBefore = search;
         }
+
+        // Call update table view to refresh all msg show
+        UpdateTableView();
+
+JUST_SHOW_MSG:
+        QString status;
+        status.append(QString::number(m_usnSet.size()));
+        status.append(tr(" objests"));
+        this->SetStatusBar(status);
     }
     else
     {
-        // TODO:
+        this->SetStatusBar(QString("Scan files..."));
     }
-
-    // Call update table view to refresh all msg show
-    UpdateTableView();
 }
 
 void MiniThingQt::ShortKeyOpen()
@@ -238,4 +248,3 @@ void MiniThingQt::RightKeyMenu(QPoint pos)
 
     this->SetStatusBar("File opened");
 }
-

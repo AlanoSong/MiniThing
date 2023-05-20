@@ -107,6 +107,7 @@ public:
     void CloseVolumeHandle(void);
     bool IsNtfs(std::wstring volName);
     bool IsSqlExist(void) { return m_isSqlExist; }
+    bool IsCoreReady(void) { return m_isCoreReady; };
 
 public:
     // Monitor thread related parameters
@@ -158,5 +159,6 @@ private:
     sqlite3                             *m_hSql;
     std::string                         m_sqlDbPath;
     bool                                m_isSqlExist;
+    bool                                m_isCoreReady;
 };
 

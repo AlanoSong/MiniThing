@@ -18,8 +18,6 @@
 #include "../Utility/Utility.h"
 #include "MiniThingQtBackgroud.h"
 
-
-
 class MiniThingQt : public QMainWindow
 {
     Q_OBJECT
@@ -30,12 +28,17 @@ public:
 
     void UpdateTableView(void);
 
+    // Status bar funcs
+    void SetStatusBar(QString str);
+
+protected:
+    MiniThingQtWorkThread* m_pMiniThingQtWorkThread;
+
 private:
     Ui::MiniThingClass m_ui;
     QStandardItemModel m_model;
 
     MiniThingCore* m_pMiniThingCore;
-    MiniThingQtWorkThread* m_pMiniThingQtWorkThread;
 
     QString m_searchBefore;
 
@@ -68,9 +71,8 @@ private slots:
     void ShortKeyOpen();
     void ShortKeyOpenPath();
 
-    // Status bar funcs
-    void SetStatusBar(QString str);
-
     // Enter press funcs for line text
     void EnterPressDown(void);
 };
+
+
