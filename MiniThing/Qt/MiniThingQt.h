@@ -11,6 +11,7 @@
 #include <QAction>
 #include <qmenu.h>
 #include <qprocess.h>
+#include <qlabel.h>
 
 #include "ui_MiniThing.h"
 #include "../Core/MiniThingCore.h"
@@ -50,6 +51,9 @@ private:
     QAction* m_rightKeyActionOpen;
     QAction* m_rightKeyActionOpenPath;
 
+    // Status bar
+    QLabel* m_statusBar;
+
 private slots:
     // Button funcs
     void ButtonSearchClicked();
@@ -61,4 +65,7 @@ private slots:
     void ShortKeySearch();
     void ShortKeyOpen();
     void ShortKeyOpenPath();
+
+    // Status bar funcs
+    void SetStatusBar(QString str);
 };

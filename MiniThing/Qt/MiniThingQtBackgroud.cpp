@@ -1,4 +1,5 @@
 #include "MiniThingQtBackgroud.h"
+//#include "MiniThingQt.h"
 
 
 MiniThingQtWorkThread::MiniThingQtWorkThread()
@@ -8,6 +9,7 @@ MiniThingQtWorkThread::MiniThingQtWorkThread()
 MiniThingQtWorkThread::~MiniThingQtWorkThread()
 {
 }
+
 
 MiniThingQtWorkThread::MiniThingQtWorkThread(MiniThingCore* pMiniThingCore)
 {
@@ -19,7 +21,5 @@ void MiniThingQtWorkThread::run()
 {
     m_isMiniThingCoreReady = false;
     m_pMiniThingCore->StartInstance();
-    qDebug() << "Minithing core ready";
-
     m_isMiniThingCoreReady = true;
 }

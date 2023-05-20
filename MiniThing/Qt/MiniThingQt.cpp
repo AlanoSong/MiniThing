@@ -8,18 +8,20 @@ MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
     m_ui.setupUi(this);
     m_usnSet.clear();
 
+    // Create MiniThingCore instance, put it in background
     m_pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore);
     m_pMiniThingQtWorkThread->start();
 
-    m_ui.tableView->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
-    m_ui.tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    m_ui.tableView->verticalHeader()->setVisible(false);
-    // ui.tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    // ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    // ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+    // Setup status bar
+    m_statusBar = new QLabel;
+    statusBar()->addWidget(m_statusBar);
 
+    statusBar()->setStyleSheet("QLabel{ color: black }");
+    QString status;
+    status.append(tr("Scanning files ..."));
+
+    // Setup right key
     m_rightKeyMenu = new QMenu(m_ui.tableView);
     m_rightKeyActionOpen = new QAction();
     m_rightKeyActionOpenPath = new QAction();
@@ -29,8 +31,6 @@ MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
     m_rightKeyMenu->addAction(m_rightKeyActionOpen);
     m_rightKeyMenu->addAction(m_rightKeyActionOpenPath);
     connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(RightKeyMenu(QPoint)));
-
-    UpdateTableView();
 
     // Registe all shortcut keys
     m_shortKeySearch = new QAction(this);
@@ -47,6 +47,16 @@ MiniThingQt::MiniThingQt(QWidget *parent) : QMainWindow(parent)
     m_shortKeyOpenPath->setShortcut(tr("ctrl+p"));
     this->addAction(m_shortKeyOpenPath);
     connect(m_shortKeyOpenPath, SIGNAL(triggered()), this, SLOT(ShortKeyOpenPath()));
+
+    // Setup table view
+    m_ui.tableView->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
+    m_ui.tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_ui.tableView->verticalHeader()->setVisible(true);
+    // ui.tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    // ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    // ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+    UpdateTableView();
 }
 
 MiniThingQt::~MiniThingQt()
@@ -93,6 +103,19 @@ void MiniThingQt::UpdateTableView(void)
     }
 
     m_ui.tableView->setModel(&m_model);
+
+    QString status;
+    status.append(QString::number(m_usnSet.size()));
+    status.append(tr(" objests"));
+    this->SetStatusBar(status);
+}
+
+//==========================================================================
+//                        Status Bar Functions                            //
+//==========================================================================
+void MiniThingQt::SetStatusBar(QString str)
+{
+    statusBar()->showMessage(str);
 }
 
 //==========================================================================
@@ -111,6 +134,7 @@ void MiniThingQt::ShortKeySearch()
 {
     // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
     m_usnSet.clear();
+    QString status;
 
     if (m_pMiniThingQtWorkThread->isMiniThingCoreReady())
     {
@@ -122,12 +146,15 @@ void MiniThingQt::ShortKeySearch()
         queryInfo.info.fileNameWstr = queryStr;
 
         m_pMiniThingCore->SQLiteQueryV2(&queryInfo, m_usnSet);
+
+        status.append(tr("Search over"));
     }
     else
     {
-        QMessageBox::warning(nullptr, "Warnning", "Scanning all volumes ...", QMessageBox::Close);
-        // TODO: show status msg
+        status.append(tr("Scanning files..."));
     }
+
+    this->SetStatusBar(status);
 
     // Call update table view to refresh all msg show
     UpdateTableView();
@@ -147,6 +174,8 @@ void MiniThingQt::ShortKeyOpen()
             QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         }
     }
+
+    this->SetStatusBar(tr("File opened"));
 }
 
 void MiniThingQt::ShortKeyOpenPath()
@@ -168,6 +197,8 @@ void MiniThingQt::ShortKeyOpenPath()
         QString cmd = QString("explorer.exe /select,\"%1\"").arg(filePath);
         process.startDetached(cmd);
     }
+
+    this->SetStatusBar(tr("File path opened"));
 }
 
 //==========================================================================
@@ -189,5 +220,7 @@ void MiniThingQt::RightKeyMenu(QPoint pos)
             QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         }
     }
+
+    this->SetStatusBar("File opened");
 }
 

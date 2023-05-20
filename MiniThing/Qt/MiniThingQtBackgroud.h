@@ -11,7 +11,8 @@ public:
     MiniThingQtWorkThread();
     ~MiniThingQtWorkThread();
 
-    MiniThingQtWorkThread(MiniThingCore *pMiniThingCore);
+    MiniThingQtWorkThread(MiniThingCore* pMiniThingCore);
+
     bool isMiniThingCoreReady(void) { return m_isMiniThingCoreReady; };
 
 private:
