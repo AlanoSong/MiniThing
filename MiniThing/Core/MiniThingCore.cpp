@@ -630,6 +630,8 @@ HRESULT MiniThingCore::SQLiteOpen(void)
 {
     HRESULT ret = S_OK;
 
+    assert(sqlite3_threadsafe() == true);
+
     // TODO: if m_SQLitePath contain wstring ?
     assert(!m_sqlDbPath.empty());
     int result = sqlite3_open_v2(m_sqlDbPath.c_str(), &m_hSql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);

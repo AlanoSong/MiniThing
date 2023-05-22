@@ -4,6 +4,9 @@
 //==========================================================================
 //                        Static Parameters                               //
 //==========================================================================
+// TODO: refine it
+std::wstring g_monitorFilter0 = L"AppData\\Local\\Temp";
+std::wstring g_monitorFilter1 = L"MiniThing.db-journal";
 
 //==========================================================================
 //                        Public Parameters                               //
@@ -91,6 +94,8 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
         if (!g_updateDataBaseTaskList.empty())
         {
+            printf_s("Task list size: %u\n", g_updateDataBaseTaskList.size());
+
             WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
             UpdateDataBaseTaskInfo taskInfo = g_updateDataBaseTaskList.front();
             g_updateDataBaseTaskList.pop_front();
@@ -100,7 +105,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
             {
             case FILE_ACTION_ADDED:
             {
-                // wprintf_s(L"Add: '%s'\n", taskInfo.oriPath.c_str());
+                wprintf_s(L"Add: '%s'\n", taskInfo.oriPath.c_str());
 
                 UsnInfo unsInfo = { 0 };
                 unsInfo.filePathWstr = taskInfo.oriPath;
@@ -118,7 +123,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_RENAMED_OLD_NAME:
             {
-                // wprintf_s(L"Ren: '%s' -> '%s'\n", taskInfo.oriPath.c_str(), taskInfo.newPath.c_str());
+                wprintf_s(L"Ren: '%s' -> '%s'\n", taskInfo.oriPath.c_str(), taskInfo.newPath.c_str());
 
                 UsnInfo oriInfo = { 0 };
                 oriInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
@@ -137,7 +142,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_REMOVED:
             {
-                // wprintf_s(L"Rem: '%s'\n", taskInfo.oriPath.c_str());
+                wprintf_s(L"Rem: '%s'\n", taskInfo.oriPath.c_str());
 
                 UsnInfo usnInfo = { 0 };
                 usnInfo.filePathWstr = taskInfo.oriPath;
@@ -215,6 +220,13 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             // Change file name
             filePathWstr = pNotifyInfo->FileName;
             filePathWstr.resize(pNotifyInfo->FileNameLength / 2);
+
+            // There is too many events about appdata, filter them
+            if (filePathWstr.find(g_monitorFilter0) != std::wstring::npos
+                || filePathWstr.find(g_monitorFilter1) != std::wstring::npos)
+            {
+                continue;
+            }
 
             // Rename file new name
             auto pInfo = reinterpret_cast<PFILE_NOTIFY_INFORMATION>(reinterpret_cast<char*>(pNotifyInfo) + pNotifyInfo->NextEntryOffset);
@@ -297,12 +309,15 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 break;
             }
 
-            // We dispath those update task into list and handle them in UpdateSqlDataBaseThread,
-            //  cause updating sql data base may consume some time,
-            //  and we may lost more file change event at the same time.
-            WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
-            g_updateDataBaseTaskList.push_back(updateTaskInfo);
-            ReleaseMutex(g_updateDataBaseWrMutex);
+            if (updateTaskInfo.op)
+            {
+                // We dispath those update task into list and handle them in UpdateSqlDataBaseThread,
+                //  cause updating sql data base may consume some time,
+                //  and we may lost more file change event at the same time.
+                WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
+                g_updateDataBaseTaskList.push_back(updateTaskInfo);
+                ReleaseMutex(g_updateDataBaseWrMutex);
+            }
         }
     }
 
