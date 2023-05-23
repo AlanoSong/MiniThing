@@ -34,6 +34,8 @@ HRESULT MiniThingCore::StartInstance(void)
 
     SetChsPrintEnv();
 
+    m_localAppDataPath = GetLocalAppDataPath();
+
     if (FAILED(QueryAllVolume()))
     {
         assert(0);
@@ -563,6 +565,8 @@ HRESULT MiniThingCore::CreateMonitorThread(void)
         MonitorTaskInfo* pTask = (MonitorTaskInfo*)it->pMonitorTaskInfo;
         pTask->pMiniThingCore = this;
         pTask->pVolumeInfo = &(*it);
+        // TODO: only c:\ need to filter file changes
+        pTask->localAppDataPath = m_localAppDataPath;
 
         it->hMonitor = CreateThread(0, 0, MonitorThread, it->pMonitorTaskInfo, 0, 0);
         if (INVALID_HANDLE_VALUE == it->hMonitor)

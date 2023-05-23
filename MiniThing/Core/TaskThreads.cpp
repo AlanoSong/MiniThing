@@ -4,9 +4,6 @@
 //==========================================================================
 //                        Static Parameters                               //
 //==========================================================================
-// TODO: refine it
-std::wstring g_monitorFilter0 = L"AppData\\Local\\Temp";
-std::wstring g_monitorFilter1 = L"MiniThing.db-journal";
 
 //==========================================================================
 //                        Public Parameters                               //
@@ -167,11 +164,13 @@ DWORD WINAPI MonitorThread(LPVOID lp)
     MonitorTaskInfo* pTaskInfo = (MonitorTaskInfo*)lp;
     VolumeInfo* pVolumeInfo = pTaskInfo->pVolumeInfo;
     MiniThingCore* pMiniThingCore = pTaskInfo->pMiniThingCore;
+    std::wstring localAppDataPath = pTaskInfo->localAppDataPath;
 
     char notifyInfo[1024] = { 0 };
 
     std::wstring filePathWstr;
     std::wstring fileRePathWstr;
+    std::wstring fullFilePathWstr;
 
     SetChsPrintEnv();
 
@@ -222,8 +221,10 @@ DWORD WINAPI MonitorThread(LPVOID lp)
             filePathWstr.resize(pNotifyInfo->FileNameLength / 2);
 
             // There is too many events about appdata, filter them
-            if (filePathWstr.find(g_monitorFilter0) != std::wstring::npos
-                || filePathWstr.find(g_monitorFilter1) != std::wstring::npos)
+            fullFilePathWstr = pVolumeInfo->volumeName + L"\\" + filePathWstr;
+            if (fullFilePathWstr.find(localAppDataPath) != std::wstring::npos
+                // TODO: refine this
+                || fullFilePathWstr.find(L"MiniThing.db-journal") != std::wstring::npos)
             {
                 continue;
             }

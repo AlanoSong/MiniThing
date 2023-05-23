@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stringapiset.h>
 #include <vector>
+#include <shlobj.h>
 
 // No 1.1
 inline int CharToWchar(const char* pChar, wchar_t* pWchar)
@@ -274,3 +275,20 @@ inline void GetSystemError(void)
     LPCTSTR strValue = lpMsgBuf;
     wprintf_s(L"Err msg: %s\n", strValue);
 }
+
+inline std::wstring GetLocalAppDataPath(void)
+{
+    wchar_t buffer[MAX_PATH];
+    SHGetSpecialFolderPath(0, buffer, CSIDL_LOCAL_APPDATA, false);
+
+    char* path = new char[MAX_PATH];
+    size_t pathLength;
+    wcstombs_s(&pathLength, path, MAX_PATH, buffer, MAX_PATH);
+
+    std::wstring localAppDataPath = CharToWstring(path);
+
+    delete[] path;
+
+    return localAppDataPath;
+}
+

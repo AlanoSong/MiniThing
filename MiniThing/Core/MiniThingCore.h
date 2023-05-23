@@ -70,6 +70,7 @@ typedef struct
 {
     VolumeInfo* pVolumeInfo;
     MiniThingCore* pMiniThingCore;
+    std::wstring localAppDataPath;
 }MonitorTaskInfo;
 
 typedef struct
@@ -160,5 +161,6 @@ private:
     std::string                         m_sqlDbPath;
     bool                                m_isSqlExist;
     bool                                m_isCoreReady;
+    std::wstring                        m_localAppDataPath;
 };
 
