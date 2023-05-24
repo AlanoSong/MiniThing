@@ -3,9 +3,13 @@
 ## 1. Usage
 ![Usage](./Docs/Pictures/Usage.png)
 
-- Start search: `ctrl+f` / `enter` / `search button`
-- Open seleted file: `ctrl+o` / `right key`
-- Open seleted file path: `ctrl+p` / `right key`
+- [x] Start search: `ctrl+f` / `enter` / `search button`
+- [x] Open selected: `ctrl+o` / `right key`
+- [x] Open selected path: `ctrl+p` / `right key`
+- [ ] Copy selected: `ctrl+c` / `right key`
+- [ ] Delete selected: `ctrl+d` / `right key`
+- [ ] Rename selected: `ctrl+r` / `right key`
+- [ ] Search from current result: `ctrl+shift+f`
 - Add more...
 
 ## 2. Build
@@ -14,7 +18,7 @@
 
 ## 3. To be added
 - [x] Display more file info (include file name, path, size, last modified date)
-- [ ] Add right key to open file or file location
+- [x] Add more short key
 - [ ] Perfermance enhance
 - [ ] Fix bugs
 - [ ] CMake build
