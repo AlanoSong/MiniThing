@@ -17,8 +17,6 @@
 #include "../Utility/Utility.h"
 #include "../ThirdParty/SQLite/sqlite3.h"
 
-using namespace std;
-
 #define SQL_BATCH_INSERT_GRANULARITY    ( 4096 )
 
 class MiniThingCore;
@@ -43,7 +41,7 @@ typedef struct
     HANDLE hVolume;
 
     USN_JOURNAL_DATA usnJournalData;
-    unordered_map<DWORDLONG, UsnInfo> usnRecordMap;
+    std::unordered_map<DWORDLONG, UsnInfo> usnRecordMap;
     DWORDLONG rootFileRef;
     std::wstring rootName;
 
@@ -79,8 +77,8 @@ typedef struct
     std::string sqlPath;
     std::wstring rootFolderName;
     DWORDLONG rootRef;
-    unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
-    unordered_map<DWORDLONG, UsnInfo>* pSortTask;
+    std::unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
+    std::unordered_map<DWORDLONG, UsnInfo>* pSortTask;
 } SortTaskInfo;
 
 typedef struct
@@ -156,7 +154,7 @@ private:
 
 private:
     std::vector<VolumeInfo>             m_volumeSet;
-    unordered_map<DWORDLONG, UsnInfo>   m_usnRecordMap;
+    std::unordered_map<DWORDLONG, UsnInfo>   m_usnRecordMap;
     sqlite3                             *m_hSql;
     std::string                         m_sqlDbPath;
     bool                                m_isSqlExist;

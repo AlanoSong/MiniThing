@@ -396,8 +396,8 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
     // 3. Divide file node into several sort tasks
     int fileNodeCnt = 0;
-    vector<unordered_map<DWORDLONG, UsnInfo>> sortTaskSet;
-    unordered_map<DWORDLONG, UsnInfo> mapTmp;
+    std::vector<std::unordered_map<DWORDLONG, UsnInfo>> sortTaskSet;
+    std::unordered_map<DWORDLONG, UsnInfo> mapTmp;
 
     for (auto it = volume.usnRecordMap.begin(); it != volume.usnRecordMap.end(); it++)
     {
@@ -422,8 +422,8 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
         mapTmp.clear();
     }
 
-    vector<HANDLE> taskHandleVec;
-    vector<SortTaskInfo> sortTaskVec;
+    std::vector<HANDLE> taskHandleVec;
+    std::vector<SortTaskInfo> sortTaskVec;
 
     for (int i = 0; i < sortTaskSet.size(); i++)
     {
@@ -634,7 +634,8 @@ HRESULT MiniThingCore::SQLiteOpen(void)
 {
     HRESULT ret = S_OK;
 
-    assert(sqlite3_threadsafe() == true);
+    // Config sqlite as multiple thread
+    assert(sqlite3_config(SQLITE_CONFIG_MULTITHREAD) == SQLITE_OK);
 
     // TODO: if m_SQLitePath contain wstring ?
     assert(!m_sqlDbPath.empty());

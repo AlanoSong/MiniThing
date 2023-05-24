@@ -15,7 +15,7 @@ HANDLE g_updateDataBaseWrMutex;
 //                        Static Functions                                //
 //==========================================================================
 
-static void GetCurrentFilePath(std::wstring& path, std::wstring volName, DWORDLONG currentRef, DWORDLONG rootRef, unordered_map<DWORDLONG, UsnInfo>& recordMapAll)
+static void GetCurrentFilePath(std::wstring& path, std::wstring volName, DWORDLONG currentRef, DWORDLONG rootRef, std::unordered_map<DWORDLONG, UsnInfo>& recordMapAll)
 {
     // 1. This is root node, just add root path and return
     if (currentRef == rootRef)
@@ -68,7 +68,10 @@ DWORD WINAPI SortThread(LPVOID lp)
 
     QueryPerformanceCounter(&timeEnd);
     double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
+
+#if _DEBUG
     printf_s("Sort thread %d over, %f S\n", pTaskInfo->taskIndex, elapsed);
+#endif
 
     return 0;
 }
@@ -79,20 +82,24 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
     MiniThingCore* pMiniThingCore = (MiniThingCore*)lp;
 
+#if _DEBUG
+    wprintf_s(L"Update sql thread start\n");
+#endif
+
     while (true)
     {
         // Check if need exit thread
         DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hUpdateSqlDataBaseExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
+#if _DEBUG
             printf_s("Recv the quit event\n");
+#endif
             break;
         }
 
         if (!g_updateDataBaseTaskList.empty())
         {
-            printf_s("Task list size: %u\n", g_updateDataBaseTaskList.size());
-
             WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
             UpdateDataBaseTaskInfo taskInfo = g_updateDataBaseTaskList.front();
             g_updateDataBaseTaskList.pop_front();
@@ -102,7 +109,9 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
             {
             case FILE_ACTION_ADDED:
             {
+#if _DEBUG
                 wprintf_s(L"Add: '%s'\n", taskInfo.oriPath.c_str());
+#endif
 
                 UsnInfo unsInfo = { 0 };
                 unsInfo.filePathWstr = taskInfo.oriPath;
@@ -120,7 +129,9 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_RENAMED_OLD_NAME:
             {
+#if _DEBUG
                 wprintf_s(L"Ren: '%s' -> '%s'\n", taskInfo.oriPath.c_str(), taskInfo.newPath.c_str());
+#endif
 
                 UsnInfo oriInfo = { 0 };
                 oriInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
@@ -139,7 +150,9 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_REMOVED:
             {
+#if _DEBUG
                 wprintf_s(L"Rem: '%s'\n", taskInfo.oriPath.c_str());
+#endif
 
                 UsnInfo usnInfo = { 0 };
                 usnInfo.filePathWstr = taskInfo.oriPath;
@@ -155,6 +168,10 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
             }
         }
     }
+
+#if _DEBUG
+    wprintf_s(L"Stop update sql thread\n");
+#endif
 
     return 0;
 }
@@ -174,7 +191,9 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
     SetChsPrintEnv();
 
+#if _DEBUG
     wprintf_s(L"Start monitor: %s\n", pVolumeInfo->volumeName.c_str());
+#endif
 
     std::wstring folderPath = pVolumeInfo->volumeName;
 
@@ -200,7 +219,9 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         DWORD dwWaitCode = WaitForSingleObject(pVolumeInfo->hMonitorExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
+#if _DEBUG
             printf_s("Recv the quit event\n");
+#endif
             break;
         }
 
@@ -324,7 +345,9 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
     CloseHandle(hVolume);
 
-    printf_s("Monitor thread stop\n");
+#if _DEBUG
+    wprintf_s(L"Stop monitor: %s\n", pVolumeInfo->volumeName.c_str());
+#endif
 
     return 0;
 }
@@ -335,7 +358,9 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
     SetChsPrintEnv();
 
+#if _DEBUG
     printf_s("Query thread start\n");
+#endif
 
     while (true)
     {
@@ -343,7 +368,9 @@ DWORD WINAPI QueryThread(LPVOID lp)
         DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hQueryExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
+#if _DEBUG
             printf_s("Recv the quit event\n");
+#endif
             break;
         }
 
@@ -384,7 +411,10 @@ DWORD WINAPI QueryThread(LPVOID lp)
         printf_s("==============================\n");
     }
 
+#if _DEBUG
     printf_s("Query thread stop\n");
+#endif
+
     return 0;
 }
 
