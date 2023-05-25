@@ -17,12 +17,13 @@
 - VS config: Qt / CmdLine
 
 ## 3. To be added
-- [x] Display more file info (include file name, path, size, last modified date)
-- [x] Add more short key
+- [x] Display more file info
+- [x] Add short key
 - [ ] Perfermance enhance
 - [ ] Fix bugs
 - [ ] CMake build
 - [ ] Graceful Qt UI
+- [ ] Build installer
 
 ## 4. Participate in contributing
 - Fork this repository

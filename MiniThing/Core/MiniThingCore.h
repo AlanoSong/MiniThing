@@ -73,10 +73,10 @@ typedef struct
 
 typedef struct
 {
-    UINT taskIndex;
-    std::string sqlPath;
-    std::wstring rootFolderName;
-    DWORDLONG rootRef;
+    UINT            taskIndex;
+    std::string     sqlPath;
+    std::wstring    rootFolderName;
+    DWORDLONG       rootRef;
     std::unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
     std::unordered_map<DWORDLONG, UsnInfo>* pSortTask;
 } SortTaskInfo;
@@ -153,12 +153,12 @@ private:
     HRESULT DeleteUsn(void);
 
 private:
-    std::vector<VolumeInfo>             m_volumeSet;
-    std::unordered_map<DWORDLONG, UsnInfo>   m_usnRecordMap;
-    sqlite3                             *m_hSql;
-    std::string                         m_sqlDbPath;
-    bool                                m_isSqlExist;
-    bool                                m_isCoreReady;
-    std::wstring                        m_localAppDataPath;
+    std::vector<VolumeInfo>                 m_volumeSet;
+    std::unordered_map<DWORDLONG, UsnInfo>  m_usnRecordMap;
+    sqlite3                                 *m_hSql;
+    std::string                             m_sqlDbPath;
+    bool                                    m_isSqlExist;
+    bool                                    m_isCoreReady;
+    std::wstring                            m_localAppDataPath;
 };
 
