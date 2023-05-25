@@ -6,8 +6,8 @@
 - [x] Start search: `ctrl+f` / `enter` / `search button`
 - [x] Open selected: `ctrl+o` / `right key`
 - [x] Open selected path: `ctrl+p` / `right key`
-- [ ] Copy selected: `ctrl+c` / `right key`
-- [ ] Delete selected: `ctrl+d` / `right key`
+- [x] Copy selected: `ctrl+c` / `right key`
+- [x] Delete selected: `ctrl+d` / `right key`
 - [ ] Rename selected: `ctrl+r` / `right key`
 - [ ] Search from current result: `ctrl+shift+f`
 - Add more...

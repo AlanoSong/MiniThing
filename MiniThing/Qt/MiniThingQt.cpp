@@ -17,7 +17,7 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     statusBar()->addWidget(m_statusBar);
     statusBar()->setStyleSheet("QLabel{ color: black }");
 
-    this->SetStatusBar(QString("Scan files..."));
+    this->SetStatusBar(QString("scanning files..."));
 
     // Create MiniThingCore instance, put it in background
     m_pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
@@ -54,6 +54,16 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     this->addAction(m_shortKeyOpenPath);
     connect(m_shortKeyOpenPath, SIGNAL(triggered()), this, SLOT(ShortKeyOpenPath()));
 
+    m_shortKeyDelete = new QAction(this);
+    m_shortKeyDelete->setShortcut(tr("ctrl+d"));
+    this->addAction(m_shortKeyDelete);
+    connect(m_shortKeyDelete, SIGNAL(triggered()), this, SLOT(ShortKeyDelete()));
+
+    m_shortKeyCopy = new QAction(this);
+    m_shortKeyCopy->setShortcut(tr("ctrl+c"));
+    this->addAction(m_shortKeyCopy);
+    connect(m_shortKeyCopy, SIGNAL(triggered()), this, SLOT(ShortKeyCopy()));
+
     // Setup table view
     m_ui.tableView->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
     m_ui.tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
@@ -78,6 +88,8 @@ MiniThingQt::~MiniThingQt()
     delete m_shortKeySearch;
     delete m_shortKeyOpen;
     delete m_shortKeyOpenPath;
+    delete m_shortKeyDelete;
+    delete m_shortKeyCopy;
 
     delete m_statusBar;
 }
@@ -177,7 +189,6 @@ void MiniThingQt::ShortKeySearch()
         // Call update table view to refresh all msg show
         UpdateTableView();
 
-JUST_SHOW_MSG:
         QString status;
         status.append(QString::number(m_usnSet.size()));
         status.append(tr(" objests"));
@@ -185,7 +196,7 @@ JUST_SHOW_MSG:
     }
     else
     {
-        this->SetStatusBar(QString("Scan files..."));
+        this->SetStatusBar(QString("scanning files..."));
     }
 }
 
@@ -202,9 +213,9 @@ void MiniThingQt::ShortKeyOpen()
         {
             QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         }
-    }
 
-    this->SetStatusBar(tr("File opened"));
+        this->SetStatusBar(tr("file opened"));
+    }
 }
 
 void MiniThingQt::ShortKeyOpenPath()
@@ -225,9 +236,55 @@ void MiniThingQt::ShortKeyOpenPath()
         filePath.replace("/", "\\");
         QString cmd = QString("explorer.exe /select,\"%1\"").arg(filePath);
         process.startDetached(cmd);
-    }
 
-    this->SetStatusBar(tr("File path opened"));
+        this->SetStatusBar(tr("file path opened"));
+    }
+}
+
+void MiniThingQt::ShortKeyDelete()
+{
+    auto currentIndex = m_ui.tableView->currentIndex();
+    if (currentIndex.isValid())
+    {
+        // Get file path info from current line
+        QModelIndex index = m_model.index(currentIndex.row(), 1);
+        QString filePath = m_model.data(index).toString();
+        QFileInfo fileInfo(filePath);
+
+        if (fileInfo.isFile())
+        {
+            QFile::remove(filePath);
+            this->SetStatusBar(tr("file deleted"));
+        }
+        else if (fileInfo.isDir())
+        {
+            QDir qDir(filePath);
+            qDir.removeRecursively();
+            this->SetStatusBar(tr("directory deleted"));
+        }
+    }
+}
+
+void MiniThingQt::ShortKeyCopy()
+{
+    auto currentIndex = m_ui.tableView->currentIndex();
+    if (currentIndex.isValid())
+    {
+        // Get file path info from current line
+        QModelIndex index = m_model.index(currentIndex.row(), 1);
+        QString filePath = m_model.data(index).toString();
+
+        QList<QUrl> copyfile;
+        copyfile.push_back(QUrl::fromLocalFile(filePath));
+
+        QMimeData* data = new QMimeData;
+        data->setUrls(copyfile);
+
+        QClipboard* clip = QApplication::clipboard();
+        clip->setMimeData(data);
+
+        this->SetStatusBar("file copied");
+    }
 }
 
 //==========================================================================
@@ -248,7 +305,7 @@ void MiniThingQt::RightKeyMenu(QPoint pos)
         {
             QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         }
-    }
 
-    this->SetStatusBar("File opened");
+        this->SetStatusBar("file opened");
+    }
 }

@@ -12,6 +12,8 @@
 #include <qmenu.h>
 #include <qprocess.h>
 #include <qlabel.h>
+#include <qclipboard.h>
+#include <qmimedata.h>
 
 #include "ui_MiniThing.h"
 #include "../Core/MiniThingCore.h"
@@ -50,6 +52,8 @@ private:
     QAction* m_shortKeyOpen;
     QAction* m_shortKeyOpenPath;
     QAction* m_shortKeyFocusOnInput;
+    QAction* m_shortKeyDelete;
+    QAction* m_shortKeyCopy;
 
     // Right keys
     QMenu* m_rightKeyMenu;
@@ -70,6 +74,8 @@ private slots:
     void ShortKeySearch();
     void ShortKeyOpen();
     void ShortKeyOpenPath();
+    void ShortKeyDelete();
+    void ShortKeyCopy();
 
     // Enter press funcs for line text
     void EnterPressDown(void);
