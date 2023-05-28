@@ -637,6 +637,10 @@ HRESULT MiniThingCore::SQLiteOpen(void)
     // Config sqlite as multiple thread
     assert(sqlite3_config(SQLITE_CONFIG_MULTITHREAD) == SQLITE_OK);
 
+    // Create sqlite read write mutex
+    m_sqlRwMutex = CreateMutex(nullptr, false, nullptr);
+    assert(m_sqlRwMutex);
+
     // TODO: if m_SQLitePath contain wstring ?
     assert(!m_sqlDbPath.empty());
     int result = sqlite3_open_v2(m_sqlDbPath.c_str(), &m_hSql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
@@ -684,7 +688,11 @@ HRESULT MiniThingCore::SQLiteInsert(UsnInfo* pUsnInfo)
         pUsnInfo->pSelfRef, pUsnInfo->pParentRef, pUsnInfo->timeStamp, nameUtf8.c_str(), pathUtf8.c_str());
 
     char* errMsg = nullptr;
-    if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+    WaitForSingleObject(m_sqlRwMutex, INFINITE);
+    int exeRet = sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg);
+    ReleaseMutex(m_sqlRwMutex);
+
+    if (exeRet != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : insert failed\n");
@@ -709,6 +717,8 @@ HRESULT MiniThingCore::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstr
 
     // 2. Query and pop vector
     sprintf_s(sql, "SELECT * FROM UsnInfo WHERE FileName LIKE '%%%s%%';", str.c_str());
+
+    WaitForSingleObject(m_sqlRwMutex, INFINITE);
 
     sqlite3_stmt* stmt = NULL;
     int res = sqlite3_prepare_v2(m_hSql, sql, (int)strlen(sql), &stmt, NULL);
@@ -736,6 +746,8 @@ HRESULT MiniThingCore::SQLiteQuery(std::wstring queryInfo, std::vector<std::wstr
     }
 
     sqlite3_finalize(stmt);
+
+    ReleaseMutex(m_sqlRwMutex);
 
     return ret;
 }
@@ -777,6 +789,8 @@ HRESULT MiniThingCore::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>&
         sprintf_s(sql, "SELECT * FROM UsnInfo;");
     }
 
+    WaitForSingleObject(m_sqlRwMutex, INFINITE);
+
     sqlite3_stmt* stmt = NULL;
     int res = sqlite3_prepare_v2(m_hSql, sql, (int)strlen(sql), &stmt, NULL);
     if (SQLITE_OK == res && NULL != stmt)
@@ -811,6 +825,8 @@ HRESULT MiniThingCore::SQLiteQueryV2(QueryInfo* queryInfo, std::vector<UsnInfo>&
 
     sqlite3_finalize(stmt);
 
+    ReleaseMutex(m_sqlRwMutex);
+
     return ret;
 }
 
@@ -826,7 +842,12 @@ HRESULT MiniThingCore::SQLiteDelete(UsnInfo* pUsnInfo)
     // "CREATE TABLE UsnInfo(SelfRef sqlite_uint64, ParentRef sqlite_uint64, TimeStamp sqlite_int64, FileName TEXT, FilePath TEXT);"
     std::string path = UnicodeToUtf8(pUsnInfo->filePathWstr);
     sprintf_s(sql, "DELETE FROM UsnInfo WHERE FilePath = '%s';", path.c_str());
-    if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+
+    WaitForSingleObject(m_sqlRwMutex, INFINITE);
+    int exeRet = sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg);
+    ReleaseMutex(m_sqlRwMutex);
+
+    if (exeRet != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : delete failed\n");
@@ -840,7 +861,12 @@ HRESULT MiniThingCore::SQLiteDelete(UsnInfo* pUsnInfo)
     char sql1[2048] = { 0 };
     memset(sql1, 0x00, 2048);
     sprintf_s(sql1, "DELETE FROM UsnInfo WHERE FilePath LIKE '%s\\%%';", path.c_str());
-    if (sqlite3_exec(m_hSql, sql1, NULL, NULL, &errMsg) != SQLITE_OK)
+
+    WaitForSingleObject(m_sqlRwMutex, INFINITE);
+    exeRet = sqlite3_exec(m_hSql, sql1, NULL, NULL, &errMsg);
+    ReleaseMutex(m_sqlRwMutex);
+
+    if (exeRet != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : delete failed\n");
@@ -871,7 +897,12 @@ HRESULT MiniThingCore::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
 
     // Update file node itself
     sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s', FileName = '%s' WHERE FilePath = '%s';", newPath.c_str(), newName.c_str(), oriPath.c_str());
-    if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+
+    WaitForSingleObject(m_sqlRwMutex, INFINITE);
+    int exeRet = sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg);
+    ReleaseMutex(m_sqlRwMutex);
+
+    if (exeRet != SQLITE_OK)
     {
         ret = E_FAIL;
         printf_s("sqlite : update failed\n");
@@ -902,7 +933,12 @@ HRESULT MiniThingCore::SQLiteUpdate(UsnInfo* pOriInfo, UsnInfo* pNewInfo)
             std::wstring newName = GetFileNameAccordPath(newPath);
 
             sprintf_s(sql, "UPDATE UsnInfo SET FilePath = '%s', FileName = '%s' WHERE SelfRef = %llu;", UnicodeToUtf8(newPath).c_str(), UnicodeToUtf8(newName).c_str(), (*it).pSelfRef);
-            if (sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg) != SQLITE_OK)
+
+            WaitForSingleObject(m_sqlRwMutex, INFINITE);
+            exeRet = sqlite3_exec(m_hSql, sql, NULL, NULL, &errMsg);
+            ReleaseMutex(m_sqlRwMutex);
+
+            if (exeRet != SQLITE_OK)
             {
                 ret = E_FAIL;
                 printf_s("sqlite : update failed\n");

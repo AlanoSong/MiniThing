@@ -156,6 +156,7 @@ private:
     std::vector<VolumeInfo>                 m_volumeSet;
     std::unordered_map<DWORDLONG, UsnInfo>  m_usnRecordMap;
     sqlite3                                 *m_hSql;
+    HANDLE                                  m_sqlRwMutex;
     std::string                             m_sqlDbPath;
     bool                                    m_isSqlExist;
     bool                                    m_isCoreReady;
