@@ -24,6 +24,7 @@
     <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)'=='QtDebug|x64'">10.0.19041.0</WindowsTargetPlatformVersion>
     <WindowsTargetPlatformVersion Condition="'$(Configuration)|$(Platform)'=='QtRelease|x64'">10.0.19041.0</WindowsTargetPlatformVersion>
     <QtMsBuild Condition="'$(QtMsBuild)'=='' OR !Exists('$(QtMsBuild)\qt.targets')">$(MSBuildProjectDirectory)\QtMsBuild</QtMsBuild>
+    <WindowsTargetPlatformVersion>10.0.22000.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QtDebug|x64'" Label="Configuration">
@@ -49,13 +50,13 @@
     <Import Project="$(QtMsBuild)\qt_defaults.props" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QtDebug|x64'" Label="QtSettings">
-    <QtInstall>5.14.2_msvc2017_64</QtInstall>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
     <QtDeploy>true</QtDeploy>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QtRelease|x64'" Label="QtSettings">
-    <QtInstall>5.14.2_msvc2017_64</QtInstall>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
     <QtDeploy>true</QtDeploy>
@@ -113,13 +114,13 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
     </ClCompile>
   </ItemDefinitionGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='CmdLineDebug|x64'">
-    <QtInstall>5.14.2_msvc2017_64</QtInstall>
     <QtBuildConfig>debug</QtBuildConfig>
     <QtModules>core;gui;widgets</QtModules>
     <QtDeploy>true</QtDeploy>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='CmdLineRelease|x64'">
-    <QtInstall>5.14.2_msvc2017_64</QtInstall>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtDeploy>true</QtDeploy>
   </PropertyGroup>
@@ -160,10 +161,10 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
     <ClCompile Include="Main.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="MiniThing\Core\MiniThingCore.h" />
+    <QtMoc Include="MiniThing\Core\MiniThingCore.h" />
     <ClInclude Include="MiniThing\Core\TaskThreads.h" />
     <QtMoc Include="MiniThing\Qt\MiniThingQt.h" />
-    <ClInclude Include="MiniThing\Qt\MiniThingQtBackgroud.h" />
+    <QtMoc Include="MiniThing\Qt\MiniThingQtBackgroud.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3ext.h" />
     <ClInclude Include="MiniThing\Utility\Utility.h" />

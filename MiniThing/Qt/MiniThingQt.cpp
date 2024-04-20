@@ -13,7 +13,7 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     this->setWindowIcon(logo);
 
     // Setup background image
-    QPixmap backgroundImg = QPixmap("./Background.png").scaled(this->size());
+    // QPixmap backgroundImg = QPixmap("./Background.png").scaled(this->size());
     QPalette palette;
     // palette.setBrush(QPalette::Window, QBrush(backgroundImg));
     palette.setColor(QPalette::Window, QColor(255, 255, 255));
@@ -112,7 +112,7 @@ void MiniThingQt::UpdateTableView(void)
     QStringList lHeader = { "Name", "Path", "Size", "Last Modified" };
     m_model.setHorizontalHeaderLabels(lHeader);
     m_ui.tableView->setColumnWidth(0, 200);
-    m_ui.tableView->setColumnWidth(1, 700);
+    m_ui.tableView->setColumnWidth(1, 800);
     m_ui.tableView->setColumnWidth(2, 50);
     m_ui.tableView->setColumnWidth(3, 150);
 
