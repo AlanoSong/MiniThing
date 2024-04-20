@@ -21,6 +21,38 @@
 
 class MiniThingCore;
 
+#ifdef BUILD_FOR_QT
+#include <qstatusbar.h>
+#include <QThread>
+
+// MiniThingQtWorkThreadFake structure is all the same with MiniThingQtWorkThread
+//  as so we can call MiniThingQtWorkThread::UpdateStatusBar() by m_hMiniThingQtWorkThread passed in
+//  cause MiniThingCore is included by MiniThingQtBackgroud, and here we cannot access back into MiniThingQtBackgroud normally
+class MiniThingQtWorkThreadFake : public QThread
+{
+    Q_OBJECT
+
+public:
+    MiniThingQtWorkThreadFake();
+    ~MiniThingQtWorkThreadFake();
+
+    MiniThingQtWorkThreadFake(MiniThingCore* pMiniThingCore, QStatusBar* hStatusBar);
+
+    bool isMiniThingCoreReady(void);
+
+private:
+    virtual void run();
+    MiniThingCore* m_pMiniThingCore;
+    QStatusBar* m_hStatusBar;
+    bool m_isMiniThingCoreReady;
+
+signals:
+    void UpdateStatusBar(const QString& message);
+
+public slots:
+};
+#endif
+
 struct UsnInfo
 {
     // File reference number
@@ -79,6 +111,9 @@ typedef struct
     DWORDLONG       rootRef;
     std::unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
     std::unordered_map<DWORDLONG, UsnInfo>* pSortTask;
+#ifdef BUILD_FOR_QT
+    MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
+#endif
 } SortTaskInfo;
 
 typedef struct
@@ -100,7 +135,7 @@ public:
 
 public:
     // System related functions
-    HRESULT StartInstance(void);
+    HRESULT StartInstance(void * pPrivateData = nullptr);
     HRESULT QueryAllVolume(void);
     HRESULT GetAllVolumeHandle(void);
     void CloseVolumeHandle(void);
@@ -127,6 +162,11 @@ public:
     HRESULT CreateQueryThread(void);
     void StartQueryThread(void);
     void StopQueryThread(void);
+
+public:
+#ifdef BUILD_FOR_QT
+    MiniThingQtWorkThreadFake* GetQtWorkThreadHandle(void) { return m_hMiniThingQtWorkThread; }
+#endif
 
 public:
     // Sqlite data base related paremeters
@@ -161,5 +201,8 @@ private:
     bool                                    m_isSqlExist;
     bool                                    m_isCoreReady;
     std::wstring                            m_localAppDataPath;
+#ifdef BUILD_FOR_QT
+    MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
+#endif
 };
 

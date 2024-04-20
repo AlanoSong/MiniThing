@@ -366,4 +366,4 @@ FodyWeavers.xsd
 *.db-journal
 
 # Qt icon
-!Logo.ico
+Logo.ico

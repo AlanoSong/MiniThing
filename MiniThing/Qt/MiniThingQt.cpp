@@ -12,16 +12,25 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     QIcon logo("Logo.ico");
     this->setWindowIcon(logo);
 
+    // Setup background image
+    QPixmap backgroundImg = QPixmap("./Background.png").scaled(this->size());
+    QPalette palette;
+    // palette.setBrush(QPalette::Window, QBrush(backgroundImg));
+    palette.setColor(QPalette::Window, QColor(255, 255, 255));
+    this->setPalette(palette);
+
     // Setup status bar
     m_statusBar = new QLabel;
     statusBar()->addWidget(m_statusBar);
     statusBar()->setStyleSheet("QLabel{ color: black }");
 
-    this->SetStatusBar(QString("scanning files..."));
-
     // Create MiniThingCore instance, put it in background
     m_pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
-    m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore);
+    m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore, statusBar());
+
+    // Connect UpdateStatusBar(), so we could update status bar in diff thread
+    connect(m_pMiniThingQtWorkThread, &MiniThingQtWorkThread::UpdateStatusBar, this, &MiniThingQt::UpdateStatusBar);
+
     m_pMiniThingQtWorkThread->start();
 
     // Monitor enter press in line edit
@@ -32,8 +41,9 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     m_rightKeyActionOpen = new QAction();
     m_rightKeyActionOpenPath = new QAction();
 
-    m_rightKeyActionOpen->setText(QString("Open(ctrl+o)"));
-    m_rightKeyActionOpenPath->setText(QString("Open path(ctrl+p)"));
+    m_rightKeyActionOpen->setText(QString("Open file (ctrl+o)"));
+    m_rightKeyActionOpenPath->setText(QString("Open file path (ctrl+p)"));
+
     m_rightKeyMenu->addAction(m_rightKeyActionOpen);
     m_rightKeyMenu->addAction(m_rightKeyActionOpenPath);
     connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(RightKeyMenu(QPoint)));
@@ -96,9 +106,15 @@ MiniThingQt::~MiniThingQt()
 
 void MiniThingQt::UpdateTableView(void)
 {
+    this->SetStatusBar(QString("Preparing show ..."));
+
     m_model.clear();
     QStringList lHeader = { "Name", "Path", "Size", "Last Modified" };
     m_model.setHorizontalHeaderLabels(lHeader);
+    m_ui.tableView->setColumnWidth(0, 200);
+    m_ui.tableView->setColumnWidth(1, 700);
+    m_ui.tableView->setColumnWidth(2, 50);
+    m_ui.tableView->setColumnWidth(3, 150);
 
     QList<QStandardItem*> lRow;
 
@@ -165,38 +181,40 @@ void MiniThingQt::ShortKeySearch()
 {
     if (m_pMiniThingQtWorkThread->isMiniThingCoreReady())
     {
+        this->SetStatusBar(QString("Searching ..."));
+
         QString search = m_ui.lineEdit->text();
 
-        //if (search == m_searchBefore)
-        //{
-        //    // Search content is the same with before, do nothing
-        //    goto JUST_SHOW_MSG;
-        //}
-        //else
-        {
-            // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
-            m_usnSet.clear();
+        // Clear m_usnSet firstly, cause SQLiteQueryV2 use push back to add file node
+        m_usnSet.clear();
 
+        if(!search.isEmpty())
+        {
             QueryInfo queryInfo;
             queryInfo.type = QUERY_BY_NAME;
-            queryInfo.info.fileNameWstr = StringToWstring(search.toStdString());
+            queryInfo.info.fileNameWstr = search.toStdWString();
 
             m_pMiniThingCore->SQLiteQueryV2(&queryInfo, m_usnSet);
-
-            m_searchBefore = search;
         }
 
         // Call update table view to refresh all msg show
         UpdateTableView();
 
-        QString status;
-        status.append(QString::number(m_usnSet.size()));
-        status.append(tr(" objests"));
-        this->SetStatusBar(status);
+        if (!search.isEmpty())
+        {
+            QString status;
+            status.append(QString::number(m_usnSet.size()));
+            status.append(tr(" objests"));
+            this->SetStatusBar(status);
+        }
+        else
+        {
+            this->SetStatusBar(QString("Input something to search"));
+        }
     }
     else
     {
-        this->SetStatusBar(QString("scanning files..."));
+        this->SetStatusBar(QString("Scanning files..."));
     }
 }
 
@@ -214,7 +232,7 @@ void MiniThingQt::ShortKeyOpen()
             QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         }
 
-        this->SetStatusBar(tr("file opened"));
+        this->SetStatusBar(tr("File opened"));
     }
 }
 
@@ -237,7 +255,7 @@ void MiniThingQt::ShortKeyOpenPath()
         QString cmd = QString("explorer.exe /select,\"%1\"").arg(filePath);
         process.startDetached(cmd);
 
-        this->SetStatusBar(tr("file path opened"));
+        this->SetStatusBar(tr("File path opened"));
     }
 }
 
@@ -254,13 +272,13 @@ void MiniThingQt::ShortKeyDelete()
         if (fileInfo.isFile())
         {
             QFile::remove(filePath);
-            this->SetStatusBar(tr("file deleted"));
+            this->SetStatusBar(tr("File deleted"));
         }
         else if (fileInfo.isDir())
         {
             QDir qDir(filePath);
             qDir.removeRecursively();
-            this->SetStatusBar(tr("directory deleted"));
+            this->SetStatusBar(tr("Directory deleted"));
         }
     }
 }
@@ -283,7 +301,7 @@ void MiniThingQt::ShortKeyCopy()
         QClipboard* clip = QApplication::clipboard();
         clip->setMimeData(data);
 
-        this->SetStatusBar("file copied");
+        this->SetStatusBar(tr("File copied"));
     }
 }
 
@@ -306,6 +324,6 @@ void MiniThingQt::RightKeyMenu(QPoint pos)
             QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         }
 
-        this->SetStatusBar("file opened");
+        this->SetStatusBar(tr("File opened"));
     }
 }

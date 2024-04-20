@@ -14,6 +14,7 @@
 #include <qlabel.h>
 #include <qclipboard.h>
 #include <qmimedata.h>
+#include <QThread>
 
 #include "ui_MiniThing.h"
 #include "../Core/MiniThingCore.h"
@@ -42,8 +43,6 @@ private:
 
     MiniThingCore* m_pMiniThingCore;
 
-    QString m_searchBefore;
-
     // Usn info to be show
     std::vector<UsnInfo> m_usnSet;
 
@@ -62,6 +61,12 @@ private:
 
     // Status bar
     QLabel* m_statusBar;
+
+public slots:
+    void UpdateStatusBar(const QString& message)
+    {
+        statusBar()->showMessage(message);
+    }
 
 private slots:
     // Button funcs
