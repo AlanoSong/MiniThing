@@ -12,8 +12,12 @@
 - [ ] Search from current result: `ctrl+shift+f`
 - Add more...
 
+## 2. Installer package
+
+- Only support Windows platform: [setup.exe](./Installer/Windows/setup.exe)
+
 ## 2. Build
-- Enviroment: Visual Studio 2022 + QT 5.14.2
+- Enviroment: Visual Studio 2022 + QT 5.12.12
 - VS config: Qt / CmdLine
 
 ## 3. To be added
@@ -23,7 +27,7 @@
 - [ ] Fix bugs
 - [ ] CMake build
 - [ ] Graceful Qt UI
-- [ ] Build installer
+- [x] Build installer
 
 ## 4. Participate in contributing
 - Fork this repository
