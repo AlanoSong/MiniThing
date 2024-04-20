@@ -16,11 +16,11 @@
 
 - Only support Windows platform: [setup.exe](./Installer/Windows/setup.exe)
 
-## 2. Build
+## 3. Build
 - Enviroment: Visual Studio 2022 + QT 5.12.12
 - VS config: Qt / CmdLine
 
-## 3. To be added
+## 4. To be added
 - [x] Display more file info
 - [x] Add short key
 - [ ] Perfermance enhance
@@ -29,7 +29,7 @@
 - [ ] Graceful Qt UI
 - [x] Build installer
 
-## 4. Participate in contributing
+## 5. Participate in contributing
 - Fork this repository
 - Create a new Feature_xxx branch
 - Submit the code
