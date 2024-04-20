@@ -32,7 +32,22 @@ int main(int argc, char* argv[])
     double quadpart = (double)frequency.QuadPart;
     QueryPerformanceCounter(&timeStart);
 
-    MiniThingCore* pMiniThingCore = new MiniThingCore(".\\MiniThing.db");
+    // Get user appdata directory, and we will save and get database under this directory
+    wchar_t appDataPath[MAX_PATH];
+    SHGetSpecialFolderPath(0, appDataPath, CSIDL_APPDATA, false);
+    std::wstring dataBasePath(appDataPath);
+    dataBasePath += L"\\MiniThing";
+
+    // Check if directory exist
+    if (_access(WstringToString(dataBasePath).c_str(), 0) == -1)
+    {
+        int ret = mkdir(WstringToString(dataBasePath).c_str());
+        assert(ret == 0);
+    }
+
+    dataBasePath += L"\\MiniThing.db";
+
+    MiniThingCore* pMiniThingCore = new MiniThingCore(WstringToString(dataBasePath).c_str());
     pMiniThingCore->StartInstance();
 
     QueryPerformanceCounter(&timeEnd);

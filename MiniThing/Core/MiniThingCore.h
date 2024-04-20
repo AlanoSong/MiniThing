@@ -13,6 +13,9 @@
 #include <thread>
 #include <list>
 
+#include <direct.h>
+#include <io.h>
+
 #include "TaskThreads.h"
 #include "../Utility/Utility.h"
 #include "../ThirdParty/SQLite/sqlite3.h"
