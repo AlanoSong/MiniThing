@@ -1,6 +1,6 @@
 # MiniThing
 
-Englist | [中文](./README-CN.md)
+English | [中文](./README-CN.md)
 
 ## 1. Usage
 ![Usage](./Docs/Pictures/Usage.png)
