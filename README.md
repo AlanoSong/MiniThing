@@ -1,5 +1,7 @@
 # MiniThing
 
+Englist | [жпнд](./README-CN.md)
+
 ## 1. Usage
 ![Usage](./Docs/Pictures/Usage.png)
 
@@ -27,7 +29,7 @@
 - [ ] Fix bugs
 - [ ] CMake build
 - [ ] Graceful Qt UI
-- [x] Build installer
+- [x] Build installer package for Windows platform
 
 ## 5. Participate in contributing
 - Fork this repository
