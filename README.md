@@ -16,7 +16,7 @@ English | [中文](./README-CN.md)
 
 ## 2. Installer package
 
-- Only support Windows platform: [setup.exe](./Installer/Windows/setup.exe)
+- Only support Windows platform: [MiniThing-X86_64-1.0.exe](./Installer/Windows/MiniThing-X86_64-1.0.exe)
 
 ## 3. Build
 - Enviroment: Visual Studio 2022 + QT 5.12.12
