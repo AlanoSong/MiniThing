@@ -1,6 +1,6 @@
 # MiniThing
 
-Englist | [ÖÐÎÄ](./README-CN.md)
+Englist | [ä¸­æ–‡](./README-CN.md)
 
 ## 1. Usage
 ![Usage](./Docs/Pictures/Usage.png)
