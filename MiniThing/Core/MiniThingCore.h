@@ -22,6 +22,8 @@
 
 #define SQL_BATCH_INSERT_GRANULARITY    ( 4096 )
 
+#define MINITHING_GITHUB_URL            (L"https://github.com/AlanoSong/MiniThing")
+
 class MiniThingCore;
 
 #ifdef BUILD_FOR_QT

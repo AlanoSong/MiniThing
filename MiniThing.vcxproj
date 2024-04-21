@@ -172,6 +172,7 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
   <ItemGroup>
     <None Include=".gitignore" />
     <None Include="LICENSE" />
+    <None Include="README-CN.md" />
     <None Include="README.md" />
   </ItemGroup>
   <ItemGroup>

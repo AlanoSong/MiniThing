@@ -10,83 +10,112 @@
     <height>720</height>
    </rect>
   </property>
+  <property name="mouseTracking">
+   <bool>false</bool>
+  </property>
   <property name="windowTitle">
    <string>MiniThing</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
-     <widget class="QFrame" name="frame">
-      <property name="font">
-       <font>
-        <family>微软雅黑</family>
-       </font>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::StyledPanel</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Raised</enum>
-      </property>
-      <layout class="QGridLayout" name="gridLayout_2">
-       <item row="1" column="1">
-        <widget class="QLineEdit" name="lineEdit">
-         <property name="font">
-          <font>
-           <family>Microsoft YaHei UI</family>
-           <pointsize>9</pointsize>
-          </font>
-         </property>
-         <property name="text">
-          <string/>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="0">
-        <widget class="QLabel" name="label">
-         <property name="font">
-          <font>
-           <family>Microsoft YaHei UI</family>
-           <pointsize>9</pointsize>
-          </font>
-         </property>
-         <property name="layoutDirection">
-          <enum>Qt::LeftToRight</enum>
-         </property>
-         <property name="text">
-          <string>File Name</string>
-         </property>
-        </widget>
-       </item>
-       <item row="1" column="2">
-        <widget class="QPushButton" name="pushButton_2">
-         <property name="font">
-          <font>
-           <family>Microsoft YaHei UI</family>
-           <pointsize>9</pointsize>
-           <weight>50</weight>
-           <bold>false</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>Start (Ctrl+f)</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0" colspan="3">
-        <widget class="QTableView" name="tableView">
-         <property name="font">
-          <font>
-           <family>Microsoft YaHei UI</family>
-           <pointsize>9</pointsize>
-          </font>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </widget>
-    </item>
-   </layout>
+   <widget class="QFrame" name="frame">
+    <property name="geometry">
+     <rect>
+      <x>9</x>
+      <y>9</y>
+      <width>1261</width>
+      <height>631</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>微软雅黑</family>
+     </font>
+    </property>
+    <property name="mouseTracking">
+     <bool>true</bool>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::StyledPanel</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <layout class="QGridLayout" name="gridLayout_2">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="font">
+        <font>
+         <family>Microsoft YaHei UI</family>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="layoutDirection">
+        <enum>Qt::LeftToRight</enum>
+       </property>
+       <property name="text">
+        <string>File Name</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="lineEdit">
+       <property name="font">
+        <font>
+         <family>Microsoft YaHei UI</family>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string/>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="2">
+      <widget class="QPushButton" name="pushButton_2">
+       <property name="font">
+        <font>
+         <family>Microsoft YaHei UI</family>
+         <pointsize>8</pointsize>
+         <weight>50</weight>
+         <bold>false</bold>
+        </font>
+       </property>
+       <property name="text">
+        <string>Start (Ctrl+f)</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0" rowspan="2" colspan="3">
+      <widget class="QTableView" name="tableView">
+       <property name="font">
+        <font>
+         <family>Microsoft YaHei UI</family>
+         <pointsize>8</pointsize>
+        </font>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QPushButton" name="pushButton">
+    <property name="geometry">
+     <rect>
+      <x>1080</x>
+      <y>640</y>
+      <width>191</width>
+      <height>23</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <italic>true</italic>
+      <underline>true</underline>
+     </font>
+    </property>
+    <property name="text">
+     <string>MiniThing on github</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
@@ -120,12 +149,28 @@
    <slot>ButtonSearchClicked()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>574</x>
-     <y>87</y>
+     <x>1259</x>
+     <y>77</y>
     </hint>
     <hint type="destinationlabel">
      <x>599</x>
      <y>43</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>pushButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MiniThingClass</receiver>
+   <slot>ButtonOpenClicked()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1140</x>
+     <y>684</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>945</x>
+     <y>689</y>
     </hint>
    </hints>
   </connection>

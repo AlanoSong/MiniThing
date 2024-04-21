@@ -72,6 +72,8 @@ private slots:
     // Button funcs
     void ButtonSearchClicked();
 
+    void ButtonOpenClicked();
+
     // Right key funcs
     void RightKeyMenu(QPoint pos);
 

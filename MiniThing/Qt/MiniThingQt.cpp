@@ -50,6 +50,9 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     // Monitor enter press in line edit
     connect(m_ui.lineEdit, SIGNAL(returnPressed()), this, SLOT(EnterPressDown()));
 
+    // Connect MiniThing github link button
+    connect(m_ui.pushButton, SIGNAL(clicked()), this, SLOT(ButtonSearchClicked()));
+
     // Setup right key
     m_rightKeyMenu = new QMenu(m_ui.tableView);
     m_rightKeyActionOpen = new QAction();
@@ -186,6 +189,13 @@ void MiniThingQt::ButtonSearchClicked()
 {
     // Here reuse short key func
     ShortKeySearch();
+}
+
+void MiniThingQt::ButtonOpenClicked()
+{
+    const TCHAR szOperation[] = _T("open");
+    const TCHAR szAddress[] = MINITHING_GITHUB_URL;
+    HINSTANCE hRslt = ShellExecute(NULL, szOperation, szAddress, NULL, NULL, SW_SHOWNORMAL);
 }
 
 //==========================================================================
