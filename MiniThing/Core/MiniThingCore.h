@@ -134,13 +134,14 @@ typedef struct
 class MiniThingCore
 {
 public:
-    MiniThingCore() {};
+    MiniThingCore();
     MiniThingCore(const char* sqlDbPath);
     ~MiniThingCore(void);
 
 public:
     // System related functions
     HRESULT StartInstance(void * pPrivateData = nullptr);
+    void CreateDataBase(std::wstring dbName);
     HRESULT QueryAllVolume(void);
     HRESULT GetAllVolumeHandle(void);
     void CloseVolumeHandle(void);

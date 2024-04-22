@@ -14,9 +14,8 @@ extern HANDLE g_updateDataBaseWrMutex;
 //                        MiniThing Functions                             //
 //==========================================================================
 
-MiniThingCore::MiniThingCore(const char* sqlDbPath)
+MiniThingCore::MiniThingCore(void)
 {
-    m_sqlDbPath = sqlDbPath;
     m_isCoreReady = false;
 }
 
@@ -26,6 +25,22 @@ MiniThingCore::~MiniThingCore(void)
     {
         assert(0);
     }
+}
+
+void MiniThingCore::CreateDataBase(std::wstring dbName)
+{
+    std::wstring dataBasePath = m_localAppDataPath;
+    dataBasePath += L"\\MiniThing";
+
+    // Check if directory exist
+    if (_access(WstringToString(dataBasePath).c_str(), 0) == -1)
+    {
+        int ret = mkdir(WstringToString(dataBasePath).c_str());
+        assert(ret == 0);
+    }
+    dataBasePath += L"\\";
+    dataBasePath += dbName;
+    m_sqlDbPath = WstringToString(dataBasePath);
 }
 
 HRESULT MiniThingCore::StartInstance(void *pPrivateData)
@@ -41,6 +56,8 @@ HRESULT MiniThingCore::StartInstance(void *pPrivateData)
 #endif
 
     m_localAppDataPath = GetLocalAppDataPath();
+
+    this->CreateDataBase(L"MiniThing.db");
 
     if (FAILED(QueryAllVolume()))
     {

@@ -24,22 +24,7 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     statusBar()->addWidget(m_statusBar);
     statusBar()->setStyleSheet("QLabel{ color: black }");
 
-    // Get user appdata directory, and we will save and get database under this directory
-    wchar_t appDataPath[MAX_PATH];
-    SHGetSpecialFolderPath(0, appDataPath, CSIDL_APPDATA, false);
-    std::wstring dataBasePath(appDataPath);
-    dataBasePath += L"\\MiniThing";
-
-    // Check if directory exist
-    if (_access(WstringToString(dataBasePath).c_str(), 0) == -1)
-    {
-        int ret = mkdir(WstringToString(dataBasePath).c_str());
-        assert(ret == 0);
-    }
-
-    // Create MiniThingCore instance, put it in background
-    dataBasePath += L"\\MiniThing.db";
-    m_pMiniThingCore = new MiniThingCore(WstringToString(dataBasePath).c_str());
+    m_pMiniThingCore = new MiniThingCore();
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore, statusBar());
 
     // Connect UpdateStatusBar(), so we could update status bar in diff thread
