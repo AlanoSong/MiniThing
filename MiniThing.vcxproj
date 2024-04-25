@@ -159,7 +159,6 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port\elog_file_port.c" />
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port\elog_port.c" />
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file\elog_file.c" />
-    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\port\elog_port.c" />
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog.c" />
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_async.c" />
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_buf.c" />

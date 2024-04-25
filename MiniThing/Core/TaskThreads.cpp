@@ -1,6 +1,8 @@
 #include "TaskThreads.h"
 #include "../Utility/Utility.h"
 
+#define LOG_TAG      "TaskThreads"
+
 //==========================================================================
 //                        Static Parameters                               //
 //==========================================================================
@@ -69,6 +71,8 @@ DWORD WINAPI SortThread(LPVOID lp)
     QueryPerformanceCounter(&timeEnd);
     double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
 
+    log_i("Sort thread %d over, cost %f S", pTaskInfo->taskIndex, elapsed);
+
 #if _DEBUG
 #ifdef BUILD_FOR_QT
     char tmpBuf[256];
@@ -88,6 +92,8 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
     MiniThingCore* pMiniThingCore = (MiniThingCore*)lp;
 
+    log_i("Update sql thread start");
+
 #if _DEBUG
 #ifdef BUILD_FOR_QT
     // emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Update sql thread start"));
@@ -102,6 +108,8 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
         DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hUpdateSqlDataBaseExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
+            log_i("Recv the quit event");
+
 #if _DEBUG
 #ifdef BUILD_FOR_QT
             emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Recv the quit event"));
@@ -192,6 +200,8 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
         }
     }
 
+    log_i("Stop update sql thread");
+
 #if _DEBUG
 #ifdef BUILD_FOR_QT
     emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Stop update sql thread"));
@@ -217,6 +227,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
     std::wstring fullFilePathWstr;
 
     SetChsPrintEnv();
+
+    log_i("Start monitor: %s", pVolumeInfo->volumeName.c_str());
 
 #if _DEBUG
 #ifdef BUILD_FOR_QT
@@ -249,6 +261,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         DWORD dwWaitCode = WaitForSingleObject(pVolumeInfo->hMonitorExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
+            log_i("Recv the quit event");
+
 #if _DEBUG
 #ifdef BUILD_FOR_QT
             emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Recv the quit event"));
@@ -379,6 +393,8 @@ DWORD WINAPI MonitorThread(LPVOID lp)
 
     CloseHandle(hVolume);
 
+    log_i("Stop monitor: %s\n", pVolumeInfo->volumeName.c_str());
+
 #if _DEBUG
 #ifdef BUILD_FOR_QT
     emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Stop update sql thread"));
@@ -396,6 +412,8 @@ DWORD WINAPI QueryThread(LPVOID lp)
 
     SetChsPrintEnv();
 
+    log_i("Query thread start");
+
 #if _DEBUG
     printf_s("Query thread start\n");
 #endif
@@ -406,6 +424,7 @@ DWORD WINAPI QueryThread(LPVOID lp)
         DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hQueryExitEvent, 0x0);
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
+            log_i("Recv the quit event");
 #if _DEBUG
             printf_s("Recv the quit event\n");
 #endif
@@ -448,6 +467,8 @@ DWORD WINAPI QueryThread(LPVOID lp)
         }
         printf_s("==============================\n");
     }
+
+    log_i("Query thread stop");
 
 #if _DEBUG
     printf_s("Query thread stop\n");

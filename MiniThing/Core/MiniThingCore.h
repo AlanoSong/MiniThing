@@ -142,7 +142,7 @@ public:
 public:
     // System related functions
     HRESULT StartInstance(void * pPrivateData = nullptr);
-    void CreateDataBase(std::wstring dbName);
+    void SetDataBasePath(std::wstring dbName);
     void InitLogger(std::wstring &logPath);
     HRESULT QueryAllVolume(void);
     HRESULT GetAllVolumeHandle(void);
@@ -208,7 +208,7 @@ private:
     std::string                             m_sqlDbPath;
     bool                                    m_isSqlExist;
     bool                                    m_isCoreReady;
-    std::wstring                            m_localAppDataPath;
+    std::wstring                            m_appDataLocalPath;
     std::wstring                            m_logPath;
 #ifdef BUILD_FOR_QT
     MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;

@@ -100,9 +100,6 @@
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_utils.c">
       <Filter>MiniThing\ThirdParty\EasyLogger\src</Filter>
     </ClCompile>
-    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\port\elog_port.c">
-      <Filter>MiniThing\ThirdParty\EasyLogger\port</Filter>
-    </ClCompile>
     <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file\elog_file.c">
       <Filter>MiniThing\ThirdParty\EasyLogger\plugins\file</Filter>
     </ClCompile>
