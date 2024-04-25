@@ -43,19 +43,40 @@ void MiniThingCore::CreateDataBase(std::wstring dbName)
     m_sqlDbPath = WstringToString(dataBasePath);
 }
 
+void MiniThingCore::InitLogger(std::wstring &logPath)
+{
+    /* close printf buffer */
+    setbuf(stdout, NULL);
+    /* initialize EasyLogger */
+    elog_init(WstringToString(logPath).c_str());
+    /* set EasyLogger log format */
+    elog_set_fmt(ELOG_LVL_ASSERT, ELOG_FMT_ALL);
+    elog_set_fmt(ELOG_LVL_ERROR, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+    elog_set_fmt(ELOG_LVL_WARN, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+    elog_set_fmt(ELOG_LVL_INFO, ELOG_FMT_LVL | ELOG_FMT_TAG | ELOG_FMT_TIME);
+    elog_set_fmt(ELOG_LVL_DEBUG, ELOG_FMT_ALL & ~ELOG_FMT_FUNC);
+    elog_set_fmt(ELOG_LVL_VERBOSE, ELOG_FMT_ALL & ~ELOG_FMT_FUNC);
+    /* start EasyLogger */
+    elog_start();
+}
+
 HRESULT MiniThingCore::StartInstance(void *pPrivateData)
 {
     HRESULT ret = S_OK;
 
     SetChsPrintEnv();
 
+    m_localAppDataPath = GetLocalAppDataPath();
+
+    m_logPath = m_localAppDataPath + L"MiniThing.log";
+
+    this->InitLogger(m_logPath);
+
 #ifdef BUILD_FOR_QT
     m_hMiniThingQtWorkThread = (MiniThingQtWorkThreadFake*)pPrivateData;
     assert(m_hMiniThingQtWorkThread);
     emit m_hMiniThingQtWorkThread->UpdateStatusBar("Initing data ...");
 #endif
-
-    m_localAppDataPath = GetLocalAppDataPath();
 
     this->CreateDataBase(L"MiniThing.db");
 

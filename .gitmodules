@@ -1,0 +1,3 @@
+[submodule "MiniThing/ThirdParty/EasyLogger"]
+	path = MiniThing/ThirdParty/EasyLogger
+	url = git@github.com:armink/EasyLogger.git

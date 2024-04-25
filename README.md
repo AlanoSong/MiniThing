@@ -1,5 +1,7 @@
 # MiniThing
 
+https://github.com/AlanoSong/MiniThing
+
 English | [中文](./README-CN.md)
 
 ## 1. Usage

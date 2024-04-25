@@ -1,5 +1,7 @@
 # MiniThing
 
+https://github.com/AlanoSong/MiniThing
+
 ## 1. 使用方法
 ![界面](./Docs/Pictures/Usage.png)
 

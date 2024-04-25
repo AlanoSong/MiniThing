@@ -82,6 +82,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QtDebug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_FOR_QT;_DEBUG;_UNICODE;UNICODE;</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
       <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(ProjectDir)\
@@ -155,6 +156,14 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
     <ClCompile Include="MiniThing\Core\TaskThreads.cpp" />
     <ClCompile Include="MiniThing\Qt\MiniThingQt.cpp" />
     <ClCompile Include="MiniThing\Qt\MiniThingQtBackgroud.cpp" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port\elog_file_port.c" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port\elog_port.c" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file\elog_file.c" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\port\elog_port.c" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog.c" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_async.c" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_buf.c" />
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_utils.c" />
     <ClCompile Include="MiniThing\ThirdParty\SQLite\shell.c" />
     <ClCompile Include="MiniThing\ThirdParty\SQLite\sqlite3.c" />
     <ClCompile Include="MiniThing\Utility\Utility.cpp" />
@@ -165,6 +174,11 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
     <ClInclude Include="MiniThing\Core\TaskThreads.h" />
     <QtMoc Include="MiniThing\Qt\MiniThingQt.h" />
     <QtMoc Include="MiniThing\Qt\MiniThingQtBackgroud.h" />
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc\elog_cfg.h" />
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc\elog_file_cfg.h" />
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\easylogger\inc\elog.h" />
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\easylogger\inc\elog_cfg.h" />
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file\elog_file.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3.h" />
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3ext.h" />
     <ClInclude Include="MiniThing\Utility\Utility.h" />

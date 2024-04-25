@@ -28,6 +28,42 @@
     <Filter Include="MiniThing\Qt\Resources">
       <UniqueIdentifier>{5da48ecf-c109-4a28-8bcf-a3b016109a3c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger">
+      <UniqueIdentifier>{b838435c-f8c0-4481-9eeb-284239b1002c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\inc">
+      <UniqueIdentifier>{9e2957e5-ca3e-423f-beb6-1bd7b1fe9fc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\port">
+      <UniqueIdentifier>{e7ebf80d-072d-4e9b-870e-78fdf4262d48}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\src">
+      <UniqueIdentifier>{843f27a3-3182-47d9-85f4-e9b0527b6062}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\plugins">
+      <UniqueIdentifier>{23554100-fb6e-4d6e-afa2-46bd0b726347}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\plugins\file">
+      <UniqueIdentifier>{a622f884-33d6-401e-843c-6d4393832341}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\demo">
+      <UniqueIdentifier>{9be1cd52-d1d5-4517-a547-5d36aefa0012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\demo\os">
+      <UniqueIdentifier>{896a3dab-36ec-417a-8747-e52d6b686cd6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows">
+      <UniqueIdentifier>{5a7a542f-5347-45bb-9fc2-32335364e16c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger">
+      <UniqueIdentifier>{98f970e1-c07f-42c3-96b8-ccf8d2081e59}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc">
+      <UniqueIdentifier>{c1d928ba-fcfa-4da5-ae4f-89758196825a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port">
+      <UniqueIdentifier>{d92dc947-8176-4b4b-91ac-a675cdbd7335}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MiniThing\Core\MiniThingCore.cpp">
@@ -52,6 +88,30 @@
     <ClCompile Include="MiniThing\Qt\MiniThingQtBackgroud.cpp">
       <Filter>MiniThing\Qt</Filter>
     </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_async.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_buf.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\src\elog_utils.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\port\elog_port.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\port</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file\elog_file.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\plugins\file</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port\elog_file_port.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port</Filter>
+    </ClCompile>
+    <ClCompile Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port\elog_port.c">
+      <Filter>MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiniThing\Core\TaskThreads.h">
@@ -65,6 +125,21 @@
     </ClInclude>
     <ClInclude Include="MiniThing\ThirdParty\SQLite\sqlite3ext.h">
       <Filter>MiniThing\ThirdParty\SQLite</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file\elog_file.h">
+      <Filter>MiniThing\ThirdParty\EasyLogger\plugins\file</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\easylogger\inc\elog.h">
+      <Filter>MiniThing\ThirdParty\EasyLogger\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\easylogger\inc\elog_cfg.h">
+      <Filter>MiniThing\ThirdParty\EasyLogger\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc\elog_cfg.h">
+      <Filter>MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc\elog_file_cfg.h">
+      <Filter>MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

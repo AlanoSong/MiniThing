@@ -19,6 +19,7 @@
 #include "TaskThreads.h"
 #include "../Utility/Utility.h"
 #include "../ThirdParty/SQLite/sqlite3.h"
+#include "elog.h"
 
 #define SQL_BATCH_INSERT_GRANULARITY    ( 4096 )
 
@@ -142,6 +143,7 @@ public:
     // System related functions
     HRESULT StartInstance(void * pPrivateData = nullptr);
     void CreateDataBase(std::wstring dbName);
+    void InitLogger(std::wstring &logPath);
     HRESULT QueryAllVolume(void);
     HRESULT GetAllVolumeHandle(void);
     void CloseVolumeHandle(void);
@@ -207,6 +209,7 @@ private:
     bool                                    m_isSqlExist;
     bool                                    m_isCoreReady;
     std::wstring                            m_localAppDataPath;
+    std::wstring                            m_logPath;
 #ifdef BUILD_FOR_QT
     MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
 #endif
