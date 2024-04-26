@@ -82,7 +82,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QtDebug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_FOR_QT;_DEBUG;_UNICODE;UNICODE;</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
       <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(ProjectDir)\
@@ -93,6 +93,7 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QtRelease|x64'">
     <ClCompile>
       <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);BUILD_FOR_QT;_UNICODE;UNICODE;</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
       <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(ProjectDir)\</Command>
@@ -103,6 +104,7 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions);_DEBUG;</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalIncludeDirectories>$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
       <Command>
@@ -112,6 +114,7 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='CmdLineRelease|x64'">
     <ClCompile>
       <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='CmdLineDebug|x64'">

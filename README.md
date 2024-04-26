@@ -1,10 +1,12 @@
 # MiniThing
 
-https://github.com/AlanoSong/MiniThing
+English((./README.md)) | [中文](./README-CN.md)
 
-English | [中文](./README-CN.md)
+## 1. Project link
+- Github: https://github.com/AlanoSong/MiniThing
+- Gitee: https://gitee.com/alanosong/MiniThing
 
-## 1. Usage
+## 2. Usage
 ![Usage](./Docs/Pictures/Usage.png)
 
 - [x] Start search: `ctrl+f` / `enter` / `search button`
@@ -14,17 +16,16 @@ English | [中文](./README-CN.md)
 - [x] Delete selected: `ctrl+d` / `right key`
 - [ ] Rename selected: `ctrl+r` / `right key`
 - [ ] Search from current result: `ctrl+shift+f`
-- Add more...
 
-## 2. Installer package
+## 3. Installer package
 
 - Only support Windows platform: [MiniThing-X86_64-1.0.exe](./Installer/Windows/MiniThing-X86_64-1.0.exe)
 
-## 3. Build
+## 4. Build
 - Enviroment: Visual Studio 2022 + QT 5.12.12
 - VS config: Qt / CmdLine
 
-## 4. To be added
+## 5. To be added
 - [x] Display more file info
 - [x] Add short key
 - [ ] Perfermance enhance
@@ -33,7 +34,7 @@ English | [中文](./README-CN.md)
 - [ ] Graceful Qt UI
 - [x] Build installer package for Windows platform
 
-## 5. Participate in contributing
+## 6. Participate in contributing
 - Fork this repository
 - Create a new Feature_xxx branch
 - Submit the code

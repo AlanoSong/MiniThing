@@ -1,38 +1,41 @@
 # MiniThing
 
-https://github.com/AlanoSong/MiniThing
+English((./README.md)) | [ä¸­æ–‡](./README-CN.md)
 
-## 1. Ê¹ÓÃ·½·¨
-![½çÃæ](./Docs/Pictures/Usage.png)
+# 1. é¡¹ç›®åœ°å€
+- Github: https://github.com/AlanoSong/MiniThing
+- Gitee: https://gitee.com/alanosong/MiniThing
 
-- [x] ¿ªÊ¼ËÑË÷: `ctrl+f` / `enter` / `search button`
-- [x] ´ò¿ªÒÑÑ¡ÎÄ¼ş: `ctrl+o` / `right key`
-- [x] ´ò¿ªÒÑÑ¡ÎÄ¼şÂ·¾¶: `ctrl+p` / `right key`
-- [x] ¸´ÖÆÒÑÑ¡ÎÄ¼ş: `ctrl+c` / `right key`
-- [x] É¾³ıÒÑÑ¡ÎÄ¼ş: `ctrl+d` / `right key`
-- [ ] ÖØÃüÃûÒÑÑ¡ÎÄ¼ş: `ctrl+r` / `right key`
-- [ ] ´Óµ±Ç°ËÑË÷½á¹ûÖĞ²éÕÒ: `ctrl+shift+f`
-- Ìí¼Ó¸ü¶à...
+## 2. ä½¿ç”¨æ–¹æ³•
+![ç•Œé¢](./Docs/Pictures/Usage.png)
 
-## 2. °²×°°ü
+- [x] å¼€å§‹æœç´¢: `ctrl+f` / `enter` / `search button`
+- [x] æ‰“å¼€å·²é€‰æ–‡ä»¶: `ctrl+o` / `right key`
+- [x] æ‰“å¼€å·²é€‰æ–‡ä»¶è·¯å¾„: `ctrl+p` / `right key`
+- [x] å¤åˆ¶å·²é€‰æ–‡ä»¶: `ctrl+c` / `right key`
+- [x] åˆ é™¤å·²é€‰æ–‡ä»¶: `ctrl+d` / `right key`
+- [ ] é‡å‘½åå·²é€‰æ–‡ä»¶: `ctrl+r` / `right key`
+- [ ] ä»å½“å‰æœç´¢ç»“æœä¸­æŸ¥æ‰¾: `ctrl+shift+f`
 
-- Ä¿Ç°Ö»Ö§³ÖWindowsÆ½Ì¨: [MiniThing-X86_64-1.0.exe](./Installer/Windows/MiniThing-X86_64-1.0.exe)
+## 3. å®‰è£…åŒ…
 
-## 3. ±àÒë
-- ±àÒë»·¾³: Visual Studio 2022 + QT 5.12.12
-- ±àÒëÑ¡Ïî: Qt / CmdLine
+- ç›®å‰åªæ”¯æŒWindowså¹³å°: [MiniThing-X86_64-1.0.exe](./Installer/Windows/MiniThing-X86_64-1.0.exe)
 
-## 4. ´ıÌí¼Ó¹¦ÄÜ
-- [x] ÏÔÊ¾¸üÈ«µÄÎÄ¼şĞÅÏ¢
-- [x] Ìí¼Ó¸÷ÖÖ¿ì½İ¼ü
-- [ ] ĞÔÄÜÌáÉı
-- [ ] ĞŞBug
-- [ ] Ö§³ÖCMake±àÒë
-- [ ] ¸üÓÅÃÀµÄUIÉè¼Æ
-- [x] Ìá¹©WindowsÆ½Ì¨°²×°°ü
+## 4. ç¼–è¯‘
+- ç¼–è¯‘ç¯å¢ƒ: Visual Studio 2022 + QT 5.12.12
+- ç¼–è¯‘é€‰é¡¹: Qt / CmdLine
 
-## 5. ²ÎÓë¹±Ï×´úÂë
-- Fork±¾²Ö¿â
-- ±¾µØ´´½¨ĞÂµÄÌØĞÔ·ÖÖ§£ºFeature_xxx
-- Ìá½»ĞŞ¸Ä
-- Ìá½»ĞÂµÄPR
+## 5. å¾…æ·»åŠ åŠŸèƒ½
+- [x] æ˜¾ç¤ºæ›´å…¨çš„æ–‡ä»¶ä¿¡æ¯
+- [x] æ·»åŠ å„ç§å¿«æ·é”®
+- [ ] æ€§èƒ½æå‡
+- [ ] ä¿®Bug
+- [ ] æ”¯æŒCMakeç¼–è¯‘
+- [ ] æ›´ä¼˜ç¾çš„UIè®¾è®¡
+- [x] æä¾›Windowså¹³å°å®‰è£…åŒ…
+
+## 6. å‚ä¸è´¡çŒ®ä»£ç 
+- Forkæœ¬ä»“åº“
+- æœ¬åœ°åˆ›å»ºæ–°çš„ç‰¹æ€§åˆ†æ”¯ï¼šFeature_xxx
+- æäº¤ä¿®æ”¹
+- æäº¤æ–°çš„PR
