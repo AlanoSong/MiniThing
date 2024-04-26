@@ -1,6 +1,6 @@
 # MiniThing
 
-English((./README.md)) | [中文](./README-CN.md)
+[English](./README.md) | [中文](./README-CN.md)
 
 ## 1. Project link
 - Github: https://github.com/AlanoSong/MiniThing
