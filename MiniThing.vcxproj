@@ -85,9 +85,7 @@
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(ProjectDir)\
-
-editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
+      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='QtRelease|x64'">
@@ -96,7 +94,7 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
       <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(ProjectDir)\</Command>
+      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='CmdLineDebug|x64'">
@@ -116,6 +114,10 @@ editbin /SUBSYSTEM:CONSOLE $(OUTDIR)$(ProjectName).exe</Command>
       <PreprocessorDefinitions>_UNICODE;UNICODE;%(PreprocessorDefinitions);</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
+    <PostBuildEvent>
+      <Command>
+      </Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='CmdLineDebug|x64'">
     <QtBuildConfig>debug</QtBuildConfig>
