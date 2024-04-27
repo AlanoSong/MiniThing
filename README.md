@@ -30,10 +30,11 @@
 ## 5. To be added
 - [x] Display more file info
 - [x] Add short key
-- [ ] Perfermance enhance
-- [ ] Fix bugs
 - [ ] CMake build
 - [ ] Graceful Qt UI
+- [ ] Reduce CPU usage ratio
+- [ ] Speed up search results display
+- [ ] Add Chinese language option in Qt UI
 - [x] Build installer package for Windows platform
 
 ## 6. Participate in contributing
