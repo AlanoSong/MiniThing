@@ -19,7 +19,9 @@
 
 ## 3. 安装包
 
-- 目前只支持Windows平台: [MiniThing-X86_64-1.00.0001.exe](./Installer/Windows/MiniThing-X86_64-1.00.0001.exe)
+- **目前只支持Windows平台**
+- [MiniThing-X86_64-1.00.0001.exe](./Installer/Windows/MiniThing-X86_64-1.00.0001.exe)
+- [MiniThing-X86_64-1.00.0002.exe](./Installer/Windows/MiniThing-X86_64-1.00.0002.exe)
 
 ## 4. 编译
 - 编译环境: Visual Studio 2022 + QT 5.12.12

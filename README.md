@@ -19,7 +19,9 @@
 
 ## 3. Installer package
 
-- Only support Windows platform: [MiniThing-X86_64-1.00.0001.exe](./Installer/Windows/MiniThing-X86_64-1.00.0001.exe)
+- **Only support Windows platform**
+- [MiniThing-X86_64-1.00.0001.exe](./Installer/Windows/MiniThing-X86_64-1.00.0001.exe)
+- [MiniThing-X86_64-1.00.0002.exe](./Installer/Windows/MiniThing-X86_64-1.00.0002.exe)
 
 ## 4. Build
 - Enviroment: Visual Studio 2022 + QT 5.12.12
