@@ -32,7 +32,7 @@
 - [x] Add short key
 - [ ] CMake build
 - [ ] Graceful Qt UI
-- [ ] Reduce CPU usage ratio
+- [x] Reduce CPU usage ratio
 - [ ] Speed up search results display
 - [ ] Add Chinese language option in Qt UI
 - [x] Build installer package for Windows platform
