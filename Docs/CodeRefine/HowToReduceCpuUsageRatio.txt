@@ -1,0 +1,38 @@
+1. The root cause of high cpu usage ratio ?
+
+    multi-thread dead loop
+    debug / release build
+
+2. How many threads work after sqlite database built ?
+
+    UpdateSqlDataBaseThread
+    MonitorThread * VolNum
+    QueryThread <cmd mode only>
+
+3. First try to sleep UpdateSqlDataBaseThread for a while
+
+    under debug build
+
+    before: 29-31%
+    after:  26-29% // Sleep 100 ms
+            15-24% // Sleep 500 ms
+
+    -> so loop sleep in thread working is usable
+
+3. It may readuce thread performance, or lost data in monitor thread ?
+
+4. Try to sleep MonitorThread * VolNum
+
+    under debug build
+    MonitorThread * 4
+
+    before: 13-23%
+    after:  0-22%, 0% mostly // Sleep 100 ms each monitor thread
+
+5. Will monitor thread lost data when sleep ?
+
+    to be confirm
+
+
+
+    

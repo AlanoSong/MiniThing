@@ -198,6 +198,9 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
                 break;
             }
         }
+
+        // Sleep for a while to reduce cpu usage ratio
+        Sleep(500);
     }
 
     log_i("Stop update sql thread");
@@ -389,6 +392,9 @@ DWORD WINAPI MonitorThread(LPVOID lp)
                 ReleaseMutex(g_updateDataBaseWrMutex);
             }
         }
+
+        // Sleep for a while to reduce cpu usage ratio
+        Sleep(100);
     }
 
     CloseHandle(hVolume);
