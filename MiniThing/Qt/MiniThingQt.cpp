@@ -56,6 +56,16 @@ void MiniThingQt::setupUIComponents()
     connect(m_pMiniThingQtWorkThread, &MiniThingQtWorkThread::UpdateStatusBar, this, &MiniThingQt::UpdateStatusBar);
     m_pMiniThingQtWorkThread->start();
 
+    // Setup table view
+    m_ui.tableView->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
+    m_ui.tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_ui.tableView->verticalHeader()->setVisible(true);
+    // Uncomment the next lines if you need to set specific resize modes for headers
+    // m_ui.tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    // m_ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    // m_ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
+
     // Setup table and update view
     UpdateTableView();
 }
