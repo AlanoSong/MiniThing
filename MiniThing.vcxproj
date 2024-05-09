@@ -50,13 +50,13 @@
     <Import Project="$(QtMsBuild)\qt_defaults.props" />
   </ImportGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QtDebug|x64'" Label="QtSettings">
-    <QtInstall>5.15.11_msvc2019_64</QtInstall>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>debug</QtBuildConfig>
     <QtDeploy>true</QtDeploy>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='QtRelease|x64'" Label="QtSettings">
-    <QtInstall>5.15.11_msvc2019_64</QtInstall>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtBuildConfig>release</QtBuildConfig>
     <QtDeploy>true</QtDeploy>
@@ -123,10 +123,10 @@
     <QtBuildConfig>debug</QtBuildConfig>
     <QtModules>core;gui;widgets</QtModules>
     <QtDeploy>true</QtDeploy>
-    <QtInstall>5.15.11_msvc2019_64</QtInstall>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
   </PropertyGroup>
   <PropertyGroup Label="QtSettings" Condition="'$(Configuration)|$(Platform)'=='CmdLineRelease|x64'">
-    <QtInstall>5.15.11_msvc2019_64</QtInstall>
+    <QtInstall>5.12.12_msvc2017_64</QtInstall>
     <QtModules>core;gui;widgets</QtModules>
     <QtDeploy>true</QtDeploy>
   </PropertyGroup>
