@@ -188,6 +188,7 @@
     <ClInclude Include="MiniThing\Utility\Utility.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include=".github\workflows\msbuild.yml" />
     <None Include=".gitignore" />
     <None Include="LICENSE" />
     <None Include="README-CN.md" />

@@ -117,6 +117,7 @@ int main(int argc, char *argv[])
 
     pMiniThingCore->StopMonitorThread();
     pMiniThingCore->StopQueryThread();
+    pMiniThingCore->SQLiteClose();
 
     return 0;
 #endif

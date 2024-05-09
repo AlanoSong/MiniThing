@@ -114,8 +114,11 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
 
 MiniThingQt::~MiniThingQt()
 {
-    delete m_pMiniThingCore;
+    // Destroy qt work thread firstly, cause there are some data strcture
+    //  we need use to terminate thread and so on
+    //  after we destroy qt work thread, we can destroy core safely
     delete m_pMiniThingQtWorkThread;
+    delete m_pMiniThingCore;
 
     delete m_rightKeyMenu;
     delete m_rightKeyActionOpen;

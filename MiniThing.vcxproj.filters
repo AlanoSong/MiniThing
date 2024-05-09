@@ -64,6 +64,12 @@
     <Filter Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\port">
       <UniqueIdentifier>{d92dc947-8176-4b4b-91ac-a675cdbd7335}</UniqueIdentifier>
     </Filter>
+    <Filter Include=".github">
+      <UniqueIdentifier>{65a01b04-f0eb-4eb4-9620-e5e8dfccac45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include=".github\workflows">
+      <UniqueIdentifier>{e7177173-df38-4607-8632-68e5ad8df407}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MiniThing\Core\MiniThingCore.cpp">
@@ -151,6 +157,9 @@
     <None Include="LICENSE" />
     <None Include="README.md" />
     <None Include="README-CN.md" />
+    <None Include=".github\workflows\msbuild.yml">
+      <Filter>.github\workflows</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Docs\Pictures\Architecture.png">

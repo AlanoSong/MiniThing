@@ -23,10 +23,6 @@ MiniThingCore::MiniThingCore(void)
 
 MiniThingCore::~MiniThingCore(void)
 {
-    if (FAILED(SQLiteClose()))
-    {
-        assert(0);
-    }
 }
 
 void MiniThingCore::SetDataBasePath(std::wstring dbName)
@@ -727,18 +723,28 @@ void MiniThingCore::StopMonitorThread(void)
 {
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
-        SetEvent(it->hMonitorExitEvent);
-        DWORD dwWaitCode = WaitForSingleObject(it->hMonitor, INFINITE);
-        assert(dwWaitCode == WAIT_OBJECT_0);
+        //SetEvent(it->hMonitorExitEvent);
+        //DWORD dwWaitCode = WaitForSingleObject(it->hMonitor, INFINITE);
+        //assert(dwWaitCode == WAIT_OBJECT_0);
+
+        // Normally we shoud send exit event, and wait thread exit itself
+        // But it seems that the thread enter dead lock when exit
+        // So terminate the thread by hand
+        TerminateThread(it->hMonitor, 0);
 
         CloseHandle(it->hMonitor);
 
         delete it->pMonitorTaskInfo;
     }
 
-    SetEvent(m_hUpdateSqlDataBaseExitEvent);
-    DWORD dwWaitCode = WaitForSingleObject(m_hUpdateSqlDataBaseThread, INFINITE);
-    assert(dwWaitCode == WAIT_OBJECT_0);
+    //SetEvent(m_hUpdateSqlDataBaseExitEvent);
+    //DWORD dwWaitCode = WaitForSingleObject(m_hUpdateSqlDataBaseThread, INFINITE);
+    //assert(dwWaitCode == WAIT_OBJECT_0);
+
+    // Normally we shoud send exit event, and wait thread exit itself
+    // But it seems that the thread enter dead lock when exit
+    // So terminate the thread by hand
+    TerminateThread(m_hUpdateSqlDataBaseThread, 0);
 }
 
 HRESULT MiniThingCore::CreateQueryThread(void)
