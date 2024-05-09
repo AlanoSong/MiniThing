@@ -53,6 +53,8 @@ void MiniThingQt::setupUIComponents()
     setupActionsAndMenus();
     m_pMiniThingCore = new MiniThingCore();
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore, statusBar());
+
+    // Connect UpdateStatusBar(), so we could update status bar in diff thread
     connect(m_pMiniThingQtWorkThread, &MiniThingQtWorkThread::UpdateStatusBar, this, &MiniThingQt::UpdateStatusBar);
     m_pMiniThingQtWorkThread->start();
 
@@ -80,18 +82,18 @@ oid MiniThingQt::setupActionsAndMenus()
 {
     // Setup right-click menu
     m_rightKeyMenu = new QMenu(m_ui.tableView);
-    m_rightKeyActionOpen = new QAction(tr("Open file (Ctrl+O)"), this);
-    m_rightKeyActionOpenPath = new QAction(tr("Open file path (Ctrl+P)"), this);
+    m_rightKeyActionOpen = new QAction(tr("Open file (ctrl+o)"), this);
+    m_rightKeyActionOpenPath = new QAction(tr("Open file path (ctrl+p)"), this);
     m_rightKeyMenu->addAction(m_rightKeyActionOpen);
     m_rightKeyMenu->addAction(m_rightKeyActionOpenPath);
     connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(RightKeyMenu(QPoint)));
 
     // Setup shortcut keys
-    m_shortKeySearch = new QAction(tr("Search (Ctrl+F)"), this);
-    m_shortKeyOpen = new QAction(tr("Open (Ctrl+O)"), this);
-    m_shortKeyOpenPath = new QAction(tr("Open Path (Ctrl+P)"), this);
-    m_shortKeyDelete = new QAction(tr("Delete (Ctrl+D)"), this);
-    m_shortKeyCopy = new QAction(tr("Copy (Ctrl+C)"), this);
+    m_shortKeySearch = new QAction(tr("Search (ctrl+f)"), this);
+    m_shortKeyOpen = new QAction(tr("Open (ctrl+o)"), this);
+    m_shortKeyOpenPath = new QAction(tr("Open Path (ctrl+p)"), this);
+    m_shortKeyDelete = new QAction(tr("Delete (ctrl+d)"), this);
+    m_shortKeyCopy = new QAction(tr("Copy (ctrl+c)"), this);
 
     addAction(m_shortKeySearch);
     addAction(m_shortKeyOpen);
