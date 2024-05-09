@@ -66,6 +66,12 @@ void MiniThingQt::setupUIComponents()
     // m_ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
 
+    // Connect line edit returnPressed signal to EnterPressDown slot
+    connect(m_ui.lineEdit, SIGNAL(returnPressed()), this, SLOT(EnterPressDown()));
+
+    // Connect push button clicked signal to ButtonSearchClicked slot
+    connect(m_ui.pushButton, SIGNAL(clicked()), this, SLOT(ButtonSearchClicked()));
+
     // Setup table and update view
     UpdateTableView();
 }
