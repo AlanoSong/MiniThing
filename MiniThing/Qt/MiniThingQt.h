@@ -62,6 +62,9 @@ private:
     // Status bar
     QLabel* m_statusBar;
 
+    bool OpenFile(const QString& filePath);
+    void OpenFilePath(const QString& filePath);
+
 public slots:
     void UpdateStatusBar(const QString& message)
     {

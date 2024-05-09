@@ -3,6 +3,30 @@
 //==========================================================================
 //                        Common Functions                                //
 //==========================================================================
+
+// Opens the file explorer and highlights the specified file path. The path is adjusted
+// to the system's file path format before opening.
+void MiniThingQt::OpenFilePath(const QString& filePath)
+{
+    QProcess process;
+    QString adjustedPath = filePath;
+    adjustedPath.replace("/", "\\");
+    QString command = QString("explorer.exe /select,\"%1\"").arg(adjustedPath);
+    process.startDetached(command);
+}
+
+// Attempts to open a file at the specified path. Returns true if the file is successfully opened,
+// and false with an error message if the file cannot be opened.
+bool MiniThingQt::OpenFile(const QString& filePath)
+{
+    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath())))
+    {
+        QMessageBox::information(this, tr("Warning"), tr("Failed to open file."), QMessageBox::Ok);
+        return false;
+    }
+    return true;
+}
+
 MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
 {
     m_ui.setupUi(this);
@@ -227,37 +251,21 @@ void MiniThingQt::ShortKeySearch()
     }
 }
 
-// Attempts to open a file at the specified path. Returns true if the file is successfully opened,
-// and false with an error message if the file cannot be opened.
-bool MiniThingQt::openFile(const QString& filePath) { 
-    if (!QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(filePath).absoluteFilePath()))) {
-        QMessageBox::information(this, tr("Warning"), tr("Failed to open file."), QMessageBox::Ok);
-        return false;
-    }
-    return true;
-}
-
-void MiniThingQt::ShortKeyOpen() {
+void MiniThingQt::ShortKeyOpen()
+{
     auto currentIndex = m_ui.tableView->currentIndex();
-    if (currentIndex.isValid()) {
+    if (currentIndex.isValid())
+    {
         // Get file path info from current line
         QModelIndex index = m_model.index(currentIndex.row(), 1);
         QString filePath = m_model.data(index).toString();
 
-        if (openFile(filePath)) { // Use openFile to attempt opening the file
+        // Use openFile to attempt opening the file
+        if (this->OpenFile(filePath))
+        {
             this->SetStatusBar(tr("File opened"));
         }
     }
-}
-
-// Opens the file explorer and highlights the specified file path. The path is adjusted
-// to the system's file path format before opening.
-void MiniThingQt::openFilePath(const QString& filePath) {
-    QProcess process;
-    QString adjustedPath = filePath;
-    adjustedPath.replace("/", "\\");
-    QString command = QString("explorer.exe /select,\"%1\"").arg(adjustedPath);
-    process.startDetached(command);
 }
 
 void MiniThingQt::ShortKeyOpenPath()
@@ -274,7 +282,7 @@ void MiniThingQt::ShortKeyOpenPath()
         //    QMessageBox::information(this, tr("warning"), tr("Failed to open file."), QMessageBox::Ok);
         //}
 
-        openFilePath(filePath); // Use openFilePath to open the file path in the explorer
+        this->OpenFilePath(filePath); // Use openFilePath to open the file path in the explorer
         this->SetStatusBar(tr("File path opened"));
     }
 }
@@ -341,7 +349,9 @@ void MiniThingQt::RightKeyMenu(QPoint pos)
         QModelIndex index = m_model.index(currentIndex.row(), 1);
         QString filePath = m_model.data(index).toString();
 
-        if (openFile(filePath)) { // Use openFile to attempt opening the file
+        // Use openFile to attempt opening the file
+        if (this->OpenFile(filePath))
+        {
             this->SetStatusBar(tr("File opened"));
         }
     }
