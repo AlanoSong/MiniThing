@@ -58,6 +58,7 @@ HRESULT MiniThingCore::StartInstance(void *pPrivateData)
 {
     HRESULT ret = S_OK;
 
+    // Set chinese print env
     SetChsPrintEnv();
 
     m_appDataLocalPath = GetLocalAppDataPath();
