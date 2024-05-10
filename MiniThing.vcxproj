@@ -190,6 +190,9 @@
   <ItemGroup>
     <None Include=".github\workflows\msbuild.yml" />
     <None Include=".gitignore" />
+    <None Include="Docs\Topics\1_MonitorFileChangesUnderWindowsSystem.md" />
+    <None Include="Docs\Topics\2_Sqlite3SpeedupMethod.md" />
+    <None Include="Docs\Topics\3_SpeedupQtTableViewAddContent.md" />
     <None Include="LICENSE" />
     <None Include="README-CN.md" />
     <None Include="README.md" />

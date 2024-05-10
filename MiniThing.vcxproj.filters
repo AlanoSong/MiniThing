@@ -70,6 +70,9 @@
     <Filter Include=".github\workflows">
       <UniqueIdentifier>{e7177173-df38-4607-8632-68e5ad8df407}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Docs\Topics">
+      <UniqueIdentifier>{7b35985d-9917-4cd9-8cad-ab071dbf4f89}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MiniThing\Core\MiniThingCore.cpp">
@@ -159,6 +162,15 @@
     <None Include="README-CN.md" />
     <None Include=".github\workflows\msbuild.yml">
       <Filter>.github\workflows</Filter>
+    </None>
+    <None Include="Docs\Topics\1_MonitorFileChangesUnderWindowsSystem.md">
+      <Filter>Docs\Topics</Filter>
+    </None>
+    <None Include="Docs\Topics\2_Sqlite3SpeedupMethod.md">
+      <Filter>Docs\Topics</Filter>
+    </None>
+    <None Include="Docs\Topics\3_SpeedupQtTableViewAddContent.md">
+      <Filter>Docs\Topics</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>
