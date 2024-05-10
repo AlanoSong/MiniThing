@@ -8,12 +8,11 @@
 // to the system's file path format before opening.
 void MiniThingQt::OpenFilePath(const QString& filePath)
 {
-    QProcess process;
-    QString adjustedPath = filePath;
-    adjustedPath.replace("/", "\\");
+    QString adjustedPath = filePath.replace("/", "\\");
     QString command = QString("explorer.exe /select,\"%1\"").arg(adjustedPath);
-    process.startDetached(command);
+    QProcess::startDetached(command);
 }
+
 
 // Attempts to open a file at the specified path. Returns true if the file is successfully opened,
 // and false with an error message if the file cannot be opened.
@@ -32,84 +31,81 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     m_ui.setupUi(this);
     m_usnSet.clear();
 
-    // Setup logo icon
+    // Setup UI components
+    setupUIComponents();
+}
+
+void MiniThingQt::setupUIComponents()
+{
+    // Setup logo and other UI elements
     QIcon logo("Logo.ico");
     this->setWindowIcon(logo);
-
-    // Setup background image
-    // QPixmap backgroundImg = QPixmap("./Background.png").scaled(this->size());
     QPalette palette;
-    // palette.setBrush(QPalette::Window, QBrush(backgroundImg));
     palette.setColor(QPalette::Window, QColor(255, 255, 255));
     this->setPalette(palette);
 
-    // Setup status bar
+    // Status Bar setup
     m_statusBar = new QLabel;
     statusBar()->addWidget(m_statusBar);
-    statusBar()->setStyleSheet("QLabel{ color: black }");
+    statusBar()->setStyleSheet("QLabel { color: black }");
 
+    // Setup actions, menus, and other signal-slot connections
+    setupActionsAndMenus();
     m_pMiniThingCore = new MiniThingCore();
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore, statusBar());
 
     // Connect UpdateStatusBar(), so we could update status bar in diff thread
     connect(m_pMiniThingQtWorkThread, &MiniThingQtWorkThread::UpdateStatusBar, this, &MiniThingQt::UpdateStatusBar);
-
     m_pMiniThingQtWorkThread->start();
-
-    // Monitor enter press in line edit
-    connect(m_ui.lineEdit, SIGNAL(returnPressed()), this, SLOT(EnterPressDown()));
-
-    // Connect MiniThing github link button
-    connect(m_ui.pushButton, SIGNAL(clicked()), this, SLOT(ButtonSearchClicked()));
-
-    // Setup right key
-    m_rightKeyMenu = new QMenu(m_ui.tableView);
-    m_rightKeyActionOpen = new QAction();
-    m_rightKeyActionOpenPath = new QAction();
-
-    m_rightKeyActionOpen->setText(QString("Open file (ctrl+o)"));
-    m_rightKeyActionOpenPath->setText(QString("Open file path (ctrl+p)"));
-
-    m_rightKeyMenu->addAction(m_rightKeyActionOpen);
-    m_rightKeyMenu->addAction(m_rightKeyActionOpenPath);
-    connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(RightKeyMenu(QPoint)));
-
-    // Registe all shortcut keys
-    m_shortKeySearch = new QAction(this);
-    m_shortKeySearch->setShortcut(tr("ctrl+f"));
-    this->addAction(m_shortKeySearch);
-    connect(m_shortKeySearch, SIGNAL(triggered()), this, SLOT(ShortKeySearch()));
-
-    m_shortKeyOpen = new QAction(this);
-    m_shortKeyOpen->setShortcut(tr("ctrl+o"));
-    this->addAction(m_shortKeyOpen);
-    connect(m_shortKeyOpen, SIGNAL(triggered()), this, SLOT(ShortKeyOpen()));
-
-    m_shortKeyOpenPath = new QAction(this);
-    m_shortKeyOpenPath->setShortcut(tr("ctrl+p"));
-    this->addAction(m_shortKeyOpenPath);
-    connect(m_shortKeyOpenPath, SIGNAL(triggered()), this, SLOT(ShortKeyOpenPath()));
-
-    m_shortKeyDelete = new QAction(this);
-    m_shortKeyDelete->setShortcut(tr("ctrl+d"));
-    this->addAction(m_shortKeyDelete);
-    connect(m_shortKeyDelete, SIGNAL(triggered()), this, SLOT(ShortKeyDelete()));
-
-    m_shortKeyCopy = new QAction(this);
-    m_shortKeyCopy->setShortcut(tr("ctrl+c"));
-    this->addAction(m_shortKeyCopy);
-    connect(m_shortKeyCopy, SIGNAL(triggered()), this, SLOT(ShortKeyCopy()));
 
     // Setup table view
     m_ui.tableView->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectRows);
     m_ui.tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_ui.tableView->verticalHeader()->setVisible(true);
-    // ui.tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-    // ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
-    // ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    // Uncomment the next lines if you need to set specific resize modes for headers
+    // m_ui.tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    // m_ui.tableView->horizontalHeader()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    // m_ui.tableView->verticalHeader()->setSectionResizeMode(QHeaderView::Stretch);
     m_ui.tableView->setContextMenuPolicy(Qt::CustomContextMenu);
 
+    // Connect line edit returnPressed signal to EnterPressDown slot
+    connect(m_ui.lineEdit, SIGNAL(returnPressed()), this, SLOT(EnterPressDown()));
+
+    // Connect push button clicked signal to ButtonSearchClicked slot
+    connect(m_ui.pushButton, SIGNAL(clicked()), this, SLOT(ButtonSearchClicked()));
+
+    // Setup table and update view
     UpdateTableView();
+}
+
+oid MiniThingQt::setupActionsAndMenus()
+{
+    // Setup right-click menu
+    m_rightKeyMenu = new QMenu(m_ui.tableView);
+    m_rightKeyActionOpen = new QAction(tr("Open file (ctrl+o)"), this);
+    m_rightKeyActionOpenPath = new QAction(tr("Open file path (ctrl+p)"), this);
+    m_rightKeyMenu->addAction(m_rightKeyActionOpen);
+    m_rightKeyMenu->addAction(m_rightKeyActionOpenPath);
+    connect(m_ui.tableView, SIGNAL(customContextMenuRequested(QPoint)), this, SLOT(RightKeyMenu(QPoint)));
+
+    // Setup shortcut keys
+    m_shortKeySearch = new QAction(tr("Search (ctrl+f)"), this);
+    m_shortKeyOpen = new QAction(tr("Open (ctrl+o)"), this);
+    m_shortKeyOpenPath = new QAction(tr("Open Path (ctrl+p)"), this);
+    m_shortKeyDelete = new QAction(tr("Delete (ctrl+d)"), this);
+    m_shortKeyCopy = new QAction(tr("Copy (ctrl+c)"), this);
+
+    addAction(m_shortKeySearch);
+    addAction(m_shortKeyOpen);
+    addAction(m_shortKeyOpenPath);
+    addAction(m_shortKeyDelete);
+    addAction(m_shortKeyCopy);
+
+    connect(m_shortKeySearch, SIGNAL(triggered()), this, SLOT(ShortKeySearch()));
+    connect(m_shortKeyOpen, SIGNAL(triggered()), this, SLOT(ShortKeyOpen()));
+    connect(m_shortKeyOpenPath, SIGNAL(triggered()), this, SLOT(ShortKeyOpenPath()));
+    connect(m_shortKeyDelete, SIGNAL(triggered()), this, SLOT(ShortKeyDelete()));
+    connect(m_shortKeyCopy, SIGNAL(triggered()), this, SLOT(ShortKeyCopy()));
 }
 
 MiniThingQt::~MiniThingQt()
