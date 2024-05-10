@@ -111,9 +111,9 @@ void MiniThingQt::SetupActionsAndMenus()
 
 MiniThingQt::~MiniThingQt()
 {
-    // Destroy qt work thread firstly, cause there are some data strcture
-    //  we need use to terminate thread and so on
-    //  after we destroy qt work thread, we can destroy core safely
+    // Destroy qt work thread firstly, cause there are some data strcture pMiniThingCore
+    //  we need use to destroy qt work thread firstly
+    //  and then destroy minithing core
     delete m_pMiniThingQtWorkThread;
     delete m_pMiniThingCore;
 

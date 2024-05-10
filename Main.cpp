@@ -11,6 +11,9 @@
 #include "./MiniThing/Qt/MiniThingQt.h"
 #endif
 
+//==========================================================================
+//                        Static Functions                                //
+//==========================================================================
 static bool IsRunAsAdmin(void)
 {
     BOOL isRunAsAdmin = FALSE;
@@ -66,11 +69,14 @@ static void GetAdminPrivileges(CString strApp)
     WaitForSingleObject(executeInfo.hProcess, INFINITE);
 }
 
+//==========================================================================
+//                              Main Entry                                //
+//==========================================================================
 int main(int argc, char *argv[])
 {
-    // Check if current app run as admin
-    //  if not, create a new app run as admin
-    //  and exit current app
+    // Check if current process run as admin
+    //  if not, create a new process run as admin
+    //  and exit current process
     if (!IsRunAsAdmin())
     {
         WCHAR path[MAX_PATH] = { 0 };
