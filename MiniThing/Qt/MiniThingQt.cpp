@@ -8,7 +8,8 @@
 // to the system's file path format before opening.
 void MiniThingQt::OpenFilePath(const QString& filePath)
 {
-    QString adjustedPath = filePath.replace("/", "\\");
+    QString adjustedPath = filePath;
+    adjustedPath.replace("/", "\\");
     QString command = QString("explorer.exe /select,\"%1\"").arg(adjustedPath);
     QProcess::startDetached(command);
 }
@@ -32,10 +33,10 @@ MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
     m_usnSet.clear();
 
     // Setup UI components
-    setupUIComponents();
+    this->SetupUIComponents();
 }
 
-void MiniThingQt::setupUIComponents()
+void MiniThingQt::SetupUIComponents()
 {
     // Setup logo and other UI elements
     QIcon logo("Logo.ico");
@@ -50,7 +51,7 @@ void MiniThingQt::setupUIComponents()
     statusBar()->setStyleSheet("QLabel { color: black }");
 
     // Setup actions, menus, and other signal-slot connections
-    setupActionsAndMenus();
+    this->SetupActionsAndMenus();
     m_pMiniThingCore = new MiniThingCore();
     m_pMiniThingQtWorkThread = new MiniThingQtWorkThread(m_pMiniThingCore, statusBar());
 
@@ -78,7 +79,7 @@ void MiniThingQt::setupUIComponents()
     UpdateTableView();
 }
 
-oid MiniThingQt::setupActionsAndMenus()
+void MiniThingQt::SetupActionsAndMenus()
 {
     // Setup right-click menu
     m_rightKeyMenu = new QMenu(m_ui.tableView);

@@ -64,6 +64,8 @@ private:
 
     bool OpenFile(const QString& filePath);
     void OpenFilePath(const QString& filePath);
+    void SetupUIComponents();
+    void SetupActionsAndMenus();
 
 public slots:
     void UpdateStatusBar(const QString& message)
