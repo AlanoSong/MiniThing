@@ -203,6 +203,7 @@ private:
     bool                                    m_isSqlExist;
     bool                                    m_isCoreReady;
     std::wstring                            m_appDataLocalPath;
+    std::wstring                            m_appCurrentPath;
     std::wstring                            m_logPath;
     MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
 };

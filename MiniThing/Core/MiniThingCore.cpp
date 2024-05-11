@@ -27,7 +27,8 @@ MiniThingCore::~MiniThingCore(void)
 
 void MiniThingCore::SetDataBasePath(std::wstring dbName)
 {
-    std::wstring dataBasePath = m_appDataLocalPath;
+    //std::wstring dataBasePath = m_appDataLocalPath;
+    std::wstring dataBasePath = m_appCurrentPath;
     dataBasePath += L"\\";
     dataBasePath += dbName;
     m_sqlDbPath = WstringToString(dataBasePath);
@@ -50,25 +51,55 @@ void MiniThingCore::InitLogger(std::wstring &logPath)
     elog_start();
 }
 
-HRESULT MiniThingCore::StartInstance(void *pPrivateData)
+HRESULT MiniThingCore::StartInstance(void* pPrivateData)
 {
     HRESULT ret = S_OK;
 
     // Set chinese print env
     SetChsPrintEnv();
 
-    m_appDataLocalPath = GetLocalAppDataPath();
+    // Get current exe path
+    TCHAR currentPath[MAX_PATH] = { 0 };
+    GetModuleFileName(NULL, currentPath, sizeof(currentPath));
+    m_appCurrentPath = currentPath;
+    int index = m_appCurrentPath.find_last_of('\\');
+    m_appCurrentPath = m_appCurrentPath.substr(0, index);
 
-    m_appDataLocalPath += L"\\MiniThing";
+    // Set auto run when system boot up
+    //  by set reg value in regedit
+    //  reg location : HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+    //  reg key : MiniThing <no matter what>, reg value : [path\to\the\exe]
 
-    // Check if directory exist, mkdir for it if not exist
-    if (_access(WstringToString(m_appDataLocalPath).c_str(), 0) == -1)
+    // Check if the reg value already exist
+    std::string checkVal = GetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing");
+    std::wstring checkWVal = StringToWstring(checkVal);
+    if (checkVal.empty())
     {
-        int ret = mkdir(WstringToString(m_appDataLocalPath).c_str());
-        assert(ret == 0);
+        std::wstring exePath = currentPath;
+        std::string tmpPath = WstringToString(exePath);
+        SetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", tmpPath);
+    }
+    else if (checkWVal != currentPath)
+    {
+        DelRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", checkVal);
+        std::wstring exePath = currentPath;
+        std::string tmpPath = WstringToString(exePath);
+        SetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", tmpPath);
     }
 
-    m_logPath = m_appDataLocalPath + L"\\MiniThing.log";
+    //m_appDataLocalPath = GetLocalAppDataPath();
+    //m_appDataLocalPath += L"\\MiniThing";
+
+    //// Check if directory exist, mkdir for it if not exist
+    //if (_access(WstringToString(m_appDataLocalPath).c_str(), 0) == -1)
+    //{
+    //    int ret = mkdir(WstringToString(m_appDataLocalPath).c_str());
+    //    assert(ret == 0);
+    //}
+
+    //m_logPath = m_appDataLocalPath + L"\\MiniThing.log";
+
+    m_logPath = m_appCurrentPath + L"\\MiniThing.log";
 
     this->InitLogger(m_logPath);
 
@@ -656,7 +687,8 @@ HRESULT MiniThingCore::CreateMonitorThread(void)
         pTask->pMiniThingCore = this;
         pTask->pVolumeInfo = &(*it);
         // TODO: only c:\ need to filter file changes
-        pTask->localAppDataPath = m_appDataLocalPath;
+        // pTask->localAppDataPath = m_appDataLocalPath;
+        pTask->localAppDataPath = m_appCurrentPath;
 
         it->hMonitor = CreateThread(0, 0, MonitorThread, it->pMonitorTaskInfo, 0, 0);
         if (INVALID_HANDLE_VALUE == it->hMonitor)

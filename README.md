@@ -17,11 +17,16 @@
 - [ ] Rename selected: `ctrl+r` / `right key`
 - [ ] Search from current result: `ctrl+shift+f`
 
-## 3. Installer package
+## 3. Packages
+- **Only support Windows platform currently**
 
-- **Only support Windows platform**
-- [MiniThing-X86_64-1.00.0001.exe](./Installer/Windows/MiniThing-X86_64-1.00.0001.exe)
-- [MiniThing-X86_64-1.00.0002.exe](./Installer/Windows/MiniThing-X86_64-1.00.0002.exe)
+### 3.1 Portable package
+- [MiniThing-X86_64-20240511.zip](./Packages/Windows/MiniThing-X86_64-20240511.zip), SHA256: 24650e07484126b839c1e57dbd8f218f14c0dbd53af3ae4d571f0c00577aee01
+
+### 3.2 Installer package
+
+- [MiniThing-X86_64-1.00.0002.exe](./Packages/Windows/MiniThing-X86_64-1.00.0002.exe)
+- [MiniThing-X86_64-1.00.0001.exe](./Packages/Windows/MiniThing-X86_64-1.00.0001.exe)
 
 ## 4. Build
 - Enviroment: Visual Studio 2022 + QT 5.12.12
@@ -36,6 +41,8 @@
 - [ ] Speed up search results display
 - [ ] Add Chinese language option in Qt UI
 - [x] Build installer package for Windows platform
+- [x] Build portable package
+- [ ] Add clean bat script for portable package
 
 ## 6. Participate in contributing
 - Fork this repository

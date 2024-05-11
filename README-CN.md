@@ -17,11 +17,18 @@
 - [ ] 重命名已选文件: `ctrl+r` / `right key`
 - [ ] 从当前搜索结果中查找: `ctrl+shift+f`
 
-## 3. 安装包
+## 3. 软件包
 
 - **目前只支持Windows平台**
-- [MiniThing-X86_64-1.00.0001.exe](./Installer/Windows/MiniThing-X86_64-1.00.0001.exe)
-- [MiniThing-X86_64-1.00.0002.exe](./Installer/Windows/MiniThing-X86_64-1.00.0002.exe)
+
+### 3.1 绿色版
+
+- [MiniThing-X86_64-20240511.zip](./Packages/Windows/MiniThing-X86_64-20240511.zip), SHA256: 24650e07484126b839c1e57dbd8f218f14c0dbd53af3ae4d571f0c00577aee01
+
+### 3.2 安装版
+
+- [MiniThing-X86_64-1.00.0002.exe](./Packages/Windows/MiniThing-X86_64-1.00.0002.exe)
+- [MiniThing-X86_64-1.00.0001.exe](./Packages/Windows/MiniThing-X86_64-1.00.0001.exe)
 
 ## 4. 编译
 - 编译环境: Visual Studio 2022 + QT 5.12.12
@@ -36,6 +43,8 @@
 - [ ] 提高搜索结果显示速度
 - [ ] 添加中文选项
 - [x] 提供Windows平台安装包
+- [x] 提供绿色版安装包
+- [ ] 为绿色版安装包提供清理bat脚本
 
 ## 6. 参与贡献代码
 - Fork本仓库

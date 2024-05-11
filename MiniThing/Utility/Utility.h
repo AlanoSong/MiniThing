@@ -6,6 +6,11 @@
 #include <stringapiset.h>
 #include <vector>
 #include <shlobj.h>
+#include <assert.h>
+
+bool DelRegValue(const char* pMidPath, const std::string& key, const std::string& value);
+bool SetRegValue(const char* pMidPath, const std::string& key, const std::string& value);
+std::string GetRegValue(const char* middlePath, const std::string& key);
 
 // No 1.1
 inline int CharToWchar(const char* pChar, wchar_t* pWchar)
