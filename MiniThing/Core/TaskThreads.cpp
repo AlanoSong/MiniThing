@@ -74,13 +74,9 @@ DWORD WINAPI SortThread(LPVOID lp)
     log_i("Sort thread %d over, cost %f S", pTaskInfo->taskIndex, elapsed);
 
 #if _DEBUG
-#ifdef BUILD_FOR_QT
     char tmpBuf[256];
     sprintf_s(tmpBuf, "Sort thread %d over, cost %f S", pTaskInfo->taskIndex, elapsed);
     emit pTaskInfo->m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-    printf_s("Sort thread %d over, cost %f S\n", pTaskInfo->taskIndex, elapsed);
-#endif
 #endif
 
     return 0;
@@ -95,11 +91,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
     log_i("Update sql thread start");
 
 #if _DEBUG
-#ifdef BUILD_FOR_QT
     // emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Update sql thread start"));
-#else
-    wprintf_s(L"Update sql thread start\n");
-#endif
 #endif
 
     while (true)
@@ -111,11 +103,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
             log_i("Recv the quit event");
 
 #if _DEBUG
-#ifdef BUILD_FOR_QT
             emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Recv the quit event"));
-#else
-            printf_s("Recv the quit event\n");
-#endif
 #endif
             break;
         }
@@ -131,13 +119,6 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
             {
             case FILE_ACTION_ADDED:
             {
-#if _DEBUG
-#ifdef BUILD_FOR_QT
-#else
-                wprintf_s(L"Add: '%s'\n", taskInfo.oriPath.c_str());
-#endif
-#endif
-
                 UsnInfo unsInfo = { 0 };
                 unsInfo.filePathWstr = taskInfo.oriPath;
                 unsInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
@@ -154,13 +135,6 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_RENAMED_OLD_NAME:
             {
-#if _DEBUG
-#ifdef BUILD_FOR_QT
-#else
-                wprintf_s(L"Ren: '%s' -> '%s'\n", taskInfo.oriPath.c_str(), taskInfo.newPath.c_str());
-#endif
-#endif
-
                 UsnInfo oriInfo = { 0 };
                 oriInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
                 oriInfo.filePathWstr = taskInfo.oriPath;
@@ -178,13 +152,6 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
             case FILE_ACTION_REMOVED:
             {
-#if _DEBUG
-#ifdef BUILD_FOR_QT
-#else
-                wprintf_s(L"Rem: '%s'\n", taskInfo.oriPath.c_str());
-#endif
-#endif
-
                 UsnInfo usnInfo = { 0 };
                 usnInfo.filePathWstr = taskInfo.oriPath;
                 if (FAILED(((MiniThingCore*)taskInfo.pMiniThingCore)->SQLiteDelete(&usnInfo)))
@@ -205,14 +172,6 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
 
     log_i("Stop update sql thread");
 
-#if _DEBUG
-#ifdef BUILD_FOR_QT
-    emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Stop update sql thread"));
-#else
-    wprintf_s(L"Stop update sql thread\n");
-#endif
-#endif
-
     return 0;
 }
 
@@ -232,13 +191,6 @@ DWORD WINAPI MonitorThread(LPVOID lp)
     SetChsPrintEnv();
 
     log_i("Start monitor: %s", pVolumeInfo->volumeName.c_str());
-
-#if _DEBUG
-#ifdef BUILD_FOR_QT
-#else
-    wprintf_s(L"Start monitor: %s\n", pVolumeInfo->volumeName.c_str());
-#endif
-#endif
 
     std::wstring folderPath = pVolumeInfo->volumeName;
 
@@ -265,14 +217,6 @@ DWORD WINAPI MonitorThread(LPVOID lp)
         if (WAIT_OBJECT_0 == dwWaitCode)
         {
             log_i("Recv the quit event");
-
-#if _DEBUG
-#ifdef BUILD_FOR_QT
-            emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Recv the quit event"));
-#else
-            printf_s("Recv the quit event\n");
-#endif
-#endif
             break;
         }
 
@@ -400,14 +344,6 @@ DWORD WINAPI MonitorThread(LPVOID lp)
     CloseHandle(hVolume);
 
     log_i("Stop monitor: %s\n", pVolumeInfo->volumeName.c_str());
-
-#if _DEBUG
-#ifdef BUILD_FOR_QT
-    emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Stop update sql thread"));
-#else
-    wprintf_s(L"Stop monitor: %s\n", pVolumeInfo->volumeName.c_str());
-#endif
-#endif
 
     return 0;
 }

@@ -72,11 +72,9 @@ HRESULT MiniThingCore::StartInstance(void *pPrivateData)
 
     this->InitLogger(m_logPath);
 
-#ifdef BUILD_FOR_QT
     m_hMiniThingQtWorkThread = (MiniThingQtWorkThreadFake*)pPrivateData;
     assert(m_hMiniThingQtWorkThread);
     emit m_hMiniThingQtWorkThread->UpdateStatusBar("Initing data ...");
-#endif
 
     this->SetDataBasePath(L"MiniThing.db");
 
@@ -127,9 +125,7 @@ HRESULT MiniThingCore::StartInstance(void *pPrivateData)
 
     CloseVolumeHandle();
 
-#ifdef BUILD_FOR_QT
     emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString("App ready"));
-#endif
     m_isCoreReady = true;
 
     return ret;
@@ -184,14 +180,10 @@ HRESULT MiniThingCore::GetAllVolumeHandle()
         if (INVALID_HANDLE_VALUE == it->hVolume)
         {
             log_w("Get handle failed for %s", WstringToString(it->volumeName).c_str());
-#ifdef BUILD_FOR_QT
             char tmpBuf[256];
             sprintf_s(tmpBuf, "Get handle failed : %s", WstringToString(it->volumeName).c_str());
             emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-            printf_s("Get handle failed : %s\n", WstringToString(it->volumeName).c_str());
-            GetSystemError();
-#endif
+
             // Remove this one cause it's invalid
             it = m_volumeSet.erase(it);
         }
@@ -268,14 +260,9 @@ bool MiniThingCore::IsNtfs(std::wstring volName)
     else
     {
         log_w("Not NTFS : %s", WstringToString(volName).c_str());
-#ifdef BUILD_FOR_QT
         char tmpBuf[256];
         sprintf_s(tmpBuf, "Not NTFS format : %s", WstringToString(volName).c_str());
         emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-        printf_s("Not NTFS format : %s\n", WstringToString(volName).c_str());
-        GetSystemError();
-#endif
     }
 
     delete[] pVol;
@@ -308,13 +295,10 @@ HRESULT MiniThingCore::CreateUsn(void)
         if (false == status)
         {
             log_w("Create usn failed : %s", WstringToString(it->volumeName).c_str());
-#ifdef BUILD_FOR_QT
             char tmpBuf[256];
             sprintf_s(tmpBuf, "Create usn failed : %s", WstringToString(it->volumeName).c_str());
             emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-            printf_s("Create usn failed : %s\n", WstringToString(it->volumeName).c_str());
-#endif
+
             GetSystemError();
             // Remove this one cause it's invalid
             it = m_volumeSet.erase(it);
@@ -351,14 +335,10 @@ HRESULT MiniThingCore::QueryUsn(void)
         {
             log_w("Query usn failed : %s", WstringToString(it->volumeName).c_str());
 
-#ifdef BUILD_FOR_QT
             char tmpBuf[256];
             sprintf_s(tmpBuf, "Query usn failed : %s", WstringToString(it->volumeName).c_str());
             emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-            printf_s("Query usn failed : %s\n", WstringToString(it->volumeName).c_str());
-            GetSystemError();
-#endif
+
             ret = E_FAIL;
 
             break;
@@ -377,11 +357,7 @@ HRESULT MiniThingCore::RecordUsn(void)
 {
     log_i("Recording usn ...");
 
-#ifdef BUILD_FOR_QT
     emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString("Recording usn ..."));
-#else
-    printf_s("Recording usn ...\n");
-#endif
 
     for (auto it = m_volumeSet.begin(); it != m_volumeSet.end(); it++)
     {
@@ -456,13 +432,9 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
     log_i("Building data base for %s ...", WstringToString(volume.volumeName).c_str());
 
-#ifdef BUILD_FOR_QT
     char tmpBuf[256];
     sprintf_s(tmpBuf, "Building data base for %s ...", WstringToString(volume.volumeName).c_str());
     emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-    printf_s("Building data base ...\n");
-#endif
 
     // 1. Get root file node
     //  cause "System Volume Information" is a system file and just under root folder
@@ -485,11 +457,8 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
     {
         log_e("Cannot find root folder for %s", WstringToString(volume.volumeName).c_str());
 
-#ifdef BUILD_FOR_QT
         emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString("Cannot find root folder"));
-#else
-        printf_s("Cannot find root folder\n");
-#endif
+
         assert(0);
     }
 
@@ -544,9 +513,7 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
         taskInfo.pSortTask = &(sortTaskSet[i]);
         taskInfo.pAllUsnRecordMap = &(volume.usnRecordMap);
         taskInfo.rootRef = volume.rootFileRef;
-#ifdef BUILD_FOR_QT
         taskInfo.m_hMiniThingQtWorkThread = m_hMiniThingQtWorkThread;
-#endif
 
         sortTaskVec.push_back(taskInfo);
     }
@@ -576,12 +543,8 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
     log_i("Inserting data base for %s ...", WstringToString(volume.volumeName).c_str());
 
-#ifdef BUILD_FOR_QT
     sprintf_s(tmpBuf, "Inserting data base for %s ...", WstringToString(volume.volumeName).c_str());
     emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-    printf_s("Inserting data base ...\n");
-#endif
 
     // 6. Write all file node info into sqlite
     char* errMsg = nullptr;
@@ -631,12 +594,8 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
 
     log_i("%s file node: %d", WstringToString(volume.volumeName).c_str(), fileNodeCnt);
 
-#ifdef BUILD_FOR_QT
     sprintf_s(tmpBuf, "%s file node: %d", WstringToString(volume.volumeName).c_str(), fileNodeCnt);
     emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-    wprintf_s(L"%s file node: %d\n", volume.volumeName.c_str(), fileNodeCnt);
-#endif
 
     return ret;
 }
@@ -665,14 +624,9 @@ HRESULT MiniThingCore::DeleteUsn(void)
         {
             log_w("Delete usn file failed : %s", WstringToString(it->volumeName).c_str());
 
-#ifdef BUILD_FOR_QT
             char tmpBuf[256];
             sprintf_s(tmpBuf, "Delete usn file failed");
             emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-            printf_s("Delete usn file failed\n");
-            GetSystemError();
-#endif
             ret = E_FAIL;
         }
     }
@@ -811,11 +765,8 @@ HRESULT MiniThingCore::SQLiteOpen(void)
         {
             log_i("Data base already exist");
 
-#ifdef BUILD_FOR_QT
             emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString("Data base already exist"));
-#else
-            printf_s("Data base already exist\n");
-#endif
+
             m_isSqlExist = true;
         }
     }
@@ -825,13 +776,9 @@ HRESULT MiniThingCore::SQLiteOpen(void)
 
         log_e("Err: %s", errMsg);
 
-#ifdef BUILD_FOR_QT
         char tmpBuf[256];
         sprintf_s(tmpBuf, "Err: %s", errMsg);
         emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-        printf_s("Sqlite: %s\n", errMsg);
-#endif
     }
 
     return ret;
@@ -859,14 +806,9 @@ HRESULT MiniThingCore::SQLiteInsert(UsnInfo* pUsnInfo)
 
         log_e("Err: %s", errMsg);
 
-#ifdef BUILD_FOR_QT
         char tmpBuf[256];
         sprintf_s(tmpBuf, "Err: %s", errMsg);
         emit m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
-#else
-        printf_s("sqlite : insert failed\n");
-        printf_s("error : %s\n", errMsg);
-#endif
     }
     else
     {

@@ -27,7 +27,6 @@
 
 class MiniThingCore;
 
-#ifdef BUILD_FOR_QT
 #include <qstatusbar.h>
 #include <QThread>
 
@@ -57,7 +56,6 @@ signals:
 
 public slots:
 };
-#endif
 
 struct UsnInfo
 {
@@ -117,9 +115,7 @@ typedef struct
     DWORDLONG       rootRef;
     std::unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
     std::unordered_map<DWORDLONG, UsnInfo>* pSortTask;
-#ifdef BUILD_FOR_QT
     MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
-#endif
 } SortTaskInfo;
 
 typedef struct
@@ -172,9 +168,7 @@ public:
     void StopQueryThread(void);
 
 public:
-#ifdef BUILD_FOR_QT
     MiniThingQtWorkThreadFake* GetQtWorkThreadHandle(void) { return m_hMiniThingQtWorkThread; }
-#endif
 
 public:
     // Sqlite data base related paremeters
@@ -210,8 +204,6 @@ private:
     bool                                    m_isCoreReady;
     std::wstring                            m_appDataLocalPath;
     std::wstring                            m_logPath;
-#ifdef BUILD_FOR_QT
     MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
-#endif
 };
 

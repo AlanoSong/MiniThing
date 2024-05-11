@@ -5,11 +5,8 @@
 #include <tchar.h>
 
 #include "./MiniThing/Core/MiniThingCore.h"
-
-#ifdef BUILD_FOR_QT
 #include <QtWidgets/QApplication>
 #include "./MiniThing/Qt/MiniThingQt.h"
-#endif
 
 //==========================================================================
 //                        Static Functions                                //
@@ -86,45 +83,10 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-#ifdef BUILD_FOR_QT
     QApplication app(argc, argv);
 
     MiniThingQt miniThingQt;
     miniThingQt.show();
 
     return app.exec();
-#else
-    LARGE_INTEGER timeStart;
-    LARGE_INTEGER timeEnd;
-    LARGE_INTEGER frequency;
-    QueryPerformanceFrequency(&frequency);
-    double quadpart = (double)frequency.QuadPart;
-    QueryPerformanceCounter(&timeStart);
-
-    MiniThingCore* pMiniThingCore = new MiniThingCore();
-    pMiniThingCore->StartInstance();
-
-    QueryPerformanceCounter(&timeEnd);
-    double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
-    printf_s("Time elasped: %f S\n", elapsed);
-
-    if (FAILED(pMiniThingCore->CreateMonitorThread()))
-    {
-        assert(0);
-    }
-    if (FAILED(pMiniThingCore->CreateQueryThread()))
-    {
-        assert(0);
-    }
-    pMiniThingCore->StartMonitorThread();
-    pMiniThingCore->StartQueryThread();
-
-    Sleep(1000 * 1200);
-
-    pMiniThingCore->StopMonitorThread();
-    pMiniThingCore->StopQueryThread();
-    pMiniThingCore->SQLiteClose();
-
-    return 0;
-#endif
 }

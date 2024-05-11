@@ -160,9 +160,6 @@
     <None Include="LICENSE" />
     <None Include="README.md" />
     <None Include="README-CN.md" />
-    <None Include=".github\workflows\msbuild.yml">
-      <Filter>.github\workflows</Filter>
-    </None>
     <None Include="Docs\Topics\1_MonitorFileChangesUnderWindowsSystem.md">
       <Filter>Docs\Topics</Filter>
     </None>
