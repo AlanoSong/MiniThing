@@ -14,7 +14,6 @@ void MiniThingQt::OpenFilePath(const QString& filePath)
     QProcess::startDetached(command);
 }
 
-
 // Attempts to open a file at the specified path. Returns true if the file is successfully opened,
 // and false with an error message if the file cannot be opened.
 bool MiniThingQt::OpenFile(const QString& filePath)
@@ -25,6 +24,31 @@ bool MiniThingQt::OpenFile(const QString& filePath)
         return false;
     }
     return true;
+}
+
+
+void MiniThingQt::UpdateUiFont(QFont& font)
+{
+    // QWidget *centralWidget;
+    // QFrame *frame;
+    // QGridLayout *gridLayout_2;
+    // QLabel *label;
+    // QLineEdit *lineEdit;
+    // QPushButton *pushButton_2;
+    // QTableView *tableView;
+    // QPushButton *pushButton;
+    // QMenuBar *menuBar;
+    // QToolBar *mainToolBar;
+    // QStatusBar *statusBar;
+    m_ui.label->setFont(font);
+    m_ui.frame->setFont(font);
+    m_ui.lineEdit->setFont(font);
+    m_ui.pushButton->setFont(font);
+    m_ui.pushButton_2->setFont(font);
+    m_ui.menuBar->setFont(font);
+    m_ui.mainToolBar->setFont(font);
+    m_ui.statusBar->setFont(font);
+    m_ui.tableView->setFont(font);
 }
 
 MiniThingQt::MiniThingQt(QWidget* parent) : QMainWindow(parent)
@@ -75,8 +99,10 @@ void MiniThingQt::SetupUIComponents()
     // Connect push button clicked signal to ButtonSearchClicked slot
     connect(m_ui.pushButton, SIGNAL(clicked()), this, SLOT(ButtonSearchClicked()));
 
+    connect(this->m_ui.actionFont, SIGNAL(triggered()), this, SLOT(FontActionPress()));
+
     // Setup table and update view
-    UpdateTableView();
+    this->UpdateTableView();
 }
 
 void MiniThingQt::SetupActionsAndMenus()
@@ -208,6 +234,27 @@ void MiniThingQt::ButtonOpenClicked()
 }
 
 //==========================================================================
+//                          Menu & Action Press Functions                 //
+//==========================================================================
+void MiniThingQt::FontActionPress()
+{
+    bool isSuccess = false;
+    int fontSize = QInputDialog::getInt(this,
+        "Font",                     // Title
+        "Please input font size",   // Hint msg
+        8,  // Default
+        1,  // Min
+        20, // Max
+        1,  // Step
+        &isSuccess);
+    if (isSuccess && fontSize >= 1 && fontSize <= 20)
+    {
+        QFont font("Microsoft YaHei", fontSize, QFont::Normal);
+        this->UpdateUiFont(font);
+    }
+}
+
+//==========================================================================
 //                        Short Key Functions                             //
 //==========================================================================
 void MiniThingQt::ShortKeySearch()
@@ -231,7 +278,7 @@ void MiniThingQt::ShortKeySearch()
         }
 
         // Call update table view to refresh all msg show
-        UpdateTableView();
+        this->UpdateTableView();
 
         if (!search.isEmpty())
         {

@@ -15,6 +15,7 @@
 #include <qclipboard.h>
 #include <qmimedata.h>
 #include <QThread>
+#include <qinputdialog.h>
 
 #include "ui_MiniThing.h"
 #include "../Core/MiniThingCore.h"
@@ -66,6 +67,7 @@ private:
     void OpenFilePath(const QString& filePath);
     void SetupUIComponents();
     void SetupActionsAndMenus();
+    void UpdateUiFont(QFont& font);
 
 public slots:
     void UpdateStatusBar(const QString& message)
@@ -91,6 +93,9 @@ private slots:
 
     // Enter press funcs for line text
     void EnterPressDown(void);
+
+    // Menu & Action Press Functions
+    void FontActionPress();
 };
 
 
