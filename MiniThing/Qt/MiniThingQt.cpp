@@ -117,10 +117,15 @@ void MiniThingQt::SetupActionsAndMenus()
 
     // Setup shortcut keys
     m_shortKeySearch = new QAction(tr("Search (ctrl+f)"), this);
+    m_shortKeySearch->setShortcut(tr("ctrl+f"));
     m_shortKeyOpen = new QAction(tr("Open (ctrl+o)"), this);
+    m_shortKeyOpen->setShortcut(tr("ctrl+o"));
     m_shortKeyOpenPath = new QAction(tr("Open Path (ctrl+p)"), this);
+    m_shortKeyOpenPath->setShortcut(tr("ctrl+p"));
     m_shortKeyDelete = new QAction(tr("Delete (ctrl+d)"), this);
+    m_shortKeyDelete->setShortcut(tr("ctrl+d"));
     m_shortKeyCopy = new QAction(tr("Copy (ctrl+c)"), this);
+    m_shortKeyCopy->setShortcut(tr("ctrl+d"));
 
     addAction(m_shortKeySearch);
     addAction(m_shortKeyOpen);
@@ -239,7 +244,8 @@ void MiniThingQt::ButtonOpenClicked()
 void MiniThingQt::FontActionPress()
 {
     bool isSuccess = false;
-    int fontSize = QInputDialog::getInt(this,
+    int fontSize = QInputDialog::getInt(
+        this,
         "Font",                     // Title
         "Please input font size",   // Hint msg
         8,  // Default
