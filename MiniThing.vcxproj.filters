@@ -73,6 +73,12 @@
     <Filter Include="Docs\Topics">
       <UniqueIdentifier>{7b35985d-9917-4cd9-8cad-ab071dbf4f89}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Tools">
+      <UniqueIdentifier>{ca065695-3a22-4daf-b790-9b7197b4df8b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="MiniThing\ThirdParty\cmdline">
+      <UniqueIdentifier>{7e8c2152-0143-4a3f-b625-238362fac2a2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MiniThing\Core\MiniThingCore.cpp">
@@ -147,6 +153,9 @@
     <ClInclude Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc\elog_file_cfg.h">
       <Filter>MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc</Filter>
     </ClInclude>
+    <ClInclude Include="MiniThing\ThirdParty\cmdline\cmdline.h">
+      <Filter>MiniThing\ThirdParty\cmdline</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="MiniThing\Qt\MiniThingQt.h">
@@ -168,6 +177,9 @@
     </None>
     <None Include="Docs\Topics\3_SpeedupQtTableViewAddContent.md">
       <Filter>Docs\Topics</Filter>
+    </None>
+    <None Include="Tools\UninstallPortablePackage.bat">
+      <Filter>Tools</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

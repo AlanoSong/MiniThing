@@ -20,6 +20,7 @@
 #include "../Utility/Utility.h"
 #include "../ThirdParty/SQLite/sqlite3.h"
 #include "elog.h"
+#include "cmdline.h"
 
 #define SQL_BATCH_INSERT_GRANULARITY    ( 4096 )
 

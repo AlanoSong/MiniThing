@@ -149,6 +149,9 @@
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionFont">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Font</string>
    </property>

@@ -66,19 +66,21 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);_DEBUG;_UNICODE;UNICODE;</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file;$(ProjectDir)MiniThing\ThirdParty\cmdline</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(TargetDir)</Command>
+      <Command>xcopy /y $(ProjectDir)MiniThing\Qt\Resources\Logo.ico $(TargetDir)
+xcopy /y $(ProjectDir)Tools\UninstallPortablePackage.bat $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <PreprocessorDefinitions>$(Qt_DEFINES_);%(PreprocessorDefinitions);_UNICODE;UNICODE;</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);$(Qt_INCLUDEPATH_);$(ProjectDir)MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\inc;$(ProjectDir)MiniThing\ThirdParty\EasyLogger\easylogger\plugins\file;$(ProjectDir)MiniThing\ThirdParty\cmdline</AdditionalIncludeDirectories>
     </ClCompile>
     <PostBuildEvent>
-      <Command>xcopy /y $(ProjectDir)\MiniThing\Qt\Resources\Logo.ico $(TargetDir)</Command>
+      <Command>xcopy /y $(ProjectDir)MiniThing\Qt\Resources\Logo.ico $(TargetDir)
+xcopy /y $(ProjectDir)Tools\UninstallPortablePackage.bat $(TargetDir)</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
@@ -129,6 +131,7 @@
     <ClInclude Include="MiniThing\Core\TaskThreads.h" />
     <QtMoc Include="MiniThing\Qt\MiniThingQt.h" />
     <QtMoc Include="MiniThing\Qt\MiniThingQtBackgroud.h" />
+    <ClInclude Include="MiniThing\ThirdParty\cmdline\cmdline.h" />
     <ClInclude Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc\elog_cfg.h" />
     <ClInclude Include="MiniThing\ThirdParty\EasyLogger\demo\os\windows\easylogger\inc\elog_file_cfg.h" />
     <ClInclude Include="MiniThing\ThirdParty\EasyLogger\easylogger\inc\elog.h" />
@@ -146,6 +149,7 @@
     <None Include="LICENSE" />
     <None Include="README-CN.md" />
     <None Include="README.md" />
+    <None Include="Tools\UninstallPortablePackage.bat" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="Docs\Pictures\Architecture.png" />
