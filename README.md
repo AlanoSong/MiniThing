@@ -8,7 +8,6 @@
 
 ## 2. Usage
 ![Usage](./Docs/Pictures/Usage.png)
-
 - [x] Start search: `ctrl+f` / `enter` / `search button`
 - [x] Open selected: `ctrl+o` / `right key`
 - [x] Open selected path: `ctrl+p` / `right key`
@@ -21,12 +20,10 @@
 - **Only support Windows platform currently**
 
 ### 3.1 Portable package
-- [MiniThing-X86_64-20240511.zip](./Packages/Windows/MiniThing-X86_64-20240511.zip), SHA256: 24650e07484126b839c1e57dbd8f218f14c0dbd53af3ae4d571f0c00577aee01
+- [MiniThing-X86_64-V0.1-20240513.zip](./Packages/Windows/MiniThing-X86_64-V0.1-20240513.zip), SHA256: 6fc9db79576a2645452591f23101c0124294c903afc708dcfc88eec0b40d86b7
 
 ### 3.2 Installer package
-
-- [MiniThing-X86_64-1.00.0002.exe](./Packages/Windows/MiniThing-X86_64-1.00.0002.exe)
-- [MiniThing-X86_64-1.00.0001.exe](./Packages/Windows/MiniThing-X86_64-1.00.0001.exe)
+- To be added
 
 ## 4. Build
 - Enviroment: Visual Studio 2022 + QT 5.12.12

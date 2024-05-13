@@ -8,7 +8,6 @@
 
 ## 2. 使用方法
 ![界面](./Docs/Pictures/Usage.png)
-
 - [x] 开始搜索: `ctrl+f` / `enter` / `search button`
 - [x] 打开已选文件: `ctrl+o` / `right key`
 - [x] 打开已选文件路径: `ctrl+p` / `right key`
@@ -18,17 +17,13 @@
 - [ ] 从当前搜索结果中查找: `ctrl+shift+f`
 
 ## 3. 软件包
-
 - **目前只支持Windows平台**
 
 ### 3.1 绿色版
-
-- [MiniThing-X86_64-20240511.zip](./Packages/Windows/MiniThing-X86_64-20240511.zip), SHA256: 24650e07484126b839c1e57dbd8f218f14c0dbd53af3ae4d571f0c00577aee01
+- [MiniThing-X86_64-V0.1-20240513.zip](./Packages/Windows/MiniThing-X86_64-V0.1-20240513.zip), SHA256: 6fc9db79576a2645452591f23101c0124294c903afc708dcfc88eec0b40d86b7
 
 ### 3.2 安装版
-
-- [MiniThing-X86_64-1.00.0002.exe](./Packages/Windows/MiniThing-X86_64-1.00.0002.exe)
-- [MiniThing-X86_64-1.00.0001.exe](./Packages/Windows/MiniThing-X86_64-1.00.0001.exe)
+- 待添加
 
 ## 4. 编译
 - 编译环境: Visual Studio 2022 + QT 5.12.12
