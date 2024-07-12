@@ -1111,3 +1111,27 @@ HRESULT MiniThingCore::SQLiteClose(void)
     return S_OK;
 }
 
+
+//==========================================================================
+//               Useless code, just for build pass                        //
+//==========================================================================
+MiniThingQtWorkThreadFake::MiniThingQtWorkThreadFake()
+{
+}
+
+MiniThingQtWorkThreadFake::~MiniThingQtWorkThreadFake()
+{
+}
+
+MiniThingQtWorkThreadFake::MiniThingQtWorkThreadFake(MiniThingCore* pMiniThingCore, QStatusBar* hStatusBar)
+{
+}
+
+bool MiniThingQtWorkThreadFake::isMiniThingCoreReady(void)
+{
+    return false;
+}
+
+void MiniThingQtWorkThreadFake::run()
+{
+}
