@@ -65,41 +65,50 @@ HRESULT MiniThingCore::StartInstance(void* pPrivateData)
     int index = m_appCurrentPath.find_last_of('\\');
     m_appCurrentPath = m_appCurrentPath.substr(0, index);
 
-    // Set auto run when system boot up
-    //  by set reg value in regedit
-    //  reg location : HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
-    //  reg key : MiniThing <no matter what>, reg value : [path\to\the\exe]
-
-    // Check if the reg value already exist
-    std::string checkVal = GetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing");
-    std::wstring checkWVal = StringToWstring(checkVal);
-    if (checkVal.empty())
+    // Only add reg value in release version
+#ifndef _DEBUG
     {
-        std::wstring exePath = currentPath;
-        std::string tmpPath = WstringToString(exePath);
-        SetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", tmpPath);
+        // Set auto run when system boot up
+        //  by set reg value in regedit
+        //  reg location : HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run
+        //  reg key : MiniThing <no matter what>, reg value : [path\to\the\exe]
+        std::string checkVal = GetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing");
+        std::wstring checkWVal = StringToWstring(checkVal);
+        if (checkVal.empty())
+        {
+            std::wstring exePath = currentPath;
+            std::string tmpPath = WstringToString(exePath);
+            SetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", tmpPath);
+        }
+        else if (checkWVal != currentPath)
+        {
+            DelRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", checkVal);
+            std::wstring exePath = currentPath;
+            std::string tmpPath = WstringToString(exePath);
+            SetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", tmpPath);
+        }
     }
-    else if (checkWVal != currentPath)
+#endif
+
+    bool saveLogFileUnderAppDataPath = false;
+    if (saveLogFileUnderAppDataPath)
     {
-        DelRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", checkVal);
-        std::wstring exePath = currentPath;
-        std::string tmpPath = WstringToString(exePath);
-        SetRegValue("SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", "MiniThing", tmpPath);
+        m_appDataLocalPath = GetLocalAppDataPath();
+        m_appDataLocalPath += L"\\MiniThing";
+
+        // Check if directory exist, mkdir for it if not exist
+        if (_access(WstringToString(m_appDataLocalPath).c_str(), 0) == -1)
+        {
+            int ret = mkdir(WstringToString(m_appDataLocalPath).c_str());
+            assert(ret == 0);
+        }
+
+        m_logPath = m_appDataLocalPath + L"\\MiniThing.log";
     }
-
-    //m_appDataLocalPath = GetLocalAppDataPath();
-    //m_appDataLocalPath += L"\\MiniThing";
-
-    //// Check if directory exist, mkdir for it if not exist
-    //if (_access(WstringToString(m_appDataLocalPath).c_str(), 0) == -1)
-    //{
-    //    int ret = mkdir(WstringToString(m_appDataLocalPath).c_str());
-    //    assert(ret == 0);
-    //}
-
-    //m_logPath = m_appDataLocalPath + L"\\MiniThing.log";
-
-    m_logPath = m_appCurrentPath + L"\\MiniThing.log";
+    else
+    {
+        m_logPath = m_appCurrentPath + L"\\MiniThing.log";
+    }
 
     this->InitLogger(m_logPath);
 
