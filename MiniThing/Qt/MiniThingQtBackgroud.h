@@ -25,7 +25,7 @@ private:
     bool m_isMiniThingCoreReady;
 
 signals:
-    void UpdateStatusBar(const QString& message);
+    void UpdateStatusBar(const std::string msg);
 
 public slots:
 };

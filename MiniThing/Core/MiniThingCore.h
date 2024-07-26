@@ -28,35 +28,7 @@
 
 class MiniThingCore;
 
-#include <qstatusbar.h>
-#include <QThread>
-
-// MiniThingQtWorkThreadFake structure is all the same with MiniThingQtWorkThread
-//  as so we can call MiniThingQtWorkThread::UpdateStatusBar() by m_hMiniThingQtWorkThread passed in
-//  cause MiniThingCore is included by MiniThingQtBackgroud, and here we cannot access back into MiniThingQtBackgroud normally
-class MiniThingQtWorkThreadFake : public QThread
-{
-    Q_OBJECT
-
-public:
-    MiniThingQtWorkThreadFake();
-    ~MiniThingQtWorkThreadFake();
-
-    MiniThingQtWorkThreadFake(MiniThingCore* pMiniThingCore, QStatusBar* hStatusBar);
-
-    bool isMiniThingCoreReady(void);
-
-private:
-    virtual void run();
-    MiniThingCore* m_pMiniThingCore;
-    QStatusBar* m_hStatusBar;
-    bool m_isMiniThingCoreReady;
-
-signals:
-    void UpdateStatusBar(const QString& message);
-
-public slots:
-};
+typedef void (*pfnStatusUpdateCb)(const std::string);
 
 struct UsnInfo
 {
@@ -116,7 +88,7 @@ typedef struct
     DWORDLONG       rootRef;
     std::unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
     std::unordered_map<DWORDLONG, UsnInfo>* pSortTask;
-    MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
+    pfnStatusUpdateCb m_statusUpdateCb;
 } SortTaskInfo;
 
 typedef struct
@@ -138,7 +110,7 @@ public:
 
 public:
     // System related functions
-    HRESULT StartInstance(void * pPrivateData = nullptr);
+    HRESULT StartInstance(pfnStatusUpdateCb);
     void SetDataBasePath(std::wstring dbName);
     void InitLogger(std::wstring &logPath);
     HRESULT QueryAllVolume(void);
@@ -147,6 +119,8 @@ public:
     bool IsNtfs(std::wstring volName);
     bool IsSqlExist(void) { return m_isSqlExist; }
     bool IsCoreReady(void) { return m_isCoreReady; };
+
+    pfnStatusUpdateCb m_statusUpdateCb;
 
 public:
     // Monitor thread related parameters
@@ -167,9 +141,6 @@ public:
     HRESULT CreateQueryThread(void);
     void StartQueryThread(void);
     void StopQueryThread(void);
-
-public:
-    MiniThingQtWorkThreadFake* GetQtWorkThreadHandle(void) { return m_hMiniThingQtWorkThread; }
 
 public:
     // Sqlite data base related paremeters
@@ -206,6 +177,5 @@ private:
     std::wstring                            m_appDataLocalPath;
     std::wstring                            m_appCurrentPath;
     std::wstring                            m_logPath;
-    MiniThingQtWorkThreadFake               *m_hMiniThingQtWorkThread;
 };
 

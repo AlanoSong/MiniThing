@@ -76,7 +76,7 @@ DWORD WINAPI SortThread(LPVOID lp)
 #if _DEBUG
     char tmpBuf[256];
     sprintf_s(tmpBuf, "Sort thread %d over, cost %f S", pTaskInfo->taskIndex, elapsed);
-    emit pTaskInfo->m_hMiniThingQtWorkThread->UpdateStatusBar(QString(tmpBuf));
+    pTaskInfo->m_statusUpdateCb(tmpBuf);
 #endif
 
     return 0;
@@ -103,7 +103,7 @@ DWORD WINAPI UpdateSqlDataBaseThread(LPVOID lp)
             log_i("Recv the quit event");
 
 #if _DEBUG
-            emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Recv the quit event"));
+            pMiniThingCore->m_statusUpdateCb("Recv the quit event");
 #endif
             break;
         }

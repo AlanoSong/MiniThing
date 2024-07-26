@@ -70,9 +70,10 @@ private:
     void UpdateUiFont(QFont& font);
 
 public slots:
-    void UpdateStatusBar(const QString& message)
+    void UpdateStatusBar(const std::string& msg)
     {
-        statusBar()->showMessage(message);
+        const QString qStr = QString::fromStdString(msg);
+        statusBar()->showMessage(qStr);
     }
 
 private slots:
