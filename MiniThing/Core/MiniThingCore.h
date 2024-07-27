@@ -28,7 +28,7 @@
 
 class MiniThingCore;
 
-typedef void (*pfnStatusUpdateCb)(const std::string);
+typedef void (*PFN_UPDATE_STATUS_CB)(const std::string);
 
 struct UsnInfo
 {
@@ -88,7 +88,7 @@ typedef struct
     DWORDLONG       rootRef;
     std::unordered_map<DWORDLONG, UsnInfo>* pAllUsnRecordMap;
     std::unordered_map<DWORDLONG, UsnInfo>* pSortTask;
-    pfnStatusUpdateCb m_statusUpdateCb;
+    PFN_UPDATE_STATUS_CB m_pfnUpdateStatusCb;
 } SortTaskInfo;
 
 typedef struct
@@ -110,7 +110,7 @@ public:
 
 public:
     // System related functions
-    HRESULT StartInstance(pfnStatusUpdateCb);
+    HRESULT StartInstance(PFN_UPDATE_STATUS_CB);
     void SetDataBasePath(std::wstring dbName);
     void InitLogger(std::wstring &logPath);
     HRESULT QueryAllVolume(void);
@@ -120,7 +120,7 @@ public:
     bool IsSqlExist(void) { return m_isSqlExist; }
     bool IsCoreReady(void) { return m_isCoreReady; };
 
-    pfnStatusUpdateCb m_statusUpdateCb;
+    PFN_UPDATE_STATUS_CB m_statusUpdateCb;
 
 public:
     // Monitor thread related parameters

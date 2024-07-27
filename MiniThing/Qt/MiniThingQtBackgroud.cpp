@@ -4,6 +4,7 @@
 static MiniThingQtWorkThread* g_pMiniThingQtWorkThread = nullptr;
 static void UpdateStatusBarStr(const std::string str)
 {
+    assert(g_pMiniThingQtWorkThread);
     g_pMiniThingQtWorkThread->UpdateStatusBar(str);
 }
 

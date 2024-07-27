@@ -76,7 +76,7 @@ DWORD WINAPI SortThread(LPVOID lp)
 #if _DEBUG
     char tmpBuf[256];
     sprintf_s(tmpBuf, "Sort thread %d over, cost %f S", pTaskInfo->taskIndex, elapsed);
-    pTaskInfo->m_statusUpdateCb(tmpBuf);
+    pTaskInfo->m_pfnUpdateStatusCb(tmpBuf);
 #endif
 
     return 0;

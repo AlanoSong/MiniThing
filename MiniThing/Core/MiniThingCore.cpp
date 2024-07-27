@@ -51,7 +51,7 @@ void MiniThingCore::InitLogger(std::wstring &logPath)
     elog_start();
 }
 
-HRESULT MiniThingCore::StartInstance(pfnStatusUpdateCb cb)
+HRESULT MiniThingCore::StartInstance(PFN_UPDATE_STATUS_CB cb)
 {
     HRESULT ret = S_OK;
 
@@ -112,7 +112,7 @@ HRESULT MiniThingCore::StartInstance(pfnStatusUpdateCb cb)
 
     this->InitLogger(m_logPath);
 
-    m_statusUpdateCb = (pfnStatusUpdateCb)cb;
+    m_statusUpdateCb = (PFN_UPDATE_STATUS_CB)cb;
     assert(m_statusUpdateCb);
     m_statusUpdateCb("Initing data ...");
 
@@ -551,7 +551,7 @@ HRESULT MiniThingCore::SortVolumeAndUpdateSql(VolumeInfo& volume)
         taskInfo.pSortTask = &(sortTaskSet[i]);
         taskInfo.pAllUsnRecordMap = &(volume.usnRecordMap);
         taskInfo.rootRef = volume.rootFileRef;
-        taskInfo.m_statusUpdateCb = m_statusUpdateCb;
+        taskInfo.m_pfnUpdateStatusCb = m_statusUpdateCb;
 
         sortTaskVec.push_back(taskInfo);
     }
