@@ -3,120 +3,47 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <tchar.h>
+#include <Windows.h>
 
+#include "cmdline.h"
 #include "MiniThingCore.h"
 
-//==========================================================================
-//                        Static Functions                                //
-//==========================================================================
-static bool
-IsRunAsAdmin(void) {
-    BOOL isRunAsAdmin = FALSE;
-    DWORD dwError = ERROR_SUCCESS;
-    PSID pAdminGroup = NULL;
-
-    SID_IDENTIFIER_AUTHORITY NtAuthority = SECURITY_NT_AUTHORITY;
-
-    if (!AllocateAndInitializeSid(
-                &NtAuthority,
-                2,
-                SECURITY_BUILTIN_DOMAIN_RID,
-                DOMAIN_ALIAS_RID_ADMINS,
-                0, 0, 0, 0, 0, 0,
-                &pAdminGroup)) {
-        dwError = GetLastError();
-        goto Exit;
-    }
-
-    if (!CheckTokenMembership(NULL, pAdminGroup, &isRunAsAdmin)) {
-        dwError = GetLastError();
-        goto Exit;
-    }
-
-Exit:
-
-    if (pAdminGroup) {
-        FreeSid(pAdminGroup);
-        pAdminGroup = NULL;
-    }
-
-    if (ERROR_SUCCESS != dwError) {
-        throw dwError;
-    }
-
-    return isRunAsAdmin;
+void UpdateProgressCb(
+    const std::string str
+)
+{
+    std::cout << str << std::endl;
 }
 
-static void
-GetAdminPrivileges(CString strApp, std::wstring args) {
-    SHELLEXECUTEINFO executeInfo;
-    memset(&executeInfo, 0, sizeof(executeInfo));
-    executeInfo.lpFile = strApp;
-    executeInfo.cbSize = sizeof(executeInfo);
-    executeInfo.lpVerb = _T("runas");
-    executeInfo.fMask = SEE_MASK_NO_CONSOLE;
-    executeInfo.nShow = SW_SHOWDEFAULT;
-    executeInfo.lpParameters = args.c_str();
-
-    ShellExecuteEx(&executeInfo);
-
-    WaitForSingleObject(executeInfo.hProcess, INFINITE);
-}
-
-static void
-CleanRegValue(void) {
-    HKEY hKey;
-
-    if (ERROR_SUCCESS == RegOpenKeyEx(HKEY_CURRENT_USER, L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run", 0, KEY_SET_VALUE, &hKey)) {
-        LSTATUS ret = RegDeleteKey(hKey, L"MiniThing");
-
-        RegCloseKey(hKey);
-    }
-}
-
-//==========================================================================
-//                              Main Entry                                //
-//==========================================================================
 int
-main(int argc, char *argv[]) {
-    // Check if current process run as admin
-    //  if not, create a new process run as admin
-    //  and exit current process
-    if (!IsRunAsAdmin()) {
-        WCHAR path[MAX_PATH] = { 0 };
-        GetModuleFileName(NULL, path, MAX_PATH);
+main(
+    int argc,
+    char *argv[]
+)
+{
+    // Load DLL from the same directory as the executable
+    PFN_MTC_CREATE pfnMtcCreate = NULL;
+    PFN_MTC_DESTROY pfnMtcDestroy = NULL;
+    HMODULE hMtcDll = LoadLibraryA("MiniThingCore.dll");
 
-        // Pass down args
-        std::wstring args;
-
-        // Pass the first one cause is exe name itself
-        for (int i = 1; i < argc; i++) {
-            std::string tmpStr = argv[i];
-            args += StringToWstring(tmpStr);
-            args += L" ";
-        }
-
-        GetAdminPrivileges(path, args);
-
+    if (hMtcDll == NULL)
+    {
+        std::cerr << "Failed to load dll" << std::endl;
         return 0;
     }
 
-    cmdline::parser parser;
+    // Get function addresses
+    pfnMtcCreate = (PFN_MTC_CREATE)GetProcAddress(hMtcDll, "MTC_Create");
+    pfnMtcDestroy = (PFN_MTC_DESTROY)GetProcAddress(hMtcDll, "MTC_Destroy");
 
-    // add specified type of variable.
-    // 1st argument is long name
-    // 2nd argument is short name (no short name if '\0' specified)
-    // 3rd argument is description
-    // 4th argument is mandatory (optional. default is false)
-    // 5th argument is default value  (optional. it used when mandatory is false)
+    // Call MTC_Create
+    void* instance = pfnMtcCreate((PVOID)UpdateProgressCb);
 
-    // parser.add<std::string>("clean", 'c', "clean app data", false, "false", cmdline::oneof<std::string>("true", "false"));
-    parser.add("clean", 'c', "clean app data");
-    // Parse command line
-    parser.parse_check(argc, argv);
+    // Call MTC_Destroy
+    pfnMtcDestroy(instance);
 
-    if (parser.exist("clean")) {
-        CleanRegValue();
-        return 0;
-    }
+    // Unload DLL
+    FreeLibrary(hMtcDll);
+
+    return 0;
 }

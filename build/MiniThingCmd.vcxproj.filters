@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="doc">
+      <UniqueIdentifier>{f0ebeb76-f2ff-488e-b286-570f86c236b8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui">
+      <UniqueIdentifier>{19824ee4-6483-496f-8524-12eeb906cf2a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui\libs">
+      <UniqueIdentifier>{15253fd2-9e71-468d-8ad8-97a7f8236dec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="gui\libs\cmdline">
+      <UniqueIdentifier>{53fdf96d-7aa6-4ee1-bf99-96f73b06ecca}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\gui\libs\cmdline\cmdline.h">
+      <Filter>gui\libs\cmdline</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\gui\main.cpp">
+      <Filter>gui</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

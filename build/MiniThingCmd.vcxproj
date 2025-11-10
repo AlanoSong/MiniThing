@@ -70,6 +70,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -102,7 +105,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)..\libs\EasyLogger\demo\os\windows\easylogger\inc;$(SolutionDir)..\libs\EasyLogger\easylogger\inc;$(SolutionDir)..\libs\EasyLogger\easylogger\plugins\file;$(SolutionDir)..\libs\cmdline;$(SolutionDir)..\libs\SQLite;$(SolutionDir)..\utils;$(SolutionDir)..\core;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\Alano\MiniThing\core\inc;$(SolutionDir)..\gui\libs\cmdline;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -124,32 +127,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\core\MiniThingCore.cpp" />
-    <ClCompile Include="..\core\TaskThreads.cpp" />
-    <ClCompile Include="..\gui\main.cpp" />
-    <ClCompile Include="..\libs\EasyLogger\demo\os\windows\easylogger\port\elog_file_port.c" />
-    <ClCompile Include="..\libs\EasyLogger\demo\os\windows\easylogger\port\elog_port.c" />
-    <ClCompile Include="..\libs\EasyLogger\easylogger\plugins\file\elog_file.c" />
-    <ClCompile Include="..\libs\EasyLogger\easylogger\src\elog.c" />
-    <ClCompile Include="..\libs\EasyLogger\easylogger\src\elog_async.c" />
-    <ClCompile Include="..\libs\EasyLogger\easylogger\src\elog_buf.c" />
-    <ClCompile Include="..\libs\EasyLogger\easylogger\src\elog_utils.c" />
-    <ClCompile Include="..\libs\SQLite\shell.c" />
-    <ClCompile Include="..\libs\SQLite\sqlite3.c" />
-    <ClCompile Include="..\utils\utils.cpp" />
+    <ClInclude Include="..\gui\libs\cmdline\cmdline.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\core\MiniThingCore.h" />
-    <ClInclude Include="..\core\TaskThreads.h" />
-    <ClInclude Include="..\libs\cmdline\cmdline.h" />
-    <ClInclude Include="..\libs\EasyLogger\demo\os\windows\easylogger\inc\elog_cfg.h" />
-    <ClInclude Include="..\libs\EasyLogger\demo\os\windows\easylogger\inc\elog_file_cfg.h" />
-    <ClInclude Include="..\libs\EasyLogger\easylogger\inc\elog.h" />
-    <ClInclude Include="..\libs\EasyLogger\easylogger\inc\elog_cfg.h" />
-    <ClInclude Include="..\libs\EasyLogger\easylogger\plugins\file\elog_file.h" />
-    <ClInclude Include="..\libs\SQLite\sqlite3.h" />
-    <ClInclude Include="..\libs\SQLite\sqlite3ext.h" />
-    <ClInclude Include="..\utils\utils.h" />
+    <ClCompile Include="..\gui\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,0 +1,4 @@
+#pragma once
+
+typedef PVOID (WINAPI*  PFN_MTC_CREATE)(PVOID);
+typedef VOID (WINAPI* PFN_MTC_DESTROY)(PVOID);

@@ -3,14 +3,14 @@
 SET ROOT_DIR=..\..
 
 .\astyle.exe ^
-    %ROOT_DIR%\utils\*.cpp ^
-    %ROOT_DIR%\utils\*.h ^
-    %ROOT_DIR%\core\*.cpp ^
-    %ROOT_DIR%\core\*.h ^
+    %ROOT_DIR%\core\utils\*.cpp ^
+    %ROOT_DIR%\core\utils\*.h ^
+    %ROOT_DIR%\core\src\*.cpp ^
+    %ROOT_DIR%\core\inc\*.h ^
     %ROOT_DIR%\gui\*.cpp ^
     %ROOT_DIR%\gui\*.h ^
     -n ^
-    --style=google ^
+    --style=bsd ^
     --attach-namespaces ^
     --attach-classes ^
     --attach-inlines ^

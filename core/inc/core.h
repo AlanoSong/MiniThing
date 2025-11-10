@@ -16,11 +16,10 @@
 #include <direct.h>
 #include <io.h>
 
-#include "TaskThreads.h"
+#include "threads.h"
 #include "utils.h"
 #include "sqlite3.h"
 #include "elog.h"
-#include "cmdline.h"
 
 #define SQL_BATCH_INSERT_GRANULARITY    ( 4096 )
 
@@ -30,7 +29,8 @@ class MiniThingCore;
 
 typedef void (*PFN_UPDATE_STATUS_CB)(const std::string);
 
-struct UsnInfo {
+struct UsnInfo
+{
     // File reference number
     DWORDLONG pParentRef = 0;
     DWORDLONG pSelfRef = 0;
@@ -43,7 +43,8 @@ struct UsnInfo {
     std::wstring filePathWstr;
 };
 
-typedef struct {
+typedef struct
+{
     std::wstring volumeName;
     HANDLE hVolume;
 
@@ -58,24 +59,28 @@ typedef struct {
     void *pMonitorTaskInfo;
 } VolumeInfo;
 
-typedef enum _QUERY_TYPE {
+typedef enum _QUERY_TYPE
+{
     QUERY_BY_NAME = 0,
     QUERY_BY_REF,
     QUERY_BY_PREPATH,
 } QUERY_TYPE;
 
-typedef struct _QueryInfo {
+typedef struct _QueryInfo
+{
     QUERY_TYPE type;
     UsnInfo info;
 } QueryInfo;
 
-typedef struct {
+typedef struct
+{
     VolumeInfo *pVolumeInfo;
     MiniThingCore *pMiniThingCore;
     std::wstring localAppDataPath;
 } MonitorTaskInfo;
 
-typedef struct {
+typedef struct
+{
     UINT            taskIndex;
     std::string     sqlPath;
     std::wstring    rootFolderName;
@@ -85,7 +90,8 @@ typedef struct {
     PFN_UPDATE_STATUS_CB m_pfnUpdateStatusCb;
 } SortTaskInfo;
 
-typedef struct {
+typedef struct
+{
     void *pVolumeInfo;
     void *pMiniThingCore;
     DWORD op;
@@ -95,12 +101,12 @@ typedef struct {
 } UpdateDataBaseTaskInfo;
 
 class MiniThingCore {
-  public:
+public:
     MiniThingCore();
     MiniThingCore(const char* sqlDbPath);
     ~MiniThingCore(void);
 
-  public:
+public:
     // System related functions
     HRESULT StartInstance(PFN_UPDATE_STATUS_CB);
     void SetDataBasePath(std::wstring dbName);
@@ -117,7 +123,7 @@ class MiniThingCore {
 
     PFN_UPDATE_STATUS_CB m_statusUpdateCb;
 
-  public:
+public:
     // Monitor thread related parameters
     HANDLE      m_hExitEvent;
     HANDLE      m_hMonitorThread;
@@ -127,7 +133,7 @@ class MiniThingCore {
     void StartMonitorThread(void);
     void StopMonitorThread(void);
 
-  public:
+public:
     // Query thread related parameters
     HANDLE      m_hQueryExitEvent;
     HANDLE      m_hQueryThread;
@@ -137,7 +143,7 @@ class MiniThingCore {
     void StartQueryThread(void);
     void StopQueryThread(void);
 
-  public:
+public:
     // Sqlite data base related paremeters
     HANDLE      m_hUpdateSqlDataBaseExitEvent;
     HANDLE      m_hUpdateSqlDataBaseThread;
@@ -154,14 +160,14 @@ class MiniThingCore {
     HRESULT SQLiteQueryV2(QueryInfo* queryInfo, std::vector < UsnInfo > & vec);
     HRESULT SQLiteClose(void);
 
-  private:
+private:
     // Usn related functions
     HRESULT CreateUsn(void);
     HRESULT QueryUsn(void);
     HRESULT RecordUsn(void);
     HRESULT DeleteUsn(void);
 
-  private:
+private:
     std::vector < VolumeInfo >                 m_volumeSet;
     std::unordered_map < DWORDLONG, UsnInfo >  m_usnRecordMap;
     sqlite3                                 *m_hSql;

@@ -1,0 +1,153 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="libs">
+      <UniqueIdentifier>{70c14850-f3ae-4864-b616-3ae14e6b3cbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="utils">
+      <UniqueIdentifier>{462bb131-b731-4e2d-b42e-ee450125ad72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger">
+      <UniqueIdentifier>{f819320b-ddc2-4b01-8ecd-0033c83a8b03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\SQLite">
+      <UniqueIdentifier>{1ce70c50-1cd8-481b-8b74-290f230922f8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\demo">
+      <UniqueIdentifier>{4da5f14c-ac10-49c3-873f-f5734f2a537e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\easylogger">
+      <UniqueIdentifier>{55332a50-fcc5-4773-95a2-a2d0d503ce1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\demo\os">
+      <UniqueIdentifier>{e985363d-20d4-4dda-b1c0-93a3ddd01338}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\demo\os\windows">
+      <UniqueIdentifier>{e8c786c4-84e4-4c81-8922-c0aa31faa1ec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\demo\os\windows\easylogger">
+      <UniqueIdentifier>{503a927b-8707-405b-911a-fba9a402e44e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\demo\os\windows\easylogger\inc">
+      <UniqueIdentifier>{4269e030-3272-4fbc-94b2-2fa76c27bc08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\demo\os\windows\easylogger\port">
+      <UniqueIdentifier>{2cb8093c-0a85-42f6-b4f2-46210aaadda2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\easylogger\inc">
+      <UniqueIdentifier>{6baad0ca-70b1-41e5-9f75-6e012033e592}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\easylogger\plugins">
+      <UniqueIdentifier>{e4212b04-50c5-45c0-aefb-e641d9d1d985}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\easylogger\src">
+      <UniqueIdentifier>{1b65d97b-5c71-4637-aa83-ae8e3ddfc85e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libs\EasyLogger\easylogger\plugins\file">
+      <UniqueIdentifier>{b04db5ef-fe75-4fd2-97b5-bc76b20ebb6f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inc">
+      <UniqueIdentifier>{712c00ed-d96e-4220-833b-db7c50915bdc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{cbe66077-b82b-4f3f-8ac3-21ee23c9d70b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="exports.def" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="utils\utils.h">
+      <Filter>utils</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\SQLite\sqlite3.h">
+      <Filter>libs\SQLite</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\SQLite\sqlite3ext.h">
+      <Filter>libs\SQLite</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\EasyLogger\demo\os\windows\easylogger\inc\elog_cfg.h">
+      <Filter>libs\EasyLogger\demo\os\windows\easylogger\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\EasyLogger\demo\os\windows\easylogger\inc\elog_file_cfg.h">
+      <Filter>libs\EasyLogger\demo\os\windows\easylogger\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\EasyLogger\easylogger\inc\elog.h">
+      <Filter>libs\EasyLogger\easylogger\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\EasyLogger\easylogger\inc\elog_cfg.h">
+      <Filter>libs\EasyLogger\easylogger\inc</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\EasyLogger\easylogger\plugins\file\elog_file.h">
+      <Filter>libs\EasyLogger\easylogger\plugins\file</Filter>
+    </ClInclude>
+    <ClInclude Include="libs\EasyLogger\easylogger\plugins\file\elog_file_cfg.h">
+      <Filter>libs\EasyLogger\easylogger\plugins\file</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\core.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\framework.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\pch.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\threads.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+    <ClInclude Include="inc\MiniThingCore.h">
+      <Filter>inc</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="utils\utils.cpp">
+      <Filter>utils</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\SQLite\shell.c">
+      <Filter>libs\SQLite</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\SQLite\sqlite3.c">
+      <Filter>libs\SQLite</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\demo\os\windows\easylogger\port\elog_file_port.c">
+      <Filter>libs\EasyLogger\demo\os\windows\easylogger\port</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\demo\os\windows\easylogger\port\elog_port.c">
+      <Filter>libs\EasyLogger\demo\os\windows\easylogger\port</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\easylogger\src\elog.c">
+      <Filter>libs\EasyLogger\easylogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\easylogger\src\elog_async.c">
+      <Filter>libs\EasyLogger\easylogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\easylogger\src\elog_buf.c">
+      <Filter>libs\EasyLogger\easylogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\easylogger\src\elog_utils.c">
+      <Filter>libs\EasyLogger\easylogger\src</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\easylogger\plugins\file\elog_file.c">
+      <Filter>libs\EasyLogger\easylogger\plugins\file</Filter>
+    </ClCompile>
+    <ClCompile Include="libs\EasyLogger\easylogger\plugins\file\elog_file_port.c">
+      <Filter>libs\EasyLogger\easylogger\plugins\file</Filter>
+    </ClCompile>
+    <ClCompile Include="src\core.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\exports.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\pch.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\threads.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,4 @@
+LIBRARY MiniThingCore
+EXPORTS
+    MTC_Create
+    MTC_Destroy

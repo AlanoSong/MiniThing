@@ -1,7 +1,7 @@
-#include "TaskThreads.h"
+#include "threads.h"
 #include "utils.h"
 
-#define LOG_TAG      "TaskThreads"
+#define LOG_TAG      "MTC"
 
 //==========================================================================
 //                        Static Parameters                               //
@@ -18,21 +18,25 @@ HANDLE g_updateDataBaseWrMutex;
 //==========================================================================
 
 static void
-GetCurrentFilePath(std::wstring& path, std::wstring volName, DWORDLONG currentRef, DWORDLONG rootRef, std::unordered_map<DWORDLONG, UsnInfo> &recordMapAll) {
+GetCurrentFilePath(std::wstring& path, std::wstring volName, DWORDLONG currentRef, DWORDLONG rootRef, std::unordered_map<DWORDLONG, UsnInfo> &recordMapAll)
+{
     // 1. This is root node, just add root path and return
-    if (currentRef == rootRef) {
+    if (currentRef == rootRef)
+    {
         path = volName + L"\\" + path;
         return;
     }
 
-    if (recordMapAll.find(currentRef) != recordMapAll.end()) {
+    if (recordMapAll.find(currentRef) != recordMapAll.end())
+    {
         // 2. Normal node, loop more
         std::wstring str = recordMapAll[currentRef].fileNameWstr;
         path = str + L"\\" + path;
         GetCurrentFilePath(path, volName, recordMapAll[currentRef].pParentRef, rootRef, recordMapAll);
     }
 
-    else {
+    else
+    {
         // 3. Some special system files's root node is not in current folder
         std::wstring str = L"?";
         path = str + L"\\" + path;
@@ -45,10 +49,9 @@ GetCurrentFilePath(std::wstring& path, std::wstring volName, DWORDLONG currentRe
 //                        Task Threads                                    //
 //==========================================================================
 DWORD WINAPI
-SortThread(LPVOID lp) {
+SortThread(LPVOID lp)
+{
     SortTaskInfo* pTaskInfo = (SortTaskInfo*)lp;
-
-    SetChsPrintEnv();
 
     // 1. Get start time
     LARGE_INTEGER timeStart;
@@ -58,7 +61,8 @@ SortThread(LPVOID lp) {
     double quadpart = (double)frequency.QuadPart;
     QueryPerformanceCounter(&timeStart);
 
-    for (auto it = (*pTaskInfo->pSortTask).begin(); it != (*pTaskInfo->pSortTask).end(); it++) {
+    for (auto it = (*pTaskInfo->pSortTask).begin(); it != (*pTaskInfo->pSortTask).end(); it++)
+    {
         UsnInfo usnInfo = it->second;
         std::wstring path(usnInfo.fileNameWstr);
         GetCurrentFilePath(path, pTaskInfo->rootFolderName, usnInfo.pParentRef, pTaskInfo->rootRef, *(pTaskInfo->pAllUsnRecordMap));
@@ -70,19 +74,12 @@ SortThread(LPVOID lp) {
 
     log_i("Sort thread %d over, cost %f S", pTaskInfo->taskIndex, elapsed);
 
-#if _DEBUG
-    char tmpBuf[256];
-    sprintf_s(tmpBuf, "Sort thread %d over, cost %f S", pTaskInfo->taskIndex, elapsed);
-    pTaskInfo->m_pfnUpdateStatusCb(tmpBuf);
-#endif
-
     return 0;
 }
 
 DWORD WINAPI
-UpdateSqlDataBaseThread(LPVOID lp) {
-    SetChsPrintEnv();
-
+UpdateSqlDataBaseThread(LPVOID lp)
+{
     MiniThingCore* pMiniThingCore = (MiniThingCore*)lp;
 
     log_i("Update sql thread start");
@@ -91,27 +88,28 @@ UpdateSqlDataBaseThread(LPVOID lp) {
     // emit pMiniThingCore->GetQtWorkThreadHandle()->UpdateStatusBar(QString("Update sql thread start"));
 #endif
 
-    while (true) {
+    while (true)
+    {
         // Check if need exit thread
         DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hUpdateSqlDataBaseExitEvent, 0x0);
 
-        if (WAIT_OBJECT_0 == dwWaitCode) {
+        if (WAIT_OBJECT_0 == dwWaitCode)
+        {
             log_i("Recv the quit event");
-
-#if _DEBUG
-            pMiniThingCore->m_statusUpdateCb("Recv the quit event");
-#endif
             break;
         }
 
-        if (!g_updateDataBaseTaskList.empty()) {
+        if (!g_updateDataBaseTaskList.empty())
+        {
             WaitForSingleObject(g_updateDataBaseWrMutex, INFINITE);
             UpdateDataBaseTaskInfo taskInfo = g_updateDataBaseTaskList.front();
             g_updateDataBaseTaskList.pop_front();
             ReleaseMutex(g_updateDataBaseWrMutex);
 
-            switch (taskInfo.op) {
-            case FILE_ACTION_ADDED: {
+            switch (taskInfo.op)
+            {
+            case FILE_ACTION_ADDED:
+            {
                 UsnInfo unsInfo = { 0 };
                 unsInfo.filePathWstr = taskInfo.oriPath;
                 unsInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
@@ -119,14 +117,16 @@ UpdateSqlDataBaseThread(LPVOID lp) {
                 unsInfo.pParentRef = 0;
                 unsInfo.pSelfRef = 0;
 
-                if (FAILED(((MiniThingCore *)taskInfo.pMiniThingCore)->SQLiteInsert(&unsInfo))) {
+                if (FAILED(((MiniThingCore *)taskInfo.pMiniThingCore)->SQLiteInsert(&unsInfo)))
+                {
                     assert(0);
                 }
 
                 break;
             }
 
-            case FILE_ACTION_RENAMED_OLD_NAME: {
+            case FILE_ACTION_RENAMED_OLD_NAME:
+            {
                 UsnInfo oriInfo = { 0 };
                 oriInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.oriPath);
                 oriInfo.filePathWstr = taskInfo.oriPath;
@@ -135,18 +135,21 @@ UpdateSqlDataBaseThread(LPVOID lp) {
                 reInfo.fileNameWstr = GetFileNameAccordPath(taskInfo.newPath);
                 reInfo.filePathWstr = taskInfo.newPath;
 
-                if (FAILED(((MiniThingCore *)taskInfo.pMiniThingCore)->SQLiteUpdate(&oriInfo, &reInfo))) {
+                if (FAILED(((MiniThingCore *)taskInfo.pMiniThingCore)->SQLiteUpdate(&oriInfo, &reInfo)))
+                {
                     assert(0);
                 }
 
                 break;
             }
 
-            case FILE_ACTION_REMOVED: {
+            case FILE_ACTION_REMOVED:
+            {
                 UsnInfo usnInfo = { 0 };
                 usnInfo.filePathWstr = taskInfo.oriPath;
 
-                if (FAILED(((MiniThingCore *)taskInfo.pMiniThingCore)->SQLiteDelete(&usnInfo))) {
+                if (FAILED(((MiniThingCore *)taskInfo.pMiniThingCore)->SQLiteDelete(&usnInfo)))
+                {
                     assert(0);
                 }
 
@@ -168,7 +171,8 @@ UpdateSqlDataBaseThread(LPVOID lp) {
 }
 
 DWORD WINAPI
-MonitorThread(LPVOID lp) {
+MonitorThread(LPVOID lp)
+{
     MonitorTaskInfo* pTaskInfo = (MonitorTaskInfo*)lp;
     VolumeInfo* pVolumeInfo = pTaskInfo->pVolumeInfo;
     MiniThingCore* pMiniThingCore = pTaskInfo->pMiniThingCore;
@@ -179,8 +183,6 @@ MonitorThread(LPVOID lp) {
     std::wstring filePathWstr;
     std::wstring fileRePathWstr;
     std::wstring fullFilePathWstr;
-
-    SetChsPrintEnv();
 
     log_i("Start monitor: %s", pVolumeInfo->volumeName.c_str());
 
@@ -194,18 +196,21 @@ MonitorThread(LPVOID lp) {
                                 FILE_FLAG_BACKUP_SEMANTICS,
                                 nullptr);
 
-    if (hVolume == INVALID_HANDLE_VALUE) {
+    if (hVolume == INVALID_HANDLE_VALUE)
+    {
         GetSystemError();
         assert(0);
     }
 
     auto* pNotifyInfo = reinterpret_cast<FILE_NOTIFY_INFORMATION *>(notifyInfo);
 
-    while (true) {
+    while (true)
+    {
         // Check if need exit thread
         DWORD dwWaitCode = WaitForSingleObject(pVolumeInfo->hMonitorExitEvent, 0x0);
 
-        if (WAIT_OBJECT_0 == dwWaitCode) {
+        if (WAIT_OBJECT_0 == dwWaitCode)
+        {
             log_i("Recv the quit event");
             break;
         }
@@ -220,7 +225,8 @@ MonitorThread(LPVOID lp) {
                     FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_SIZE,
                     &retBytes,
                     nullptr,
-                    nullptr)) {
+                    nullptr))
+        {
             // Change file name
             filePathWstr = pNotifyInfo->FileName;
             filePathWstr.resize(pNotifyInfo->FileNameLength / 2);
@@ -230,7 +236,8 @@ MonitorThread(LPVOID lp) {
 
             if (fullFilePathWstr.find(localAppDataPath) != std::wstring::npos
                     // TODO: refine this
-                    || fullFilePathWstr.find(L"MiniThing.db-journal") != std::wstring::npos) {
+                    || fullFilePathWstr.find(L"MiniThing.db-journal") != std::wstring::npos)
+            {
                 continue;
             }
 
@@ -245,9 +252,11 @@ MonitorThread(LPVOID lp) {
             updateTaskInfo.pMiniThingCore = pMiniThingCore;
             updateTaskInfo.op = 0;
 
-            switch (pNotifyInfo->Action) {
+            switch (pNotifyInfo->Action)
+            {
             case FILE_ACTION_ADDED:
-                if (filePathWstr.find(L"$RECYCLE.BIN") == std::wstring::npos) {
+                if (filePathWstr.find(L"$RECYCLE.BIN") == std::wstring::npos)
+                {
                     std::wstring addPath;
                     addPath.clear();
                     addPath.append(pVolumeInfo->volumeName);
@@ -263,7 +272,8 @@ MonitorThread(LPVOID lp) {
             case FILE_ACTION_MODIFIED:
                 if (filePathWstr.find(L"$RECYCLE.BIN") == std::wstring::npos &&
                         filePathWstr.find(L"fileAdded.txt") == std::wstring::npos &&
-                        filePathWstr.find(L"fileRemoved.txt") == std::wstring::npos) {
+                        filePathWstr.find(L"fileRemoved.txt") == std::wstring::npos)
+                {
                     std::wstring modPath;
                     modPath.append(pVolumeInfo->volumeName);
                     modPath.append(L"\\");
@@ -276,7 +286,8 @@ MonitorThread(LPVOID lp) {
                 break;
 
             case FILE_ACTION_REMOVED:
-                if (filePathWstr.find(L"$RECYCLE.BIN") == std::wstring::npos) {
+                if (filePathWstr.find(L"$RECYCLE.BIN") == std::wstring::npos)
+                {
                     std::wstring remPath;
                     remPath.clear();
                     remPath.append(pVolumeInfo->volumeName);
@@ -290,7 +301,8 @@ MonitorThread(LPVOID lp) {
                 break;
 
             case FILE_ACTION_RENAMED_OLD_NAME:
-                if (filePathWstr.find(L"$RECYCLE.BIN") == std::wstring::npos) {
+                if (filePathWstr.find(L"$RECYCLE.BIN") == std::wstring::npos)
+                {
                     std::wstring oriPath;
                     oriPath.clear();
                     oriPath.append(pVolumeInfo->volumeName);
@@ -314,7 +326,8 @@ MonitorThread(LPVOID lp) {
                 break;
             }
 
-            if (updateTaskInfo.op) {
+            if (updateTaskInfo.op)
+            {
                 // We dispath those update task into list and handle them in UpdateSqlDataBaseThread,
                 //  cause updating sql data base may consume some time,
                 //  and we may lost more file change event at the same time.
@@ -336,26 +349,20 @@ MonitorThread(LPVOID lp) {
 }
 
 DWORD WINAPI
-QueryThread(LPVOID lp) {
+QueryThread(LPVOID lp)
+{
     MiniThingCore* pMiniThingCore = (MiniThingCore*)lp;
-
-    SetChsPrintEnv();
 
     log_i("Query thread start");
 
-#if _DEBUG
-    printf_s("Query thread start\n");
-#endif
-
-    while (true) {
+    while (true)
+    {
         // Check if need exit thread
         DWORD dwWaitCode = WaitForSingleObject(pMiniThingCore->m_hQueryExitEvent, 0x0);
 
-        if (WAIT_OBJECT_0 == dwWaitCode) {
+        if (WAIT_OBJECT_0 == dwWaitCode)
+        {
             log_i("Recv the quit event");
-#if _DEBUG
-            printf_s("Recv the quit event\n");
-#endif
             break;
         }
 
@@ -381,14 +388,17 @@ QueryThread(LPVOID lp) {
         double elapsed = (timeEnd.QuadPart - timeStart.QuadPart) / quadpart;
         printf_s("Time elasped: %f S\n", elapsed);
 
-        if (vec.empty()) {
+        if (vec.empty())
+        {
             printf_s("Not found\n");
         }
 
-        else {
+        else
+        {
             int cnt = 0;
 
-            for (auto it = vec.begin(); it != vec.end(); it++) {
+            for (auto it = vec.begin(); it != vec.end(); it++)
+            {
                 wprintf_s(L"NO.%d\t: %s\n", cnt++, (*it).c_str());
             }
         }

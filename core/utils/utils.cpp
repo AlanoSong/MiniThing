@@ -7,12 +7,32 @@
 
 #include "utils.h"
 
+void
+GetCurrentPath(
+    std::wstring& path)
+{
+    std::string curPath;
+    char buffer[MAX_PATH] = { 0 };
+    ::GetModuleFileNameA(NULL, buffer, MAX_PATH);
+    curPath = buffer;
+    size_t pos = curPath.find_last_of('\\');
+
+    if (pos != std::string::npos)
+    {
+        curPath = curPath.substr(0, pos + 1);
+    }
+
+    path = std::wstring(curPath.begin(), curPath.end());
+}
+
 bool
-DelRegValue(const char* pMidPath, const std::string& key, const std::string& value) {
+DelRegValue(const char* pMidPath, const std::string& key, const std::string& value)
+{
     HKEY hkey = nullptr;
     LSTATUS res = ::RegOpenKeyExA(HKEY_CURRENT_USER, pMidPath, 0, KEY_SET_VALUE, &hkey);
 
-    if (res != ERROR_SUCCESS) {
+    if (res != ERROR_SUCCESS)
+    {
         return false;
     }
 
@@ -21,22 +41,27 @@ DelRegValue(const char* pMidPath, const std::string& key, const std::string& val
 }
 
 bool
-SetRegValue(const char* pMidPath, const std::string& key, const std::string& value) {
+SetRegValue(const char* pMidPath, const std::string& key, const std::string& value)
+{
     HKEY hkey = nullptr;
     LSTATUS res = ::RegOpenKeyExA(HKEY_CURRENT_USER, pMidPath, 0, KEY_WRITE, &hkey);
 
-    if (res != ERROR_SUCCESS) {
+    if (res != ERROR_SUCCESS)
+    {
         res = ::RegCreateKeyA(HKEY_CURRENT_USER, pMidPath, &hkey);
     }
 
-    if (res != ERROR_SUCCESS) {
+    if (res != ERROR_SUCCESS)
+    {
         return false;
     }
 
     std::shared_ptr<void> close_key
     (
-    nullptr, [&](void*) {
-        if (hkey != nullptr) {
+        nullptr, [&](void*)
+    {
+        if (hkey != nullptr)
+        {
             ::RegCloseKey(hkey);
             hkey = nullptr;
         }
@@ -45,7 +70,8 @@ SetRegValue(const char* pMidPath, const std::string& key, const std::string& val
     );
     res = ::RegSetValueExA(hkey, key.c_str(), 0, REG_SZ, (BYTE*)value.c_str(), value.length());
 
-    if (res != ERROR_SUCCESS) {
+    if (res != ERROR_SUCCESS)
+    {
         return false;
     }
 
@@ -53,19 +79,23 @@ SetRegValue(const char* pMidPath, const std::string& key, const std::string& val
 }
 
 std::string
-GetRegValue(const char *pMidPath, const std::string& key) {
+GetRegValue(const char *pMidPath, const std::string& key)
+{
     HKEY hkey = nullptr;
 
     LSTATUS res = ::RegOpenKeyExA(HKEY_CURRENT_USER, pMidPath, 0, KEY_READ, &hkey);
 
-    if (res != ERROR_SUCCESS) {
+    if (res != ERROR_SUCCESS)
+    {
         return "";
     }
 
     std::shared_ptr<void> close_key
     (
-    nullptr, [&](void*) {
-        if (hkey != nullptr) {
+        nullptr, [&](void*)
+    {
+        if (hkey != nullptr)
+        {
             ::RegCloseKey(hkey);
             hkey = nullptr;
         }
@@ -77,14 +107,16 @@ GetRegValue(const char *pMidPath, const std::string& key) {
     DWORD size = 0;
     res = ::RegQueryValueExA(hkey, key.c_str(), 0, &type, nullptr, &size);
 
-    if (res != ERROR_SUCCESS || size <= 0) {
+    if (res != ERROR_SUCCESS || size <= 0)
+    {
         return "";
     }
 
     std::vector<BYTE> value_data(size);
     res = ::RegQueryValueExA(hkey, key.c_str(), 0, &type, value_data.data(), &size);
 
-    if (res != ERROR_SUCCESS) {
+    if (res != ERROR_SUCCESS)
+    {
         return "";
     }
 
